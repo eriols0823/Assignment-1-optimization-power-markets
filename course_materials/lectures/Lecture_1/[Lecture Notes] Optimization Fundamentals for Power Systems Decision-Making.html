@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>46750 — Week 1 lecture notes: Introduction to optimization &amp; mathematical modelling</title>
+</head><body style="margin:0;background:#FAFAF7"><div class="page" style="background: #FAFAF7; color: #1b1f26; font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0;"><header style="padding: 48px 0 28px;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;"><b style="color: #a9111e; font-weight: 500;">DTU</b> · Course 46750 · Week 1 · Lecture notes</div>
+<h1 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: clamp(2rem,4.2vw,3.1rem); line-height: 1.12; margin: .35em 0 .3em; letter-spacing: -.01em;">Introduction to Optimization for Power System Decisions<br><span style="font-size: .55em; color: #5b6069; font-weight: 400;">What optimization is and why power systems need it, the components of an optimization model, the standard and linear forms, and a first worked example — the night bike lane cleaning problem.</span></h1>
+<div style="margin-top: 18px; color: #5b6069;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">LEARNING OBJECTIVES</span></div>
+<div style="margin-top: 18px; color: #5b6069;">
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0px 0px 22px;">
+<tbody>
+<tr>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 33.33%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Objective 1</span> <span style="display: block; color: #a9111e; font-weight: bold;">Define</span> the components of a mathematical optimization model</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 33.33%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Objective 2</span> <span style="display: block; color: #a9111e; font-weight: bold;">Identify</span> the objective, decision variables and constraints of a simple decision-making problem</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 33.33%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Objective 3</span> <span style="display: block; color: #a9111e; font-weight: bold;">Formulate</span> that problem as a standard mathematical optimization problem</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</header><nav class="bus" aria-label="Sections" style="position: sticky; top: 0; z-index: 5; background: #FAFAF7; border-top: 5px solid #A9111E; border-bottom: 1px solid #D9DAD5;">
+<ol style="list-style: none; margin: 0 auto; padding: 0 24px; max-width: 920px; display: flex; flex-wrap: nowrap; gap: 0 20px; overflow-x: auto;">
+<li><a href="#what" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">1</span>What is optimization</a></li>
+<li><a href="#anatomy" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">2</span>Anatomy of a model</a></li>
+<li><a href="#solving" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">3</span>Solving</a></li>
+<li><a href="#scope" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">4</span>Course scope</a></li>
+<li><a href="#lp" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">5</span>Linear programs</a></li>
+<li><a href="#example" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">6</span>Worked example</a></li>
+<li><a href="#takeaways" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">7</span>Takeaways</a></li>
+<li><a href="#appendix-units" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">A</span>Appendix</a></li>
+</ol>
+</nav><main id="main" style="padding-bottom: 48px;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">
+<section class="part" id="what" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">1</span>What is optimization, and why power systems need it</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">Optimization is the art of making things as good as they can be — and the mathematics that makes "as good as they can be" a precise, computable statement rather than an opinion. A power system is a machine that must be operated and expanded through decisions taken every few minutes and every few years: which units to run, how to charge a battery, which line to reinforce, at what price to clear a market. Those decisions involve far too many interacting quantities, physical laws and technical limits for anyone to weigh by hand, and they must be justified afterwards — which is exactly what an optimization model provides.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Three questions hiding in one sentence</h3>
+<p style="margin: 0 0 12px;">"Making things as good as they can be" only sounds vague until you unpack it. Each part of the sentence corresponds to one component of the model you will write:</p>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 200px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Good?</span>
+<p style="margin: 0; font-size: .95rem;">Depends on what you want to achieve — cost, revenue, emissions, risk. This becomes the <b>objective function</b>.</p>
+</div>
+<div style="flex: 1 1 200px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Making?</span>
+<p style="margin: 0; font-size: .95rem;">Depends on what you can act upon and control. This becomes the <b>decision variables</b>.</p>
+</div>
+<div style="flex: 1 1 200px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Can be?</span>
+<p style="margin: 0; font-size: .95rem;">Depends on the limits on those possible actions — physical, technical, economic, regulatory. These become the <b>constraints</b>.</p>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Optimization as a set of tools</h3>
+<p style="margin: 0 0 12px;">Formally, optimization is a set of mathematical tools comprising two parts:</p>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;">a <b>modelling framework</b> that translates real-world decision-making problems into a unified, structured mathematical form — an <em>optimization model</em>;</li>
+<li style="margin-bottom: 4px;"><b>algorithms</b> that compute optimal solutions to these models, either analytically or numerically.</li>
+</ul>
+<p style="margin: 0 0 12px;">The first part is a modelling skill and it is where most of the value — and most of the mistakes — live. The second is largely solved: efficient implementations already exist in commercial solvers. This course is about the first, using the second.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Where this shows up in the rest of the course:</h3>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 34%;">Decision problem</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Typical objective, actions and limits</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 16%;">Weeks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Economic dispatch and optimal power flow</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Serve demand at least cost, choosing production of each unit, within capacity limits and network flow limits</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">2</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Unit commitment and battery scheduling</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Same, but decisions across time are coupled — start-ups, minimum up/down times, state of charge</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">3</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Prices and market design</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The value of a constraint — what one more MW or one more MWh of capacity is worth — read from the dual solution</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">4–7</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Decisions under uncertainty</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The same decisions, when wind, demand and prices are not known when the decision is taken</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">8–11</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">Every one of these is the same object with different content: an objective, some decision variables, some constraints. That is what makes the abstraction worth learning once.</p>
+</section>
+<section class="part" id="anatomy" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">2</span>Anatomy of an optimization model</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">An optimization model translates a decision-making problem mathematically, expressing it in a standard form built from three components.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 240px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #a9111e; display: block; margin-bottom: 6px;">Decision variables</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;"><em>x</em> = (<em>x</em><sub>1</sub>, …, <em>x</em><sub>N</sub>)<sup>T</sup> ∈ ℝ<sup>N</sup></h4>
+<p style="margin: 0; font-size: .92rem;">The quantities the decision-maker can choose. They are defined as unknowns, and their <em>optimal</em> values are determined by the optimization algorithm — not by you.</p>
+</div>
+<div style="flex: 1 1 240px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #2e4459; display: block; margin-bottom: 6px;">Objective function</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;"><em>f</em> : ℝ<sup>N</sup> → ℝ</h4>
+<p style="margin: 0; font-size: .92rem;">Evaluates the <em>quality</em> of any feasible solution — profit, cost, CO₂ emissions — which the algorithm then minimizes or maximizes, depending on the direction you choose.</p>
+</div>
+<div style="flex: 1 1 240px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Constraint functions</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;"><em>h<sub>j</sub></em>, <em>g<sub>i</sub></em> : ℝ<sup>N</sup> → ℝ</h4>
+<p style="margin: 0; font-size: .92rem;">Reflect the limitations or requirements — operational limits, physical laws, logical relationships — that any feasible solution must satisfy, written as equality or inequality conditions.</p>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The standard form</h3>
+<p style="margin: 0 0 12px;">Put together, every model in this course can be written as:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none; color: #2e4459;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05;"><span style="font-style: normal;">min</span><span style="font-size: .66em;">x ∈ ℝ<sup>N</sup></span></span></div>
+<div style="flex: 1; color: #2e4459;"><em>f</em>(<em>x</em>)</div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none; font-style: normal;">s.t.</div>
+<div style="flex: 1;"><em>h<sub>j</sub></em>(<em>x</em>) = 0,<span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;">∀</span><em>j</em> = 1, …, <em>m</em><sub>e</sub></div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none;"></div>
+<div style="flex: 1;"><em>g<sub>i</sub></em>(<em>x</em>) ≤ 0,<span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;">∀</span><em>i</em> = 1, …, <em>m</em><sub>i</sub></div>
+</div>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">with <em>m</em><sub>e</sub> equality constraints and <em>m</em><sub>i</sub> inequality constraints.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The feasible set</h3>
+<p style="margin: 0 0 12px;">The constraints define the <b>feasible set</b>: the collection of all solutions <em>x</em> that satisfy every equality and inequality at once. The objective function then ranks the points inside that set, and an <b>optimal solution</b> is a feasible point whose objective value is at least as good as that of every other feasible point. Two consequences worth keeping in mind from the first week:</p>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;">A model can be <b>infeasible</b> — the constraints contradict each other and the feasible set is empty. This is information about the problem, not a bug to be silenced.</li>
+<li style="margin-bottom: 4px;">A model can be <b>unbounded</b> — the objective improves forever inside the feasible set. In practice this almost always means a constraint is missing.</li>
+</ul>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Conventions used throughout the course</span>
+<ul style="padding-left: 1.25em; margin: 0;">
+<li style="margin-bottom: 4px;">Problems are written as <b>minimization</b>. Maximizing <em>f</em> is the same minimizing −<em>f</em>, and the optimal solution is the same.</li>
+<li style="margin-bottom: 4px;">Equalities are written as <em>h</em>(<em>x</em>) = 0 and inequalities as <em>g</em>(<em>x</em>) ≤ 0. Any "≥" or "≤ b" constraint can be rewritten in this form.</li>
+<li style="margin-bottom: 4px;">Write the model over <b>sets and indices</b>, never one line per unit or per hour. Define every symbol once, with its units and its domain.</li>
+</ul>
+</div>
+</section>
+<section class="part" id="solving" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">3</span>How an optimization model is solved</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">Optimization algorithms — solvers, or optimizers — find the best decision variables by exploring the feasible space, evaluating the objective function, and iteratively improving the solution. They are implemented efficiently in commercial software such as Gurobi and CPLEX, which is what you will call from your code from week 2 onwards.</p>
+<p style="margin: 0 0 12px;">Which algorithm applies depends on the <b>class</b> of the model you wrote — which is one reason the modelling choices matter well beyond aesthetics.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 26%;">Model class</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 28%;">Typical algorithm</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Idea in one line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Linear program (LP)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Simplex algorithm</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Move along the edges of the feasible polytope until reaching an optimal vertex</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Convex / non-convex non-linear program (NLP)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Gradient descent and Newton methods</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Use first or second derivatives to take curvature-aware steps towards a stationary point</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Convex / non-convex non-linear program (NLP)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Interior point methods</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Follow an interior path defined by barrier functions and solve the resulting Newton system</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Mixed-integer linear / non-linear program (MIP / MINLP)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Branch-and-bound, branch-and-cut</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Split into subproblems and prune those whose relaxation cannot contain the integer optimum</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">Note: How these algorithms function is out of the scope of this course. But if you are interested, the following extensions dig deeper into it: <a href="/d2l/common/dialogs/quickLink/quickLink.d2l?ou=325361&amp;type=content&amp;rcode=dtu-890348" target="_blank" rel="noopener">Overview of optimization algorithms</a></p>
+</section>
+<section class="part" id="scope" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">4</span>What this course does with all of that</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 300px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #a9111e; display: block; margin-bottom: 6px;">What we will not do</span>
+<ul style="padding-left: 1.25em; margin: 0; font-size: .92rem;">
+<li style="margin-bottom: 4px;">Study the mathematics behind optimization algorithms</li>
+<li style="margin-bottom: 4px;">Implement optimization algorithms from scratch</li>
+<li style="margin-bottom: 4px;">Go deep into the computational complexity of solving different optimization models</li>
+</ul>
+<p style="font-size: .88rem; color: #5b6069; margin: 10px 0 0;">These algorithms are already implemented efficiently in commercial solvers.</p>
+</div>
+<div style="flex: 1 1 300px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #2e4459; display: block; margin-bottom: 6px;">What we will do</span>
+<ul style="padding-left: 1.25em; margin: 0; font-size: .92rem;">
+<li style="margin-bottom: 4px;">Identify and formulate real-world decision-making problems in power systems as optimization models</li>
+<li style="margin-bottom: 4px;">Analyse the structure and properties of these models</li>
+<li style="margin-bottom: 4px;">Design validation scenarios and KPIs</li>
+<li style="margin-bottom: 4px;">Interpret results and communicate actionable insights</li>
+</ul>
+</div>
+</div>
+<p style="margin: 12px 0 12px;">The aim is twofold: to equip you with optimization tools <em>and</em> model-based reasoning skills for complex decision problems, and to build the domain knowledge needed to identify, formulate, validate, solve and analyse those problems in modern power systems.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A two-way transformation</h3>
+<p style="margin: 0 0 12px;">Creating value with optimization requires travelling in both directions: from messy real-world problems to structured mathematical representations, and back again — from abstract solutions to actionable real-world insights. A model that no one can act on has done only half the work.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The six steps you will practise</h3>
+<p style="margin: 0 0 12px;">Every activity, example and assignment in the course supports one or more of these steps. They form a loop, not a list: the insights from step 6 usually send you back to step 1 with a better question.</p>
+<ol style="list-style: decimal; padding-left: 1.7em; margin: 0 0 18px;">
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Identify the decision-making problem</h4>
+<p style="margin: 0; font-size: .95rem;">From unstructured narratives to decomposed and structured problem statements: who decides, what they want, what they control, what limits them.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Develop the optimization model</h4>
+<p style="margin: 0; font-size: .95rem;">The modelling choices that lead to an abstract representation of the real-world problem — and the assumptions they carry.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Validate the optimization model</h4>
+<p style="margin: 0; font-size: .95rem;">Insights and guarantees on the model's structure, its properties, and the characteristics of its optimal solutions.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Design and run experiments</h4>
+<p style="margin: 0; font-size: .95rem;">Plan the scenarios and KPIs to evaluate, driven by the type of insight you are after.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Analyse the results</h4>
+<p style="margin: 0; font-size: .95rem;">Look for patterns, trends and causal links between model inputs and outputs — why the results are what they are.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0; border-bottom: 1px solid #D9DAD5;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Communicate insights and create value</h4>
+<p style="margin: 0; font-size: .95rem;">Close the loop, from abstract model solutions to actionable insights for the real-world problem.</p>
+</li>
+</ol>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">This week covers steps 1 and 2 on a deliberately small example. Steps 3 to 6 arrive with duality, sensitivity analysis, experiments and storytelling later in the semester.</p>
+</section>
+<section class="part" id="lp" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">5</span>Linear programs</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">A <b>linear program</b> is the special case where the objective and all constraint functions are linear and the decision variables are continuous. It is the workhorse of power system decision-making — economic dispatch, DC optimal power flow and market clearing are all LPs — and it is where the course starts.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Standard formulation</h3>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05;"><span style="font-style: normal;">min</span><span style="font-size: .66em;">x ∈ ℝ<sup>N</sup></span></span></div>
+<div style="flex: 1; color: #2e4459;"><em>z</em> = <span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle; margin: 0 4px;"><span style="font-size: .58em; font-style: normal;">N</span><span style="font-size: 1.5em; font-style: normal; line-height: .9;">∑</span><span style="font-size: .58em;">i = 1</span></span> <em>c<sub>i</sub></em> <em>x<sub>i</sub></em></div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none; font-style: normal;">s.t.</div>
+<div style="flex: 1;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle; margin: 0 4px;"><span style="font-size: .58em; font-style: normal;">N</span><span style="font-size: 1.5em; font-style: normal; line-height: .9;">∑</span><span style="font-size: .58em;">i = 1</span></span> <em>A<sub>ji</sub></em> <em>x<sub>i</sub></em> ≥ <em>b<sub>j</sub></em>,<span style="display: inline-block; width: 18px;"></span><span style="font-style: normal;">∀</span><em>j</em> = 1, …, <em>M</em></div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none;"></div>
+<div style="flex: 1;"><em>x<sub>i</sub></em> ≥ 0,<span style="display: inline-block; width: 18px;"></span><span style="font-style: normal;">∀</span><em>i</em> = 1, …, <em>N</em></div>
+</div>
+</div>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; width: 20%;"><em>x<sub>i</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Decision variables, ∀<em>i</em> = 1, …, <em>N</em> — by convention non-negative. A free variable is modelled as <em>x<sub>i</sub></em> = <em>x<sub>i</sub></em><sup>+</sup> − <em>x<sub>i</sub></em><sup>−</sup> with <em>x<sub>i</sub></em><sup>+</sup> ≥ 0 and <em>x<sub>i</sub></em><sup>−</sup> ≥ 0.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>c<sub>i</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Cost parameters, ∀<em>i</em> = 1, …, <em>N</em>. The objective is minimized by convention.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>A<sub>ji</sub></em>, <em>b<sub>j</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Left-hand-side and right-hand-side constraint parameters, ∀<em>i</em> = 1, …, <em>N</em> and ∀<em>j</em> = 1, …, <em>M</em>. The linear constraints describe the feasible space.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Matrix formulation</h3>
+<p style="margin: 0 0 12px;">Collecting variables, costs and constraints into vectors and a matrix gives the compact form used in most textbooks and in solver documentation:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05;"><span style="font-style: normal;">min</span><span style="font-size: .66em;">x ∈ ℝ<sup>N</sup></span></span></div>
+<div style="flex: 1; color: #2e4459;"><em>z</em> = <em>c</em><sup>T</sup><b><em>x</em></b></div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none; font-style: normal;">s.t.</div>
+<div style="flex: 1;"><em>A</em><b><em>x</em></b> ≥ <em>b</em></div>
+</div>
+<div style="display: flex; align-items: center; padding: 6px 0;">
+<div style="width: 84px; margin-right: 16px; text-align: right; flex: none;"></div>
+<div style="flex: 1;"><b><em>x</em></b> ≥ 0</div>
+</div>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">with <em>x</em>, <em>c</em> ∈ ℝ<sup>N</sup> the vectors of decision variables and costs, <em>b</em> ∈ ℝ<sup>M</sup> the right-hand-side vector, and <em>A</em> ∈ ℝ<sup>M×N</sup> the left-hand-side constraint matrix — one row per constraint, one column per decision variable.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Why the LP case deserves the attention</span>
+<p style="margin: 0;">LPs are solved reliably at very large scale, an optimal solution can always be found at a <b>vertex</b> of the feasible polytope, and every constraint carries a <b>dual variable</b> — the value of relaxing it by one unit. In a dispatch model that dual is the electricity price. The whole of weeks 4 to 6 rests on this.</p>
+</div>
+</section>
+<section class="part" id="example" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">6</span>Worked example — the night bike lane cleaning problem</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The example deliberately contains no electricity at all. Its structure, however, is exactly that of the economic dispatch problem you will build next week — which is the point.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The problem statement, as given</h3>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;">
+<p style="margin: 0 0 8px;">The municipality must clean snow from its bike lanes. The lanes are spread over several districts, and the total length must be cleaned before 6 am.</p>
+<p style="margin: 0 0 8px;">The municipality does not want to pay for cleaning more than what is needed.</p>
+<p style="margin: 0 0 8px;">It owns no machines, so the work is bought from a number of contractors.</p>
+<p style="margin: 0;">Each contractor charges a fixed price per kilometre and clears at its own speed, so none of them can clean more than a certain length — depending on its speed and the remaining hours before the deadline.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 1 — Identify the decision-making problem</h3>
+<p style="margin: 0 0 12px;">Step 1 requires a thorough understanding of the decision-makers, how they behave and how they interact. Here there is a single decision-maker — the municipality. The contractors are described only by a price and a speed, so they are taken as given: this first model does not represent them as strategic players. Three questions turn the narrative into a structured problem statement.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 30%;">Question</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 42%;">Answer, in the words of the narrative</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Becomes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">What objective does the decision-maker want to achieve?</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Pay as little as possible, and not for more cleaning than is needed.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Minimize the total amount paid to the contractors — the <b>objective function</b>.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">What actions can it take?</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">It owns no machines, so its only lever is how much work it buys from each contractor.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The number of kilometres allocated to each contractor — the <b>decision variables</b>.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Are there restrictions on the feasible actions?</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The whole network must be cleared before 6 am, and no contractor can clear more than its speed allows in the hours that remain.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">One requirement on the total work done and one capacity limit per contractor — the <b>constraints</b>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">The structured problem statement, in one sentence: <em>choose how many kilometres of bike lane to buy from each contractor so that the full length of the network is cleared before the deadline, at the lowest possible total cost.</em></p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 2 — Develop the optimization model</h3>
+<p style="margin: 0 0 12px;">Step 2 turns that sentence into mathematics. It starts, always, with notation: every set, parameter and variable defined once, with its units.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 14%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 14%;">Unit</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 18%;">Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>N</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Number of available contractors</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; color: #5b6069;">—</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Set size</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>D</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Number of districts to be cleared</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; color: #5b6069;">—</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Set size</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>H</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Hours available before the 6 am deadline</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">h</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Parameter</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>c<sub>i</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Price of contractor <em>i</em> = 1, …, <em>N</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">DKK/km</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Parameter</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>v<sub>i</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Clearing speed of contractor <em>i</em> = 1, …, <em>N</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">km/h</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Parameter</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>L<sub>j</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Length of bike lane in district <em>j</em> = 1, …, <em>D</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">km</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Parameter</td>
+</tr>
+<tr style="background: #FBEEEE;">
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>x<sub>i</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Kilometres cleared by contractor <em>i</em> = 1, …, <em>N</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">km</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variable</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #a9111e; display: block; margin-bottom: 4px;">Remember this one</span>
+<p style="margin: 0;">The parameter <em>H</em> converts a clearing speed (in km/h) into a maximum workload (in km). It plays exactly the same role as a time step Δ<em>t</em> does when converting a power (in MW) into an energy (in MWh) in the power system models you will meet later in the course.</p>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">The modelling choices behind the formulation</h4>
+<p style="margin: 0 0 12px;">Before writing a single equation, notice what has been decided. Each of these is a choice, defensible here and worth revisiting when the problem changes:</p>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;"><b>Work is continuous and divisible.</b> Kilometres can be split arbitrarily between contractors, so the variables are continuous and the model stays an LP. Whole-street assignment would need integer variables.</li>
+<li style="margin-bottom: 4px;"><b>Contractors work in parallel over the same <em>H</em> hours</b>, with no travel or set-up time between districts.</li>
+<li style="margin-bottom: 4px;"><b>Price is linear in distance</b>, with no fixed call-out fee — hence a linear objective. A call-out fee would introduce a binary variable per contractor.</li>
+<li style="margin-bottom: 4px;"><b>Districts enter only through the total length.</b> The model tracks how much is cleared, not where; the spatial detail of <em>L<sub>j</sub></em> is aggregated away. This is the strongest simplification in the model, and the natural first thing to relax.</li>
+<li style="margin-bottom: 4px;"><b>Exactly the required length is cleared</b>, which is how "does not want to pay for cleaning more than what is needed" is expressed — an equality rather than a "≥".</li>
+<li style="margin-bottom: 4px;"><b>All prices, speeds and lengths are known</b> when the decision is taken. The problem is deterministic; uncertainty arrives in week 8.</li>
+</ul>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">The resulting linear program</h4>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 22px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="width: 74px; margin-right: 16px; text-align: right; flex: none;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05;"><span style="font-style: normal;">min</span><span style="font-size: .68em;"><em>x<sub>i</sub></em></span></span></div>
+<div style="flex: 1;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle; margin: 0 6px 0 0;"><span style="font-size: .58em; font-style: normal;">N</span><span style="font-size: 1.5em; font-style: normal; line-height: .9;">∑</span><span style="font-size: .58em;">i = 1</span></span> <em>c<sub>i</sub></em> <em>x<sub>i</sub></em></div>
+<div style="width: 34px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(1)</div>
+</div>
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="width: 74px; margin-right: 16px; text-align: right; flex: none; font-style: normal;">s.t.</div>
+<div style="flex: 1;">0 ≤ <em>x<sub>i</sub></em> ≤ <em>v<sub>i</sub></em> <em>H</em><span style="display: inline-block; width: 24px;"></span><span style="font-style: normal;">∀</span><em>i</em> <span style="font-style: normal;">∈</span> {1, …, <em>N</em>}</div>
+<div style="width: 34px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(2)</div>
+</div>
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="width: 74px; margin-right: 16px; text-align: right; flex: none;"></div>
+<div style="flex: 1;"><span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle; margin: 0 6px 0 0;"><span style="font-size: .58em; font-style: normal;">N</span><span style="font-size: 1.5em; font-style: normal; line-height: .9;">∑</span><span style="font-size: .58em;">i = 1</span></span> <em>x<sub>i</sub></em> <span style="font-style: normal;">=</span> <span style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1; vertical-align: middle; margin: 0 6px;"><span style="font-size: .58em; font-style: normal;">D</span><span style="font-size: 1.5em; font-style: normal; line-height: .9;">∑</span><span style="font-size: .58em;">j = 1</span></span> <em>L<sub>j</sub></em></div>
+<div style="width: 34px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(3)</div>
+</div>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Reading the model back in words</h4>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; width: 12%; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">(1)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Objective.</b> The total bill is the sum, over contractors, of a price per kilometre times the kilometres bought. It is linear in <em>x</em>, and it is the only place where <em>c<sub>i</sub></em> appears.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">(2)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Capacity limits.</b> A contractor cannot clear a negative length, and cannot clear more than its speed allows in the hours remaining: <em>v<sub>i</sub></em> <em>H</em> is a maximum workload in km. One such pair of bounds exists per contractor.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem;">(3)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Balance.</b> What is bought equals what is needed: the kilometres cleared across all contractors equal the total length of bike lane across all districts. This single equality is what couples the contractors to each other.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">The model is a linear program with <em>N</em> continuous variables, one equality constraint and <em>N</em> pairs of bounds. Mapping it onto the matrix form of section 5: <em>c</em> is the vector of prices, <em>x</em> the vector of workloads, and the balance constraint is a single row of <em>A</em> filled with ones.</p>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">What the feasible set and the optimum look like</h4>
+<p style="margin: 0 0 12px;">With two contractors the whole model fits in a plane, which is worth drawing once. The bounds (2) give a rectangle; the balance constraint (3) cuts a straight segment across it; the cost contours are parallel lines whose slope is set by the price ratio. The optimum sits at an endpoint of the segment — a vertex — unless the two prices are exactly equal.</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 16px 18px; margin: 12px 0 8px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" role="img" aria-label="Feasible set for two contractors: a rectangle of capacity bounds cut by the balance line, with the optimum at the endpoint where the cheaper contractor is at capacity" style="width: 100%; height: auto; font-family: 'IBM Plex Sans', system-ui, sans-serif;">
+<rect x="60" y="70" width="320" height="180" fill="#EDF1F4" stroke="#9AA3AE" stroke-width="1" stroke-dasharray="4 3"></rect>
+<line x1="160" y1="91" x2="380" y2="190" stroke="#2E4459" stroke-width="1" stroke-dasharray="5 4"></line>
+<line x1="220" y1="70" x2="420" y2="160" stroke="#2E4459" stroke-width="1" stroke-dasharray="5 4"></line>
+<line x1="220" y1="70" x2="380" y2="190" stroke="#A9111E" stroke-width="3"></line>
+<circle cx="380" cy="190" r="5.5" fill="#A9111E"></circle>
+<circle cx="220" cy="70" r="4" fill="#FAFAF7" stroke="#A9111E" stroke-width="2"></circle>
+<line x1="60" y1="250" x2="440" y2="250" stroke="#1B1F26" stroke-width="1.2"></line>
+<line x1="60" y1="250" x2="60" y2="40" stroke="#1B1F26" stroke-width="1.2"></line>
+<line x1="380" y1="250" x2="380" y2="245" stroke="#1B1F26" stroke-width="1.2"></line>
+<line x1="60" y1="70" x2="65" y2="70" stroke="#1B1F26" stroke-width="1.2"></line>
+<text x="376" y="268" font-size="11" fill="#5b6069">v₁H</text>
+<text x="30" y="74" font-size="11" fill="#5b6069">v₂H</text>
+<text x="430" y="268" font-size="12" fill="#1b1f26" font-style="italic">x₁</text>
+<text x="42" y="38" font-size="12" fill="#1b1f26" font-style="italic">x₂</text>
+<text x="394" y="187" font-size="11" fill="#a9111e" font-weight="600">optimum</text>
+<text x="394" y="201" font-size="10" fill="#5b6069">contractor 1 at capacity</text>
+<text x="150" y="60" font-size="11" fill="#a9111e">x₁ + x₂ = Σ L</text>
+<text x="240" y="232" font-size="10.5" fill="#2e4459">cost contours c₁x₁ + c₂x₂</text>
+<text x="98" y="150" font-size="10.5" fill="#5b6069">capacity box</text>
+</svg></div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">Two contractors, contractor 1 cheaper than contractor 2. The dashed rectangle is the set of workloads allowed by (2); the solid red segment is the feasible set once (3) is imposed; the optimum is the endpoint where the cheaper contractor is loaded to capacity.</p>
+<p style="margin: 0 0 12px;">The same reasoning generalises to any <em>N</em>: rank the contractors from cheapest to most expensive, load each to its maximum <em>v<sub>i</sub></em> <em>H</em> until the required length is met, and leave the rest idle. Exactly one contractor is normally partially loaded, and its price is what one extra kilometre of bike lane would cost the municipality. That ordering is a <b>merit order</b>, that last contractor is the <b>marginal</b> one, and its price is the dual variable of constraint (3) — three concepts you will meet again in weeks 2 and 5, with generators instead of snow ploughs.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">When is the model infeasible?</span>
+<p style="margin: 0;">If the total capacity available before the deadline is smaller than the length to be cleared — that is, if Σ<sub>i</sub> <em>v<sub>i</sub></em> <em>H</em> &lt; Σ<sub>j</sub> <em>L<sub>j</sub></em> — no allocation satisfies (2) and (3) at once and the solver returns "infeasible". That is a genuine answer to a genuine question, and the modelling response is to change the problem: hire more contractors, move the deadline, or allow part of the network to stay uncleaned at a penalty. The last option is the same device as load shedding in a dispatch model.</p>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">From bike lanes to power systems</h4>
+<p style="margin: 0 0 12px;">Rename the symbols and the very same LP becomes next week's single-hour economic dispatch:</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 50%;">Night bike lane cleaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Economic dispatch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Contractor <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Generating unit <em>i</em></td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Kilometres bought <em>x<sub>i</sub></em> (km)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Energy produced <em>p<sub>i</sub></em> (MWh)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Price <em>c<sub>i</sub></em> (DKK/km)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Marginal cost <em>c<sub>i</sub></em> (€/MWh)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum workload <em>v<sub>i</sub></em> <em>H</em> (km)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum energy <em>P<sub>i</sub></em><sup>max</sup> Δ<em>t</em> (MWh)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Total length to clear Σ<sub>j</sub> <em>L<sub>j</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Total demand to serve</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Balance constraint (3)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Power balance — and its dual, the electricity price</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">And then steps 3 to 6</h4>
+<p style="margin: 0 0 12px;">The model is written, which is where week 1 stops — but not where the work stops. <b>Validate</b> it: check that the bounds hold, that the balance is met to solver tolerance, and that limiting cases behave (one contractor with unlimited capacity should take everything; equal prices should make the allocation indifferent). <b>Experiment</b>: what happens as the deadline moves earlier and <em>H</em> shrinks, or when a cheap but slow contractor is added? <b>Analyse</b>: which constraints bind, and which contractor sets the marginal price? <b>Communicate</b>: what should the municipality actually do differently tomorrow night? Those four steps are the substance of the rest of the course, and of both assignments.</p>
+</section>
+<section class="part" id="takeaways" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">7</span>Takeaways</h2>
+<ol style="list-style: decimal; padding-left: 1.7em; margin: 0 0 18px;">
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">An optimization model has exactly three components — decision variables, an objective function, and constraints. Naming them correctly is most of the modelling work.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">The constraints define the feasible set; the objective ranks the points inside it. Infeasibility and unboundedness are results, and both usually say something true about the problem statement.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">The class of the model — LP, NLP, MIP — follows from your modelling choices and determines which algorithm the solver uses. You will not implement those algorithms; you will be responsible for the model they are given.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">A parameter that converts a rate into a quantity — <em>H</em> here, Δ<em>t</em> in every power system model to come — is where units get lost. Check them every time.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0; border-bottom: 1px solid #D9DAD5;">
+<p style="margin: 0; font-size: .95rem;">A bike lane cleaning problem and an economic dispatch are the same linear program with different nouns. Recognising structure across problems is the transferable skill this course is built on.</p>
+</li>
+</ol>
+</section>
+<section class="part" id="appendix-units" style="padding: 44px 0 8px;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">A</span>Appendix — Units in the DC power flow: the per-unit system and the voltage angles</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The DC power-flow equation of Week 2 can be written in physical units, in per unit, or — as in the lecture example and Exercise 2 — with powers in kilowatts and reactances in per unit. The equation looks the same in all three; the angle variable does not mean the same thing. This appendix states the units of every quantity in each convention and shows how to convert the voltage angles returned by a DC-OPF model to radians, which is what the small-angle assumption (assumption #4 of the linearisation) is about.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.1 Why a per-unit system?</h3>
+<p style="margin: 0 0 12px;">A power system spans several voltage levels connected by transformers, and its physical quantities range over many orders of magnitude — volts to hundreds of kilovolts, watts to gigawatts. Expressing every quantity <em>relative to a base</em>, a fixed reference value of the same kind, removes the transformer ratios from the equations, brings all voltages close to one, and keeps all numbers within a narrow range. Two bases define a per-unit (p.u.) system:</p>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;">a <b>base power</b> <em>S<sub>b</sub></em>, common to the whole system — 100&nbsp;MVA is the usual choice in transmission studies; for the small example of the Week 2 lecture and of Exercise 2 we use <em>S<sub>b</sub></em> = 100&nbsp;kW;</li>
+<li style="margin-bottom: 4px;">a <b>base voltage</b> <em>V<sub>b</sub></em> for each voltage level, the levels being linked by the transformer ratios.</li>
+</ul>
+<p style="margin: 0 0 12px;">The other bases follow from these two: the base impedance is <em>Z<sub>b</sub></em> = <em>V<sub>b</sub></em><sup>2</sup>/<em>S<sub>b</sub></em> and the base current <em>I<sub>b</sub></em> = <em>S<sub>b</sub></em>/(√3&nbsp;<em>V<sub>b</sub></em>) in a three-phase system. A quantity in per unit is its physical value divided by the corresponding base. Angles are not divided by anything: they are dimensionless already and stay in radians.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 22%;">Quantity</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 26%;">Physical value (unit)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 22%;">Base</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Per-unit value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">active power</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>P</em> (W)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>S<sub>b</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>p</em> = <em>P</em>/<em>S<sub>b</sub></em></td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">voltage magnitude</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>V</em> (V)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>V<sub>b</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>v</em> = <em>V</em>/<em>V<sub>b</sub></em></td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">line reactance</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>X</em> (Ω)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>Z<sub>b</sub></em> = <em>V<sub>b</sub></em><sup>2</sup>/<em>S<sub>b</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>x</em> = <em>X</em>/<em>Z<sub>b</sub></em> = <em>X</em>&nbsp;<em>S<sub>b</sub></em>/<em>V<sub>b</sub></em><sup>2</sup></td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">susceptance</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>B</em> = 1/<em>X</em> (S)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">1/<em>Z<sub>b</sub></em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>b</em> = 1/<em>x</em></td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">voltage angle</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>δ</em> (rad)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><span style="color: #5b6069;">—</span></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><em>δ</em> (rad)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.2 The DC flow equation in physical units</h3>
+<p style="margin: 0 0 12px;">For a lossless line between nodes <em>i</em> and <em>j</em>, the active power leaving <em>i</em> towards <em>j</em> is</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="flex: 1;"><em>P<sub>ij</sub></em> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;"><em>V<sub>i</sub></em> <em>V<sub>j</sub></em></span><span style="padding: 0 4px;"><em>X<sub>ij</sub></em></span></span> <span style="font-style: normal;">sin</span>(<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>),<span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;">[W] = [V]&nbsp;[V] / [Ω]</span></div>
+<div style="width: 44px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(A1)</div>
+</div>
+</div>
+<p style="margin: 0 0 12px;">written with three-phase power and line-to-line voltages, or equivalently per phase with phase voltages. The dimension check holds because V<sup>2</sup>/Ω = W; the sine is dimensionless. Note that the small-angle step of the DC approximation, sin(<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>) ≈ <em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>, is only valid for angles in radians — in degrees it would be off by a factor π/180. With a flat voltage profile (<em>V<sub>i</sub></em> = <em>V<sub>j</sub></em> = <em>V</em>, assumption #2) and small angle differences (assumption #4),</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="flex: 1;"><em>P<sub>ij</sub></em> ≈ <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;"><em>V</em><sup>2</sup></span><span style="padding: 0 4px;"><em>X<sub>ij</sub></em></span></span> (<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>),<span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;"><em>P</em> in W, <em>V</em> in V, <em>X</em> in Ω, <em>δ</em> in rad</span></div>
+<div style="width: 44px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(A2)</div>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.3 The same equation in per unit</h3>
+<p style="margin: 0 0 12px;">Dividing (A1) by <em>S<sub>b</sub></em> and substituting <em>V<sub>i</sub></em> = <em>v<sub>i</sub></em>&nbsp;<em>V<sub>b</sub></em> and <em>X<sub>ij</sub></em> = <em>x<sub>ij</sub></em>&nbsp;<em>Z<sub>b</sub></em> = <em>x<sub>ij</sub></em>&nbsp;<em>V<sub>b</sub></em><sup>2</sup>/<em>S<sub>b</sub></em>, the bases cancel:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="flex: 1;"><em>p<sub>ij</sub></em> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;"><em>v<sub>i</sub></em> <em>v<sub>j</sub></em></span><span style="padding: 0 4px;"><em>x<sub>ij</sub></em></span></span> <span style="font-style: normal;">sin</span>(<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>),<span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;">all quantities in p.u., <em>δ</em> in rad</span></div>
+<div style="width: 44px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;"></div>
+</div>
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="flex: 1;"><span style="font-style: normal;">with <em>v</em><sub>i</sub> = <em>v</em><sub>j</sub> = 1 and small angles:</span><span style="display: inline-block; width: 22px;"></span><em>p<sub>ij</sub></em> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;">1</span><span style="padding: 0 4px;"><em>x<sub>ij</sub></em></span></span> (<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>) = <em>b<sub>ij</sub></em> (<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>)</div>
+<div style="width: 44px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(A3)</div>
+</div>
+</div>
+<p style="margin: 0 0 12px;">This is the form used in the Week 2 lecture and notes: every symbol is dimensionless except <em>δ</em>, which is in radians. A whole DC-OPF can be written in per unit by dividing loads, capacities and flow limits by <em>S<sub>b</sub></em>; the objective then needs the cost coefficients in DKK per p.u.-hour, <em>c<sub>g</sub></em><sup>G</sup>&nbsp;<em>S<sub>b</sub></em>, if it is to remain in DKK.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.4 Mixed units — the lecture example and Exercise 2</h3>
+<p style="margin: 0 0 12px;">The lecture example and Exercise 2 keep the powers in their physical unit (kW) but give the reactances in per unit. The model then solves</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 20px 18px; margin: 12px 0 10px; font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; color: #1b1f26;">
+<div style="display: flex; align-items: center; padding: 8px 0;">
+<div style="flex: 1;"><em>P<sub>ij</sub></em>&nbsp;<span style="font-style: normal;">[kW]</span> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;">1</span><span style="padding: 0 4px;"><em>x<sub>ij</sub></em></span></span> (<em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em> − <em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>j</sub></em>),</div>
+<div style="width: 44px; margin-left: 16px; text-align: right; flex: none; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-style: normal; font-size: .8rem; color: #5b6069;">(A4)</div>
+</div>
+</div>
+<p style="margin: 0 0 12px;">where <em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em> is whatever number the solver returns for the angle variable. Multiplying (A3) by <em>S<sub>b</sub></em> gives <em>P<sub>ij</sub></em> = (1/<em>x<sub>ij</sub></em>)&nbsp;(<em>S<sub>b</sub></em><em>δ<sub>i</sub></em> − <em>S<sub>b</sub></em><em>δ<sub>j</sub></em>); comparing with (A4) identifies the model's angle.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; color: #a9111e;">Key equation</span>
+<div style="font-family: 'IBM Plex Serif', Charter, Georgia, serif; font-style: italic; font-size: 1.06rem; margin: 6px 0 10px;"><em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em> = <em>S<sub>b</sub></em>&nbsp;<em>δ<sub>i</sub></em><span style="display: inline-block; width: 22px;"></span><span style="font-style: normal;">⟺</span><span style="display: inline-block; width: 22px;"></span><em>δ<sub>i</sub></em>&nbsp;<span style="font-style: normal;">[rad]</span> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;"><em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em></span><span style="padding: 0 4px;"><em>S<sub>b</sub></em></span></span>,<span style="display: inline-block; width: 22px;"></span><em>δ<sub>i</sub></em>&nbsp;<span style="font-style: normal;">[°]</span> = <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;">180</span><span style="padding: 0 4px;">π</span></span> <span style="display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15; margin: 0 4px;"><span style="padding: 0 4px; border-bottom: 1px solid #1b1f26;"><em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em></span><span style="padding: 0 4px;"><em>S<sub>b</sub></em></span></span></div>
+<p style="margin: 0;">with <em>S<sub>b</sub></em> expressed in the unit of the flows (here kW). The angle variable of a model with powers in kW and reactances in p.u. is a voltage angle in radians multiplied by the base power; it carries the unit of the flows and cannot be interpreted until <em>S<sub>b</sub></em> is known.</p>
+</div>
+<p style="margin: 0 0 12px;">Three consequences follow.</p>
+<ol style="list-style: decimal; padding-left: 1.7em; margin: 0 0 18px;">
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Nothing else changes</h4>
+<p style="margin: 0; font-size: .95rem;">The substitution <span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span> = <em>S<sub>b</sub></em>&nbsp;<em>δ</em> is a change of variable: the balance equations, the flow limits and the reference condition <em>δ<sub>ref</sub></em> = 0 are all linear and homogeneous in <em>δ</em>, so the set of feasible dispatches, the optimal dispatch, the flows and the cost are identical for any <em>S<sub>b</sub></em> &gt; 0. This is why the base can be left unstated without altering a single result — except the angles.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Assumption #4 can only be checked after converting</h4>
+<p style="margin: 0; font-size: .95rem;">Whether the angle differences are "small" depends on <em>S<sub>b</sub></em>: the same model with reactances given on a 1&nbsp;MW base returns angles ten times smaller than on a 100&nbsp;kW base. The base therefore belongs with the data.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0; border-bottom: 1px solid #D9DAD5;">
+<h4 style="margin: 0 0 4px; font-size: .95rem; font-weight: 600;">Reactances in ohms shift the scaling to the voltage</h4>
+<p style="margin: 0; font-size: .95rem;">Comparing (A2) with a model in W and Ω — the other option mentioned on the DC-OPF slide — gives <em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em> = <em>V</em><sup>2</sup>&nbsp;<em>δ<sub>i</sub></em>, so the conversion needs the voltage magnitude instead of the base power (<em>δ<sub>i</sub></em> = 10<sup>3</sup>&nbsp;<em><span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span><sub>i</sub></em>/<em>V</em><sup>2</sup> if the flows are in kW and <em>V</em> in volts).</p>
+</li>
+</ol>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.5 Worked example: the 3-bus system of the Week 2 lecture</h3>
+<p style="margin: 0 0 12px;">Data of Exercise 2: <em>x<sub>12</sub></em> = <em>x<sub>13</sub></em> = 0.1&nbsp;p.u., <em>x<sub>23</sub></em> = 0.5&nbsp;p.u. on <em>S<sub>b</sub></em> = 100&nbsp;kW; line limits 75, 150 and 150&nbsp;kW; load 200&nbsp;kW at n3. The base-case DC-OPF gives the dispatch (75, 120, 5)&nbsp;kW, the flows <em>p<sub>21</sub></em> = 75, <em>p<sub>13</sub></em> = 150, <em>p<sub>23</sub></em> = 45&nbsp;kW, and the angles <span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span> = (0, 7.5, −15) in the model's unit. Converting with <em>S<sub>b</sub></em> = 100&nbsp;kW:</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 28%;">Node</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 24%;">Model angle (kW)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 24%;">Angle (rad)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Angle (°)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n1 (reference)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n2</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">7.5</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.075</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">4.3</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n3</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−15</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−0.150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−8.6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 28%;">Line</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Angle difference (rad)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 16%;">(°)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Sine of the difference</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n1–n2</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−0.075</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−4.3</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">−0.0749</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.1 %</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n1–n3</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">8.6</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.1494</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.4 %</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">n2–n3</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.225</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">12.9</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.2231</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; text-align: right;">0.8 %</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">The largest angle difference, 0.225&nbsp;rad on the high-reactance line n2–n3, is well below the π/6 ≈ 0.52&nbsp;rad (30°) threshold of the lecture, and replacing the sine by the angle changes the flow by at most 0.8&nbsp;%: assumption #4 holds for this operating point. As a check of the derivation, the line flows are recovered from the converted angles in per unit: <em>p<sub>13</sub></em> = (<em>δ<sub>1</sub></em> − <em>δ<sub>3</sub></em>)/<em>x<sub>13</sub></em> = 0.150/0.1 = 1.5&nbsp;p.u. = 150&nbsp;kW.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 4px; color: #5b6069;">The same example entirely in per unit</span>
+<p style="margin: 0;">With <em>S<sub>b</sub></em> = 100&nbsp;kW: load <em>L<sub>3</sub></em> = 2.0; generator capacities 1.5; line limits 0.75, 1.5, 1.5; reactances unchanged; cost coefficients <em>c<sub>g</sub></em><sup>G</sup>&nbsp;<em>S<sub>b</sub></em> = 7000, 1500, 15000&nbsp;DKK per p.u.-hour. The optimal dispatch is (0.75, 1.2, 0.05)&nbsp;p.u., the angles are (0, 0.075, −0.15)&nbsp;rad directly, and the cost is again 7800&nbsp;DKK.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">A.6 Practical rules</h3>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;"><b>State the base with the data.</b> A reactance "in p.u." is meaningless without <em>S<sub>b</sub></em> (and <em>V<sub>b</sub></em>, if ohmic values are ever needed). In code, make <em>S<sub>b</sub></em> an attribute of the input data, next to the reactances it refers to.</li>
+<li style="margin-bottom: 4px;"><b>One convention per model.</b> Either everything in per unit (angles in radians, costs in DKK per p.u.-hour), or physical powers with per-unit reactances and a conversion <em>δ</em> = <span style="display: inline-block; position: relative;">δ<span style="position: absolute; left: .1em; top: -.66em; font-size: .8em; font-style: normal; line-height: 1;">~</span></span>/<em>S<sub>b</sub></em> when the angles are reported. Never mix the two within one model, and never compare angles across models built on different bases or with reactances in different units.</li>
+<li style="margin-bottom: 4px;"><b>Two sanity checks.</b> Dimensions: the right-hand side of the flow equation must have the unit of the flow. Small angles: after conversion, max&nbsp;|<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>| should be well below π/6, and sin(<em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>) close to <em>δ<sub>i</sub></em> − <em>δ<sub>j</sub></em>; if not, the DC approximation is being used outside its domain of validity.</li>
+</ul>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">This is the same device as the parameter <em>H</em> of the bike-lane example and the time step Δ<em>t</em> of the dispatch models (takeaway 4): a factor that converts one kind of quantity into another, and the place where units are most easily lost.</p>
+</section>
+</div>
+</main><footer style="border-top: 1px solid #D9DAD5; padding: 20px 0 40px; font-size: .85rem; color: #5b6069;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">46750 Optimization in Modern Power Systems · Week 1 lecture notes, Autumn 2026 · DTU Wind, Energy Markets &amp; Analytics section. These notes summarise the live session; the slides and the material on DTU Learn take precedence.</div>
+</footer></div></body></html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>46750 — Week 2 lecture notes: System-level operational problems, from economic dispatch to optimal power flow</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']],
+         processEscapes: true },
+  options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async=""></script>
+</head><body style="margin:0;background:#FAFAF7"><div class="page" style="background: #FAFAF7; color: #1b1f26; font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0;"><header style="padding: 48px 0 28px;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;"><b style="color: #a9111e; font-weight: 500;">DTU</b> · Course 46750 · Week 2 · Lecture notes</div>
+<h1 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: clamp(2rem,4.2vw,3.1rem); line-height: 1.12; margin: .35em 0 .3em; letter-spacing: -.01em;">System-Level Operational Problems:<br>From Economic Dispatch to Optimal Power Flow<br><span style="font-size: .55em; color: #5b6069; font-weight: 400;">The three short-term operational problems and how they divide the work; the economic dispatch and the two assumptions it rests on; what available transfer capacities do and do not fix; the AC power flow equations and why AC-OPF is hard; and the four assumptions that turn them into the DC-OPF.</span></h1>
+<div style="margin-top: 18px; color: #5b6069;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">LEARNING OBJECTIVES</span></div>
+<div style="margin-top: 18px; color: #5b6069;">
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0px 0px 22px;">
+<tbody>
+<tr>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 20.00%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">WLO 2.5</span> <span style="display: block; color: #a9111e; font-weight: bold;">Describe</span> the short-term operational problems — ED, UC and OPF — and compare their respective roles in power system operations</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 20.00%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">WLO 2.6</span> <span style="display: block; color: #a9111e; font-weight: bold;">Formulate</span> the ED problem, state explicitly the assumptions it relies on, and discuss the feasibility of its solutions</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 20.00%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">WLO 2.7</span> <span style="display: block; color: #a9111e; font-weight: bold;">Extend</span> the ED to account for available transfer capacities, and discuss which physical infeasibility this removes and which it still permits</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 20.00%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">WLO 2.8</span> <span style="display: block; color: #a9111e; font-weight: bold;">Formulate</span> the AC power flow equations and the AC-OPF problem, and explain the challenges of solving it at realistic scale</td>
+<td style="padding: 10px 14px; border-bottom: 1px solid #D9DAD5; width: 20.00%; vertical-align: top;"><span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">WLO 2.9</span> <span style="display: block; color: #a9111e; font-weight: bold;">Formulate</span> the DC-OPF, justify each of the four assumptions the linearisation requires, and discuss the feasibility of its solutions</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</header><nav class="bus" aria-label="Sections" style="position: sticky; top: 0; z-index: 5; background: #FAFAF7; border-top: 5px solid #A9111E; border-bottom: 1px solid #D9DAD5;">
+<ol style="list-style: none; margin: 0 auto; padding: 0 24px; max-width: 920px; display: flex; flex-wrap: nowrap; gap: 0 20px; overflow-x: auto;">
+<li><a href="#scope" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">1</span>Where these sit</a></li>
+<li><a href="#three" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">2</span>Three questions</a></li>
+<li><a href="#day" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">3</span>The operating day</a></li>
+<li><a href="#ed" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">4</span>Economic dispatch</a></li>
+<li><a href="#atc" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">5</span>ED with ATC</a></li>
+<li><a href="#acopf" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">6</span>AC-OPF</a></li>
+<li><a href="#dcopf" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">7</span>DC-OPF</a></li>
+<li><a href="#appendix" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">8</span>Appendix: B matrix</a></li>
+<li><a href="#takeaways" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">9</span>Takeaways</a></li>
+<li><a href="#refs" style="display: block; position: relative; padding: 16px 2px 10px; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; letter-spacing: .02em; text-decoration: none; color: #1b1f26; white-space: nowrap;"><span style="color: #a9111e; margin-right: 6px;">10</span>References</a></li>
+</ol>
+</nav><main id="main" style="padding-bottom: 48px;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">
+<section class="part" id="scope" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">1</span>Where these decisions sit</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">Every decision problem in this course can be placed on two axes: the <b>time horizon</b> over which the decision binds, and the <b>scope</b> of the decision-maker taking it. Those two axes cut the field into four families. Today's problems all sit in one of them — short-term, system-level decisions taken by a social-welfare-maximising central agent, acting on behalf of everyone connected to the system.</p>
+<figure style="margin: 18px 0 20px; padding: 0;">
+<figcaption style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; letter-spacing: 0; text-transform: none; color: #5b6069; margin-top: 8px; line-height: 1.5;"><img src="4_families.png" alt="Illustration of 4 families of Decision-making Problems in Power Systems" title="Illustration of 4 families of Decision-making Problems in Power Systems" width="671" height="377" style="display: block; margin-left: auto; margin-right: auto;"><br>The two axes and the four families of decision problems. Economic dispatch, unit commitment and optimal power flow sit in the short-term, system-level cell.</figcaption>
+</figure>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The decision-maker: A central operator</h3>
+<p style="margin: 0 0 12px;">Throughout this lecture the decision-maker is a <b>central operator</b>: any decision-maker who (a) coordinates the resources across a system, (b) is responsible for the safe operation of the system it covers, and (c) acts in the interest of everyone connected to the system — maximising social welfare rather than its own profit.</p>
+<p style="margin: 0 0 12px;">This is deliberately broader than "system operator". The scope changes enormously from one such agent to the next, but the <em>structure</em> of the optimization problem does not.</p>
+<figure style="margin: 18px 0 20px; padding: 0;">
+<figcaption style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; letter-spacing: 0; text-transform: none; color: #5b6069; margin-top: 8px; line-height: 1.5;"><img src="central_agent_-_multiple_scopes.png" alt="" title="" data-d2l-editor-default-img-style="true" style="max-width: 100%;"><br>The same problem structure at five different scopes. The objective and the constraints keep their form; only the boundary of the system moves.</figcaption>
+</figure>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Scope is relative to where you draw the boundary</span>
+<p style="margin: 0 0 12px;">A DSO maximises welfare over its own grid, yet from the TSO's perspective that same DSO is a single participant. An energy community manager maximises welfare inside the community and behaves self-interestedly outside it. The formulations below transfer to these agents unchanged; the <em>interpretation</em> of the objective does not. The prosumer in Assignment 1 and the self-committing producer later in this lecture sit in the neighbouring cell of the grid above — same mathematics, different reading of what "optimal" means.</p>
+</div>
+</section>
+<section class="part" id="three" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">2</span>Three questions, three problems</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">"How should we operate the power system?" is too large a question for any single agent to answer alone. It splits into three narrower ones, each of which must be answered before a single MWh flows, and each of which can be solved by a different optimization model — and, in practice, often by a different agent.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 250px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Unit Commitment (UC)</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;">Which generators should be committed?</h4>
+<p style="margin: 0; font-size: .93rem;">Some plants take hours to start; someone has to decide in advance which ones to turn on, so enough capacity is available when it is needed.</p>
+</div>
+<div style="flex: 1 1 250px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Economic Dispatch (ED)</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;">How to match supply and demand?</h4>
+<p style="margin: 0; font-size: .93rem;">Generators and loads value energy differently; someone has to decide who produces and who consumes, so the trades are worth as much as possible.</p>
+</div>
+<div style="flex: 1 1 250px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Optimal Power Flow (OPF)</span>
+<h4 style="font-size: .95rem; font-weight: 600; margin: 0 0 6px;">How to deliver power from the generators to the loads?</h4>
+<p style="margin: 0; font-size: .93rem;">Power follows physical laws; someone has to ensure the traded quantities can be delivered without pushing the network past its limits.</p>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Side-by-side comparison</h3>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 17%;"></th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Economic Dispatch (ED)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Unit Commitment (UC)</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Optimal Power Flow (OPF)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>The question it answers</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">How much should each online unit produce, and each flexible load consume?</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Which units should be on, and when?</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Can the resulting flows be delivered?</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Key decisions</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Production and consumption setpoints</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">On/off status of each unit, in each period</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Nodal injections, network states, and the flows they cause</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Key constraints</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">One system-wide balance of production and consumption</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Minimum output, minimum up/down times, ramps</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Nodal balances, line limits, power flow physics</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Model class</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">LP, or quadratic (convex) problem</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MILP</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">LP if DC-linearised; non-convex if AC</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Typical horizon</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">15 min to 24 h, solved day-ahead to 15 min ahead</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">24–168 h, solved day-ahead</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Same horizon as the problem it is added to</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>What it assumes</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Units are on; delivery is someone else's job</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Delivery is someone else's job</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Units are on (unless combined with UC)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Two main levels of modelling complexity</h3>
+<p style="margin: 0 0 12px;">ED is the simplest of the three, and both of the others are reached by refusing one of its two simplifications. Add techno-economic detail about the units — on/off decisions, time coupling — and ED becomes UC. Add detail about the network infrastructure — nodal balances, network constraints, power flow physics — and ED becomes OPF. The triangle below is the map for the rest of the lecture.</p>
+<p style="margin: 0 0 12px;"><img src="ED__UC__OPF_deterministic__triangle_.png" alt="" title="" data-d2l-editor-default-img-style="true" style="max-width: 100%;"></p>
+<figure style="margin: 18px 0 20px; padding: 0;">
+<figcaption style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; letter-spacing: 0; text-transform: none; color: #5b6069; margin-top: 8px; line-height: 1.5;">Two directions of increasing detail away from economic dispatch: transmission network modelling towards OPF, generator and load modelling towards UC.</figcaption>
+</figure>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">A third level: uncertainty from imbalances and outages</span>
+<p style="margin: 0 0 12px;">Neither direction accounts for what happens when a generator trips, a line is lost, or the wind forecast is wrong. Adding uncertainty raises a third axis out of the plane of the triangle — reserve dimensioning and procurement, security-constrained OPF and UC — which is treated in the companion note on extensions beyond ED and DC-OPF, and in the stochastic programming weeks.</p>
+</div>
+<figure style="margin: 18px 0 20px; padding: 0;">
+<figcaption style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; letter-spacing: 0; text-transform: none; color: #5b6069; margin-top: 8px; line-height: 1.5;"><img src="ED__UC__OPF_with_uncertainty__pyramid_.png" alt="" title="" data-d2l-editor-default-img-style="true" style="max-width: 100%;"><br>The third level of complexity. Line outages and frequency dynamics lift OPF towards security-constrained OPF; generator outages and inertia lift UC towards security-constrained UC; supply and demand imbalances lift ED towards reserve dimensioning and procurement.</figcaption>
+</figure>
+</section>
+<section class="part" id="day" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">3</span>The same three questions, asked again and again</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">These are not three models used by three different people. They are three questions revisited throughout the operating day, at finer and finer resolution, as the uncertainty that made the early answers provisional resolves.</p>
+<figure style="margin: 18px 0 20px; padding: 0;">
+<figcaption style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; letter-spacing: 0; text-transform: none; color: #5b6069; margin-top: 8px; line-height: 1.5;"><img src="sequential_operation_.png" alt="" title="" data-d2l-editor-default-img-style="true" style="max-width: 100%;"><br>One operating day in a European zonal market. The same three questions are re-asked at each stage as delivery approaches.</figcaption>
+</figure>
+<p style="margin: 0 0 12px;">Two things are worth extracting from this timeline. First, the <b>rolling-horizon structure</b>: each stage takes the previous stage's answer as its starting point and corrects it with better information. Second, and less obviously, the <b>allocation of these problems to actors is institutional, not physical</b>. In a nodal US market the operator solves UC and OPF together before the market clears. In zonal Europe, producers commit themselves, the market clears on a crude representation of the network, and the TSO repairs the result afterwards through redispatch. Same physics, different division of labour.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Delegation, not neglect</span>
+<p style="margin: 0 0 12px;">It is standard to say that ED "neglects" unit characteristics and the network, which makes it sound like a defect. It is more useful to read those assumptions as <b>delegation</b>: ED assumes someone else has answered the commitment question and someone else will make the flows work. That is literally how the European arrangement is organised. Read this way, UC and OPF stop being arbitrary complications and become the two ways of saying "stop delegating question X".</p>
+</div>
+</section>
+<section class="part" id="ed" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">4</span>Economic dispatch</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">Economic dispatch matches production and consumption at the greatest total value, given that the units are already committed and that someone else is responsible for delivery.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The two assumptions, stated explicitly</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 300px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Network modelling</span>
+<p style="margin: 0; font-size: .93rem;">Someone else is assumed to make the flows work. One system-wide balance stands in for a network, so <b>location does not exist</b> and there is one price.</p>
+</div>
+<div style="flex: 1 1 300px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">Generators &amp; loads modelling</span>
+<p style="margin: 0; font-size: .93rem;">Units are assumed to have committed themselves and reported their hourly power limits. <b>No inter-temporal dependencies.</b> Costs and utilities are <b>linear</b>.</p>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">What the model contains</h3>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top; width: 22%;"><b>Decisions</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Setpoint (dispatch) of every online generator and flexible load (continuous)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Input (given)</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Marginal cost/utility and power limits of committed generators and flexible loads; consumption of inflexible loads</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Objective</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximise social welfare = total utility of consumption minus total cost of production</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Constraints</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Supply and demand balance; load and generator dispatch within their capacity limits</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Formulation</h3>
+<p style="margin: 0 0 12px;">Both sides of the market bid: flexible loads submit a marginal utility and generators a marginal cost. The objective is the <b>social welfare</b> of the trade — the area between the two curves — rather than the cost of one side of it.</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">The economic dispatch problem</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \max_{p^{G}_{g},\, p^{L}_{l}} \quad &amp; \sum_{l=1}^{L} u^{L}_{l}\, p^{L}_{l} \;-\; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} &amp;&amp; \text{(social welfare)} \\[4pt] \text{s.t.}\quad &amp; \sum_{g=1}^{G} p^{G}_{g} \;=\; \sum_{l=1}^{L} p^{L}_{l} \;+\; L &amp;&amp; \text{(power balance)} \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g}, &amp;&amp; \forall g = 1,\dots,G \\[2pt] &amp; 0 \le p^{L}_{l} \le \overline{P}^{\,L}_{l}, &amp;&amp; \forall l = 1,\dots,L \end{aligned}\]</div>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Notation</h4>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 12%;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(g \in \{1 \dots G\}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Committed generators; \(G\) is their number</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(l \in \{1 \dots L\}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Flexible loads; \(L\) is their number</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p^{G}_{g}\) / \(p^{L}_{l}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variables.</b> Dispatch of generator <em>g</em> / flexible load <em>l</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MWh/h</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(c^{G}_{g}\) / \(u^{L}_{l}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Constant marginal production cost / utility of generator <em>g</em> / flexible load <em>l</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">€/MWh</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\overline{P}^{\,G}_{g}\) / \(\overline{P}^{\,L}_{l}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum capacity of generator <em>g</em> / flexible load <em>l</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MW</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(L\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Constant inflexible load</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MW</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\Delta t\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Time step (1 h)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">h</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">A symbol doing double duty</span>
+<p style="margin: 0 0 12px;">\(L\) is used both as the number of flexible loads (the upper index bound) and as the constant inflexible load in the balance equation. This is carried over from the slides, but be aware of it when you implement the model. From the ATC section onwards the inflexible load acquires a bus and becomes \(L_i\); the flexible loads keep the index \(l \in \{1,\dots,L\}\), so the double use persists.</p>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Cost minimisation is the special case, not the general one</h4>
+<p style="margin: 0 0 12px;">If all loads are inflexible and must be supplied, the term \(\sum_l u^{L}_{l} p^{L}_{l}\) is a constant. Adding a constant to an objective does not change its argmax, so the problem reduces to minimising production cost subject to a balance against the fixed load:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">Special case: inflexible demand</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \min_{p^{G}_{g}} \quad &amp; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} \\[4pt] \text{s.t.}\quad &amp; \sum_{g=1}^{G} p^{G}_{g} \;=\; L \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g}, &amp;&amp; \forall g = 1,\dots,G \end{aligned}\]</div>
+</div>
+<p style="margin: 0 0 12px;">This is the textbook formulation. It looks different, but it is the same problem with the demand side frozen.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Why teach the welfare form first</span>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;">It is what a market clearing actually does — both sides bid, and the objective is the welfare of the trade, not the cost of one side of it.</li>
+<li style="margin-bottom: 4px;">It puts flexible demand inside the model from the start, so demand response and the prosumer in Assignment 1 need no new machinery.</li>
+<li style="margin-bottom: 4px;">The dual variable of the balance constraint is the electricity price in <em>both</em> versions — which is the subject of the duality weeks.</li>
+</ul>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Illustrative example</h3>
+<p style="margin: 0 0 12px;">Three committed generators (G1, G2, G3) and one inflexible load (L1). The central operator is responsible for matching this load in the most cost-effective way possible, and there are no network constraints between the generators and the load — so this is the special case above.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 34%;"></th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">G1</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">G2</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">G3</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">L1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Marginal cost \(c^{G}_{g}\) (DKK/kWh)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">70</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">15</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Capacity \(\overline{P}^{\,G}_{g}\) (kW)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">150</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(L_1 = 200\)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Optimal dispatch (kWh/h)</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p^{G^{*}}_{1} = 50\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p^{G^{*}}_{2} = 150\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p^{G^{*}}_{3} = 0\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(L_1 = 200\)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Production cost (DKK)</b></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;" colspan="4">\(z^{*} = 5750\)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">With linear costs the answer is the <b>merit order</b>: rank generators by marginal cost and fill from the cheapest upwards until the load is met. G2 is cheapest and runs at its capacity of 150; G1 covers the remaining 50; G3 stays at zero. The last unit called — the <b>marginal unit</b>, here G1 — is only partly loaded, and its marginal cost is the shadow price of the balance constraint. This bang-bang structure is a direct consequence of the objective being linear, and it is worth remembering when you see it again in other models.</p>
+</section>
+<section class="part" id="atc" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">5</span>Is the dispatch deliverable? ED with ATC</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The economic dispatch produced above is optimal <em>if</em> it is feasible. Place the same three generators and the load on a three-bus network and the question becomes concrete: can that dispatch actually be delivered to the load?</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Why feasibility is the only question worth asking</span>
+<p style="margin: 0 0 12px;">If an ED solution is feasible in the network, it is also optimal for the network-constrained problem. The reason is that the network-constrained problem is a <em>restriction</em> of ED — it has the same objective over a smaller feasible set. So the ED optimum is an upper bound on achievable welfare, and any feasible point attaining it must be optimal. Network constraints can only make things worse, never better.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 1 — extend the set of decisions and inputs</h3>
+<p style="margin: 0 0 12px;">Introduce a flow variable \(p_{ij}\) on every corridor, positive when power is exported from \(i\) to \(j\) and negative when imported. Generators, flexible loads and inflexible loads all acquire a bus: \(\Omega_i\), \(\Delta_i\) and \(L_i\) respectively. \(\Lambda_i\) collects the buses connected to \(i\).</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 2 — the balance equation changes granularity</h3>
+<p style="margin: 0 0 12px;">This is the step students most often skip. The granularity of the problem has changed from system-wide to nodal, so the granularity of the balance equation must change with it. <b>One balance equation per bus</b>, not one for the system.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">What a balance equation is</span>
+<p style="margin: 0 0 12px;">A balance equation requires the power <em>entering</em> a connection point to equal the power <em>leaving</em> it. The connection point is whatever boundary you draw: a household, a node, a bidding zone. At bus \(i\), power entering is what is produced there, discharged from storage there, or imported from neighbouring buses; power leaving is what is consumed there, stored there, exported to neighbours, or dissipated there. Integrate through the time step \(\Delta t\) and the same equation holds for energy. This is the single most reusable constraint in the course.</p>
+</div>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">Balance at bus i, with imports written on the entering side</div>
+<div style="font-size: 1rem;">\[\sum_{g \in \Omega_i} p^{G}_{g} \;+\; \sum_{j \in \Lambda_i} p_{ji} \;=\; \sum_{l \in \Delta_i} p^{L}_{l} \;+\; L_i , \qquad \forall i = 1,\dots,I\]</div>
+</div>
+<p style="margin: 0 0 12px;">An import from \(j\) to \(i\) enters bus \(i\) exactly as production at \(i\) would. Because the sign convention already encodes direction — \(p_{ij} = -p_{ji}\) — the import term can be moved to the other side as a net export, giving the equivalent form used from here on:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">Balance at bus i, with net exports on the leaving side</div>
+<div style="font-size: 1rem;">\[\sum_{g \in \Omega_i} p^{G}_{g} \;=\; \sum_{l \in \Delta_i} p^{L}_{l} \;+\; \sum_{j \in \Lambda_i} p_{ij} \;+\; L_i , \qquad \forall i = 1,\dots,I\]</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 3 (final) — adding power flow bounds</h3>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">Economic dispatch with available transfer capacities</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \max_{p^{G}_{g},\, p^{L}_{l},\, p_{ij}} \quad &amp; \sum_{l=1}^{L} u^{L}_{l}\, p^{L}_{l} \;-\; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} &amp;&amp; \text{(social welfare)} \\[4pt] \text{s.t.}\quad &amp; \sum_{g \in \Omega_i} p^{G}_{g} = \sum_{l \in \Delta_i} p^{L}_{l} + \sum_{j \in \Lambda_i} p_{ij} + L_i &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g} &amp;&amp; \forall g = 1,\dots,G \\[4pt] &amp; 0 \le p^{L}_{l} \le \overline{P}^{\,L}_{l} &amp;&amp; \forall l = 1,\dots,L \\[4pt] &amp; p_{ij} \le \overline{P}_{ij} &amp;&amp; \forall i = 1,\dots,I,\ \forall j \in \Lambda_i \\[4pt] &amp; p_{ij} = -p_{ji} &amp;&amp; \forall i = 1,\dots,I,\ \forall j \in \Lambda_i \end{aligned}\]</div>
+</div>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Where is the lower bound on the flow?</span>
+<p style="margin: 0 0 12px;">There is only an upper bound written, and that is deliberate. The constraint is enumerated over every connected pair in <em>both</em> directions, \(i \to j\) and \(j \to i\), so \(p_{ji} \le \overline{P}_{ji}\) together with \(p_{ij} = -p_{ji}\) supplies the lower bound \(p_{ij} \ge -\overline{P}_{ji}\) implicitly. Note that this makes asymmetric capacities natural: \(\overline{P}_{ij}\) and \(\overline{P}_{ji}\) need not be equal, and in practice they often are not.</p>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Notation added by the ATC model</h4>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 12%;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(i, j \in \{1 \dots I\}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Nodes (buses); \(I\) is their number</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\Omega_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Set of committed generators at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\Delta_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Set of flexible loads at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\Lambda_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Set of nodes connected to node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p_{ij}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variable.</b> Flow from <em>i</em> to <em>j</em> — positive if exporting from <em>i</em> to <em>j</em>, negative if importing</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MWh/h</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\overline{P}_{ij}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum available transfer capacity from <em>i</em> to <em>j</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MWh</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(L_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Constant inflexible load at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MW</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">\(p^{G}_{g}\), \(p^{L}_{l}\), \(c^{G}_{g}\), \(u^{L}_{l}\), \(\overline{P}^{\,G}_{g}\) and \(\overline{P}^{\,L}_{l}\) keep the meanings they had in the ED.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">What ATC removes, and what it still permits</h3>
+<p style="margin: 0 0 12px;">ED with ATC is the model behind <b>zonal market coupling</b> in Europe: each bidding zone is a node, and the interconnectors between zones carry the transfer capacities, which are calculated by the TSOs and the regional coordination centres and can be asymmetric. It removes one class of infeasibility and leaves another intact.</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Removed by ATC</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Still permitted by ATC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Dispatches that require more power to cross a corridor than that corridor can physically carry.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Dispatches whose flows would not <em>actually</em> follow the path the model assumes.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Dispatches that ignore where generation and load are located relative to each other.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Dispatches that overload a line inside a zone, or a line the model represents only as part of an aggregate corridor.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">The gap between the two columns is exactly why redispatch exists as an institution.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The three-bus example, continued</h3>
+<p style="margin: 0 0 12px;">Put G1 and the ED solution on the three-bus network: G1 at n1, G2 at n2, G3 and L1 at n3, with transfer capacities \(\overline{P}_{12} = 75\), \(\overline{P}_{13} = 150\) and \(\overline{P}_{23} = 150\). If we only consider transfer capacity limits, there <em>seems to be</em> a feasible power flow path for the ED dispatch (50, 150, 0): send \(p^{*}_{13} = 50\) and \(p^{*}_{23} = 150\), with \(p^{*}_{21} = 0\). Every corridor is within its limit.</p>
+<p style="margin: 0 0 12px;">But solve the same injections with the power flow equations of the next section and the flows come out as roughly 150 on 1–3, 100 on 2–1 and 50 on 2–3. The 100 on corridor 1–2 exceeds \(\overline{P}_{12} = 75\). The dispatch that looked deliverable is not.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">The remaining gap, stated precisely</span>
+<p style="margin: 0 0 12px;">ATC bounds how much can flow on each line. It does <em>not</em> define how the flow divides between them. Finding a set of flows that satisfies the nodal balances and respects the transfer limits proves only that <em>some</em> assignment of flows to corridors is within limits; it does not prove that electricity will take that assignment. That path is not ours to choose: given the injections, physical laws fix the flow on every line in the network. To close the gap, those laws must be inside the optimization problem, not checked afterwards.</p>
+</div>
+</section>
+<section class="part" id="acopf" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">6</span>AC power flow and the AC-OPF</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The optimal power flow problem replaces the assumed flows of the ATC model with the physical states of the network and the equations linking them.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Why flows depend on states</h3>
+<p style="margin: 0 0 12px;">A flow appears along a pipe — or a line — when a difference of "potential" between its two ends creates a force that moves the water, or the electrons. In a water network that potential is the level difference between tanks; in an electricity network it is the voltage difference between nodes. The flow in a line therefore depends on the states at each of its ends, and that is exactly what the power flow equations express.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Reminder: four states, two of them independent</h3>
+<p style="margin: 0 0 12px;">Each bus \(i\) is described by four quantities: active and reactive net power injection \(p_i^{net}, q_i^{net}\), and voltage magnitude and angle \(v_i, \delta_i\). Only <b>two are independent</b> at each node — the other two are then determined by the two nodal power equations, which follow from Ohm's law and Kirchhoff's law. Which two are given depends on the bus type:</p>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 26%;">Bus type</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 26%;">Given</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Determined by the nodal power equations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Load bus</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p_i^{net},\ q_i^{net}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(v_i,\ \delta_i\)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Generator bus</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(q_i^{net},\ v_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p_i^{net},\ \delta_i\)</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Slack (reference) bus</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(v_i,\ \delta_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p_i^{net},\ q_i^{net}\)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">The nodal power equations are equivalent to the <b>line flow equations</b>, which describe the power flow in each line as a function of the voltages at its two ends. These are the form used below, written for branch \(ik\).</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">Line flow equations, with \(y^{L}_{ik}\) and \(\theta^{L}_{ik}\) the magnitude and angle of the line admittance</div>
+<div style="font-size: 1rem;">\[\begin{aligned} p_{ik} &amp;= v_i^{2}\, y^{L}_{ik} \cos\!\left(\theta^{L}_{ik}\right) \;-\; v_i v_k\, y^{L}_{ik} \cos\!\left(\delta_i - \delta_k - \theta^{L}_{ik}\right) \\[4pt] q_{ik} &amp;= -\,v_i^{2}\, y^{L}_{ik} \sin\!\left(\theta^{L}_{ik}\right) \;-\; v_i v_k\, y^{L}_{ik} \sin\!\left(\delta_i - \delta_k - \theta^{L}_{ik}\right) \end{aligned}\]</div>
+</div>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">The neighbour index changes name</span>
+<p style="margin: 0 0 12px;">In the physics of this section, the neighbour of bus \(i\) is called \(k\), so a branch is \(ik\) and the reactance is \(x_{ik}\). In the optimization models of sections 5, 7 and 8 the same neighbour is called \(j\), so the branch is \(ij\) and the reactance \(x_{ij}\). The two are the same object; only the letter differs. Keep one convention in your own code.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The AC-OPF problem</h3>
+<p style="margin: 0 0 12px;"><b>AC-OPF model.</b> Given input parameters — consumption of loads, network topology and characteristics — find the active and reactive power setpoints that optimise an objective and for which there exist feasible physical states (voltage angles and magnitudes) at each bus and feasible flows in each line.</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">The AC optimal power flow problem</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \max_{p^{G}_{g},\, q^{G}_{g},\, p^{L}_{l},\, v_i,\, \delta_i} \quad &amp; \sum_{l=1}^{L} u^{L}_{l}\, p^{L}_{l} \;-\; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} \\[4pt] \text{s.t.}\quad &amp; \sum_{g \in \Omega_i} p^{G}_{g} = \sum_{l \in \Delta_i} p^{L}_{l} + \sum_{k \in \Lambda_i} p_{ik} + L^{P}_{i} &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; \sum_{g \in \Omega_i} q^{G}_{g} = \sum_{k \in \Lambda_i} q_{ik} + L^{Q}_{i} &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; p_{ik} = v_i^{2} y^{L}_{ik}\cos\!\big(\theta^{L}_{ik}\big) - v_i v_k y^{L}_{ik}\cos\!\big(\delta_i - \delta_k - \theta^{L}_{ik}\big) &amp;&amp; \forall i,\ \forall k \in \Lambda_i \\[4pt] &amp; q_{ik} = -v_i^{2} y^{L}_{ik}\sin\!\big(\theta^{L}_{ik}\big) - v_i v_k y^{L}_{ik}\sin\!\big(\delta_i - \delta_k - \theta^{L}_{ik}\big) &amp;&amp; \forall i,\ \forall k \in \Lambda_i \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g} \quad\text{and}\quad 0 \le q^{G}_{g} \le \overline{Q}^{\,G}_{g} &amp;&amp; \forall g = 1,\dots,G \\[4pt] &amp; 0 \le p^{L}_{l} \le \overline{P}^{\,L}_{l} &amp;&amp; \forall l = 1,\dots,L \\[4pt] &amp; \sqrt{p_{ik}^{2} + q_{ik}^{2}} \le \overline{S}_{ik} &amp;&amp; \forall i,\ \forall k \in \Lambda_i \\[4pt] &amp; \underline{V}_i \le v_i \le \overline{V}_i &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; \delta_{i^{ref}} = 0 \end{aligned}\]</div>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">Flexible loads are taken to bid on active power only; their reactive consumption, and reactive bids in general, are outside the scope of this course. Setting all loads inflexible recovers the familiar cost-minimising AC-OPF, exactly as in section 4.</p>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Notation added by the AC-OPF</h4>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 13%;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(p_{ik},\ q_{ik}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variables.</b> Active / reactive power flow from node <em>i</em> to \(k \in \Lambda_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MWh/h, var</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(q^{G}_{g}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variable.</b> Reactive power production of generator \(g \in \Omega_i\) at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">var</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(v_i,\ \delta_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variables.</b> Voltage magnitude and angle at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">V, rad</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(L^{P}_{i},\ L^{Q}_{i}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Active / reactive consumption of the inflexible load at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MW, var</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(y^{L}_{ik},\ \theta^{L}_{ik}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Line admittance magnitude and angle between nodes <em>i</em> and <em>k</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">S, rad</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\overline{Q}^{\,G}_{g}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum reactive power of generator <em>g</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">var</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\overline{S}_{ik}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum apparent power between nodes <em>i</em> and <em>k</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">VA</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\underline{V}_i,\ \overline{V}_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Minimum / maximum voltage magnitude at node <em>i</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">V</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(i^{ref}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Reference (slack) bus</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Challenges: highly nonlinear constraints and an "ugly" feasible space</h3>
+<p style="margin: 0 0 12px;">The products \(v_i v_k\) and the trigonometric terms make the flow equations <b>non-convex equality constraints</b>. A non-convex feasible set is "ugly" in a precise sense:</p>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 12px;">
+<div style="flex: 1 1 280px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">A "pretty" feasible space</span>
+<p style="margin: 0; font-size: .93rem;">Convex. Easy to explore for numerical solvers, and guaranteed to converge to the global optimum — any local optimum found is the global one.</p>
+</div>
+<div style="flex: 1 1 280px; border: 1px solid #D9DAD5; border-radius: 6px; padding: 16px 18px; background: #fff;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 6px;">An "ugly" feasible space</span>
+<p style="margin: 0; font-size: .93rem;">Non-convex, possibly disconnected. Harder to explore, and the solver can get stuck in a <b>local optimum</b> with no way of knowing that a better solution exists elsewhere.</p>
+</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">How to solve the OPF efficiently? Two routes</h3>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 26%;">Route</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">In its favour</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Against it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Nonlinear solver</b><br>Solve the AC-OPF as it stands</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Flows are feasible for the AC power flow equations</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Computational complexity; no optimality guarantee</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Simplification / approximation</b><br>Replace the equations by something convex</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Fast to solve; optimality guarantee</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Flows are not always feasible for the AC power flow equations</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">Three practical consequences follow from the first route. The solution returned depends on the starting point. There is generally no certificate of global optimality. And convergence itself is not guaranteed — a solver may terminate without a feasible point even when one exists. For a market clearing that must run every few minutes and be defensible to every participant, none of these is acceptable, which is why the second route is the one taken next.</p>
+</section>
+<section class="part" id="dcopf" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">7</span>The DC approximation and the DC-OPF</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The goal is a <em>good enough</em> approximation of the active and reactive power flow equations in branch \(ik\). Under four assumptions that hold well in transmission grids, they collapse into a single linear expression — and with them, the whole problem collapses into a linear program.</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">The approximate (DC linearised) power flow equation</div>
+<div style="font-size: 1rem;">\[p_{ik} \;=\; \frac{1}{x_{ik}}\left(\delta_i - \delta_k\right)\]</div>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The four assumptions, and why each is justified</h3>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 4%;">#</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 24%;">Assumption</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 30%;">What it does to the equations</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Why? (in a transmission grid)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">1</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Reactive power</b> flows can be neglected \(\left(q_{ik} \ll p_{ik}\right)\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The whole \(q_{ik}\) equation and the reactive balance disappear; \(q^{G}_{g}\) and \(\overline{Q}^{\,G}_{g}\) leave the model.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Reactive power through a line is proportional to the voltage drop across it, which is controlled so that reactive power does not "travel" far.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">2</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Voltage magnitude</b> is constant and \(= 1\) p.u.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(v_i^2 \to 1\) and \(v_i v_k \to 1\), removing the bilinear products and the voltage variables.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">At generator buses — most buses in a transmission system — voltage magnitude is controlled at a constant value, roughly \(0.95\)–\(1.05\) p.u.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">3</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Line admittance</b> \(y^{L}_{ik}\angle\theta^{L}_{ik} \approx \dfrac{1}{j\,x_{ik}} = \dfrac{1}{x_{ik}}\angle\dfrac{-\pi}{2}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The first term vanishes, since \(\cos(-\pi/2) = 0\), and the cosine in the second becomes a sine. Losses vanish with it.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">In transmission lines, resistance is negligible compared to reactance \(\left(r_{ik} \ll x_{ik}\right)\).</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">4</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Voltage angle differences</b> are small \(\left(\delta_i - \delta_k \approx 0\right)\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\sin(\delta_i - \delta_k) \approx \delta_i - \delta_k\), linearising the last trigonometric term.</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">The angle difference measures the "stress" in the system, so in most operating conditions angle differences are \(\ll \pi/6\) rad.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">The chain, step by step</h4>
+<p style="margin: 0 0 12px;">Assumption 1 removes the reactive equation. Assumption 2 sets both voltage magnitudes to 1:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-size: 1rem;">\[p_{ik} \;=\; y^{L}_{ik} \cos\!\left(\theta^{L}_{ik}\right) \;-\; y^{L}_{ik} \cos\!\left(\delta_i - \delta_k - \theta^{L}_{ik}\right)\]</div>
+</div>
+<p style="margin: 0 0 12px;">Assumption 3 substitutes \(y^{L}_{ik} = 1/x_{ik}\) and \(\theta^{L}_{ik} = -\pi/2\). The first term becomes \(\tfrac{1}{x_{ik}}\cos(-\pi/2) = 0\), and the second becomes \(-\tfrac{1}{x_{ik}}\cos\!\left(\delta_i - \delta_k + \tfrac{\pi}{2}\right)\), which is a sine:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-size: 1rem;">\[p_{ik} \;=\; \frac{1}{x_{ik}}\sin\!\left(\delta_i - \delta_k\right)\]</div>
+</div>
+<p style="margin: 0 0 12px;">Assumption 4 linearises that sine, and the DC power flow equation is reached.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Where these assumptions fail</span>
+<p style="margin: 0 0 12px;">Every one of them is an assumption about <em>transmission</em>. In distribution networks resistance is comparable to reactance, voltage magnitude varies substantially along a feeder, and reactive power is central to voltage control. Assumptions 1, 2 and 3 all break at once, which is why distribution grids need a different approximation — DistFlow and LinDistFlow — rather than the DC one. That is treated in the companion note on extensions.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">The DC-OPF problem</h3>
+<p style="margin: 0 0 12px;"><b>DC-OPF model.</b> Given input parameters, find the optimal dispatch that can be delivered to the load: the active power setpoints that optimise the objective and for which there exist feasible <em>reduced</em> physical states (voltage angles) at each bus and feasible active power flows in each line.</p>
+<p style="margin: 0 0 12px;">It is built from the ED with ATC in three steps: extend the decisions with the voltage angles \(\delta_i\), replace each line flow \(p_{ij}\) by its expression in terms of the states at each end, and fix the angle at the reference bus.</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">The DC optimal power flow problem</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \max_{p^{G}_{g},\, p^{L}_{l},\, \delta_i} \quad &amp; \sum_{l=1}^{L} u^{L}_{l}\, p^{L}_{l} \;-\; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} &amp;&amp; \text{(social welfare)} \\[4pt] \text{s.t.}\quad &amp; \sum_{g \in \Omega_i} p^{G}_{g} = \sum_{l \in \Delta_i} p^{L}_{l} + \sum_{j \in \Lambda_i} \frac{1}{x_{ij}}\left(\delta_i - \delta_j\right) + L_i &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g} &amp;&amp; \forall g = 1,\dots,G \\[4pt] &amp; 0 \le p^{L}_{l} \le \overline{P}^{\,L}_{l} &amp;&amp; \forall l = 1,\dots,L \\[4pt] &amp; \frac{1}{x_{ij}}\left(\delta_i - \delta_j\right) \le \overline{P}_{ij} &amp;&amp; \forall i = 1,\dots,I,\ \forall j \in \Lambda_i \\[4pt] &amp; \delta_{i^{ref}} = 0 \end{aligned}\]</div>
+</div>
+<p style="font-size: .9rem; color: #5b6069; margin: 0 0 12px;">As in the ATC model, the flow constraint carries only an upper bound: it is enumerated over all connected nodes in both directions \(i \to j\) and \(j \to i\), which supplies the lower bound implicitly.</p>
+<h4 style="font-size: 1rem; font-weight: 600; margin: 22px 0 8px;">Notation added by the DC-OPF</h4>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 13%;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\delta_i\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;"><b>Decision variable.</b> Voltage angle at node <em>i</em> — the unit depends on the convention chosen, see below</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">see below</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(x_{ij}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Line reactance between nodes <em>i</em> and <em>j</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Ω or p.u.</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(\overline{P}_{ij}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Maximum active power flow between nodes <em>i</em> and <em>j</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">MWh</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(i^{ref}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Reference (slack) bus</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #A9111E; background: #FBEEEE; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Per-unit conversion — what unit is \(\delta_i\) in?</span>
+<p style="margin: 0 0 12px;">If \(\delta_i\) is in radians and \(x_{ij}\) is in per unit, then \(p_{ij}\) also comes out in per unit. It is equally possible to use MWh/h for \(p_{ij}\) and ohms for \(x_{ij}\) instead of per unit — but in that case \(\delta_i\) is <b>not</b> in radians: it carries whatever units make \((\delta_i - \delta_j)/x_{ij}\) come out in MWh/h. Mixing the two conventions is one of the most common sources of silently wrong results.</p>
+</div>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Feasibility of DC-OPF solutions</h3>
+<p style="margin: 0 0 12px;">A DC-OPF solution is feasible with respect to the model it was solved in, which is not the same as being feasible in the real network. It guarantees active power balance at every bus and active power flows within limits, given the four assumptions. It says nothing about voltage magnitudes, reactive power adequacy, or losses — and a solution near the boundary of the DC feasible set can be genuinely infeasible in AC terms. This is why DC-OPF is used to clear markets and manage congestion, and AC tools are used afterwards to verify and correct the result.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Back to the three-bus example</h3>
+<p style="margin: 0 0 12px;">Solving the DC-OPF on the three-bus network answers the question the ATC model could not: how does accounting for the physics of the network change the optimal dispatch? Compare the resulting dispatch and production cost against the ED values of \(50, 150, 0\) and \(z^{*} = 5750\), and identify which constraint is binding in the network-constrained solution and what that does to the cost.</p>
+</section>
+<section class="part" id="appendix" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">8</span>Appendix — DC-OPF reformulated with the bus susceptance matrix</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">The same DC-OPF can be written so that the network enters through a single matrix. Two steps get there.</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 1 — introduce the line susceptance</h3>
+<p style="margin: 0 0 12px;">Define \(b_{ij} = 1/x_{ij}\), the line susceptance between nodes \(i\) and \(j\), in siemens. Every occurrence of \(1/x_{ij}\) in the DC-OPF becomes \(b_{ij}\): the balance constraint carries \(\sum_{j \in \Lambda_i} b_{ij}(\delta_i - \delta_j)\) and the flow bound becomes \(b_{ij}(\delta_i - \delta_j) \le \overline{P}_{ij}\).</p>
+<h3 style="font-size: 1.08rem; font-weight: 600; margin: 28px 0 8px;">Step 2 — reformulate the balance equation</h3>
+<p style="margin: 0 0 12px;">Expanding the net-export term separates the two angles:</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-size: 1rem;">\[\sum_{j \in \Lambda_i} b_{ij}\left(\delta_i - \delta_j\right) \;=\; \left(\sum_{j \in \Lambda_i} b_{ij}\right)\delta_i \;-\; \sum_{j \in \Lambda_i} b_{ij}\,\delta_j\]</div>
+</div>
+<p style="margin: 0 0 12px;">Both terms are linear in the angles, so they collapse into a single sum over <em>all</em> nodes, with coefficients given by the bus susceptance matrix \(B\).</p>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">DC-OPF in bus susceptance matrix form</div>
+<div style="font-size: 1rem;">\[\begin{aligned} \max_{p^{G}_{g},\, p^{L}_{l},\, \delta_i} \quad &amp; \sum_{l=1}^{L} u^{L}_{l}\, p^{L}_{l} \;-\; \sum_{g=1}^{G} c^{G}_{g}\, p^{G}_{g} \\[4pt] \text{s.t.}\quad &amp; \sum_{g \in \Omega_i} p^{G}_{g} = \sum_{l \in \Delta_i} p^{L}_{l} + \sum_{j = 1}^{I} B_{ij}\,\delta_j + L_i &amp;&amp; \forall i = 1,\dots,I \\[4pt] &amp; 0 \le p^{G}_{g} \le \overline{P}^{\,G}_{g} &amp;&amp; \forall g = 1,\dots,G \\[4pt] &amp; 0 \le p^{L}_{l} \le \overline{P}^{\,L}_{l} &amp;&amp; \forall l = 1,\dots,L \\[4pt] &amp; b_{ij}\left(\delta_i - \delta_j\right) \le \overline{P}_{ij} &amp;&amp; \forall i = 1,\dots,I,\ \forall j \in \Lambda_i \\[4pt] &amp; \delta_{i^{ref}} = 0 \end{aligned}\]</div>
+</div>
+<div style="border: 1px solid #D9DAD5; border-radius: 6px; background: #fff; padding: 18px 18px 14px; margin: 12px 0 10px; overflow-x: auto;">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; margin-bottom: 8px;">The bus susceptance matrix</div>
+<div style="font-size: 1rem;">\[B = \begin{bmatrix} B_{11} &amp; \cdots &amp; B_{1I} \\ \vdots &amp; \ddots &amp; \vdots \\ B_{I1} &amp; \cdots &amp; B_{II} \end{bmatrix} \quad \text{s.t.} \quad \begin{cases} B_{ii} = \sum_{j \in \Lambda_i} b_{ij} \\[4pt] B_{ij} = -b_{ij} &amp; \forall j \in \Lambda_i \\[4pt] B_{ij} = 0 &amp; \forall j \notin \Lambda_i \end{cases}\]</div>
+</div>
+<div style="overflow-x: auto; margin: 10px 0 18px;">
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: .93rem;">
+<thead>
+<tr>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 20%;">Symbol</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom;">Meaning</th>
+<th style="text-align: left; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #5b6069; padding: 8px; border-bottom: 2px solid #1B1F26; vertical-align: bottom; width: 13%;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(b_{ij} = 1/x_{ij}\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Line susceptance between nodes <em>i</em> and <em>j</em></td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">S</td>
+</tr>
+<tr>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">\(B\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">Bus susceptance matrix, of dimension \(I \times I\)</td>
+<td style="padding: 9px 8px; border-bottom: 1px solid #D9DAD5; vertical-align: top;">S</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0 0 12px;">Because every row of \(B\) sums to zero, \(B\) is singular — which is the algebraic reason a slack bus is needed. Fixing \(\delta_{i^{ref}} = 0\) removes the redundant degree of freedom and makes the reduced system invertible.</p>
+<div style="padding: 14px 18px; margin: 14px 0 18px; border-left: 4px solid #2E4459; background: #EDF1F4; border-radius: 0 4px 4px 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069; display: block; margin-bottom: 4px;">Why bother with the matrix form</span>
+<ul style="padding-left: 1.25em; margin: 0 0 12px;">
+<li style="margin-bottom: 4px;">It makes the structure of the problem visible: the network enters through a single linear operator.</li>
+<li style="margin-bottom: 4px;">From the perspective of a TSO it is often enough to aggregate all generators and loads at each bus, in which case the balance constraints reduce to the compact vector equation \(p^{G} = p^{D} + B\delta\).</li>
+<li style="margin-bottom: 4px;">It is the form in which PTDF (power transfer distribution factor) matrices are derived, which is how large-scale security analysis is done in practice.</li>
+<li style="margin-bottom: 4px;">It is convenient in code — one matrix multiplication rather than a loop over neighbours — although the indexed form is usually easier to read and debug, which is why the exercises use that one.</li>
+</ul>
+</div>
+</section>
+<section class="part" id="takeaways" style="padding: 44px 0 8px; border-bottom: 1px solid #D9DAD5;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">9</span>Takeaways</h2>
+<ol style="list-style: decimal; padding-left: 1.7em; margin: 0 0 18px;">
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">ED, UC and OPF are three narrower questions carved out of "how should we operate the system". ED is the simplest; UC is ED with the unit modelling put back; OPF is ED with the network put back.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">ED's assumptions are best read as <b>delegation</b> rather than neglect. In a European zonal market they describe an actual institutional arrangement, which is why redispatch exists.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">The general objective throughout — ED, ED with ATC, and DC-OPF alike — is <b>social welfare</b>; cost minimisation is the special case where demand is inflexible and its utility becomes a constant. Both have the same dual on the balance constraint — the price.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">When the granularity of a problem changes from system-wide to nodal, the granularity of the balance equation must change with it. One balance per bus.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">ATC bounds how much can flow on each corridor; it does not define how the flow divides between them. Finding <em>some</em> assignment of flows within limits does not mean electricity will take it — in a meshed network the flows are determined, not chosen.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0;">
+<p style="margin: 0; font-size: .95rem;">AC-OPF is exact and non-convex: local optima, starting-point dependence, no optimality certificate. The DC approximation is fast and carries an optimality guarantee, at the price of flows that are not always AC-feasible — which is why markets are cleared with it and AC tools check the result afterwards.</p>
+</li>
+<li style="padding: 12px 0 12px 10px; border-top: 1px solid #D9DAD5; margin: 0; border-bottom: 1px solid #D9DAD5;">
+<p style="margin: 0; font-size: .95rem;">The four DC assumptions — negligible reactive flows, unit voltage magnitude, negligible resistance, small angle differences — are all assumptions about transmission. Every one of them fails in distribution, which is why a different linearisation is needed there.</p>
+</li>
+</ol>
+</section>
+<section class="part" id="refs" style="padding: 44px 0 8px;">
+<h2 style="font-family: 'IBM Plex Serif', Charter, 'Iowan Old Style', Georgia, serif; font-weight: 500; font-size: 1.75rem; line-height: 1.2; margin: 0 0 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95rem; color: #a9111e; font-weight: 500; margin-right: 14px;">10</span>References and further reading</h2>
+<p style="font-size: 1.05rem; max-width: 66ch; margin: 0 0 12px;">Full formulations of the extensions mentioned in passing above are given in the three companion notes. The references below are for the material of this lecture itself.</p>
+<ol style="list-style: none; padding-left: 0; margin: 0 0 18px;">
+<li style="padding: 14px 0; border-top: 1px solid #D9DAD5; margin: 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Optimal power flow</span>
+<p style="margin: 4px 0 4px; font-size: .95rem;">S. Frank and S. Rebennack (2016). An introduction to optimal power flow: theory, formulation, and examples. <em>IIE Transactions</em> 48(12), 1172–1197.</p>
+<p style="margin: 0; font-size: .88rem; color: #5b6069;">The single best entry point if you want a fuller derivation of the AC formulation and of the DC approximation than fits in a lecture.</p>
+</li>
+<li style="padding: 14px 0; border-top: 1px solid #D9DAD5; margin: 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Case study data</span>
+<p style="margin: 4px 0 4px; font-size: .95rem;">C. Ordoudis, P. Pinson, J. M. Morales and M. Zugno (2016). <em>An Updated Version of the IEEE RTS 24-Bus System for Electricity Market and Power System Operation Studies.</em> Technical report, Technical University of Denmark.</p>
+<p style="margin: 0; font-size: .88rem; color: #5b6069;">The bus, generator and load data used in the exercises and in Assignment 2.</p>
+</li>
+<li style="padding: 14px 0; border-top: 1px solid #D9DAD5; margin: 0;"><span style="font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b6069;">Convexity and AC-OPF</span>
+<p style="margin: 4px 0 4px; font-size: .95rem;">S. Huang, K. Filonenko and C. T. Veje (2019). A review of the convexification methods for AC optimal power flow. In <em>IEEE Electrical Power and Energy Conference</em>.</p>
+<p style="margin: 0; font-size: .88rem; color: #5b6069;">A map of what people do about the non-convexity described in section 6, from the DC approximation to SDP and SOCP relaxations.</p>
+</li>
+</ol>
+<div style="border-top: 1px solid #D9DAD5;"></div>
+</section>
+</div>
+</main><footer style="border-top: 1px solid #D9DAD5; padding: 20px 0 40px; font-size: .85rem; color: #5b6069;">
+<div style="max-width: 920px; margin: 0 auto; padding: 0 24px;">46750 Optimization in Modern Power Systems · Week 2 lecture notes, Autumn 2026 · DTU Wind, Energy Markets &amp; Analytics section. These notes summarise the live session; the slides and the material on DTU Learn take precedence.</div>
+</footer></div></body></html>

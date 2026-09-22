@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>46750 – Assignment 1 (2026): Demand-Side Flexibility in Active Distribution Grids</title>
+<style>
+  :root { --dtu-red: #990000; --ink: #1a1a1a; --muted: #555; --rule: #d9d9d9; --todo: #fff3b0; }
+  html { color-scheme: light; }
+  body { margin: 0; background: #fff; color: var(--ink); font-family: Georgia, "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.45; }
+  .page { max-width: 820px; margin: 0 auto; padding: 36px 40px 64px; }
+  header img { height: 44px; display: block; }
+  h1 { font-size: 20pt; text-align: center; margin: 28px 0 4px; }
+  h2.subtitle { font-size: 14pt; text-align: center; font-weight: bold; margin: 0 0 28px; }
+  h2 { font-size: 13pt; color: var(--dtu-red); margin: 30px 0 8px; }
+  h3 { font-size: 12pt; margin: 22px 0 6px; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 4px 0 10px; padding-left: 26px; }
+  li { margin: 3px 0; }
+  li > ul, li > ol { margin-top: 3px; }
+  ol.alpha { list-style-type: lower-alpha; }
+  ol.roman { list-style-type: lower-roman; }
+  ol.alpha > li, ol.roman > li { margin: 8px 0; }
+  .lead { color: var(--dtu-red); }
+  strong.term { font-weight: bold; }
+  em.tip { font-style: italic; }
+  em.bonus { font-style: normal; font-weight: bold; color: var(--dtu-red); }
+  table.levels { width: 100%; font-size: 9.5pt; }
+  table.levels th { text-align: center; }
+  table.levels td { text-align: left; vertical-align: top; }
+  table.levels td.crit { font-weight: bold; white-space: nowrap; }
+  table { border-collapse: collapse; margin: 12px auto; font-size: 10.5pt; }
+  th, td { border: 1px solid #333; padding: 5px 10px; text-align: center; vertical-align: top; }
+  th { background: #f2f2f2; }
+  table.lo td { text-align: left; }
+  table.lo td:first-child { white-space: nowrap; font-weight: bold; text-align: center; }
+  table.lo td:last-child { min-width: 170px; font-size: 10pt; }
+  table.rubric { width: 100%; font-size: 10pt; }
+  table.rubric td.q { white-space: nowrap; font-weight: bold; }
+  table.rubric td.c { text-align: left; }
+  table.rubric tr.parent td { font-weight: bold; }
+  table.rubric tr.child td { color: #333; font-size: 9.5pt; border-top: 1px solid #ddd; }
+  table.rubric tr.child td.q { font-weight: normal; padding-left: 26px; }
+  table.rubric tr.child td.c { padding-left: 20px; }
+  table.rubric td.t { font-weight: bold; background: #fafafa; }
+  table.rubric tr.sub td { background: #f2f2f2; font-style: italic; border-top: 1.5px solid #333; }
+  table.rubric tr.tot td, table.summary tr.tot td { font-weight: bold; background: #f2f2f2; border-top: 2px solid #333; }
+  table.rubric tr.bonus td { color: var(--muted); border-top: 2px solid #333; }
+  table.timeline td { text-align: left; }
+  table.timeline td:first-child { text-align: center; white-space: nowrap; font-weight: bold; }
+  table.timeline td:nth-child(2) { font-size: 10pt; color: var(--muted); }
+  table.summary td:nth-child(odd) { text-align: left; }
+  .caption { font-size: 10pt; text-align: center; color: var(--muted); margin: 4px 0 18px; }
+  figure { margin: 18px 0; }
+  figure svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .formula { text-align: center; margin: 12px 0; font-style: italic; }
+  .formula .cases { display: inline-grid; grid-template-columns: auto auto; column-gap: 18px; row-gap: 2px; text-align: left; vertical-align: middle; border-left: 1.5px solid var(--ink); padding-left: 10px; margin-left: 8px; }
+  code { font-family: Menlo, Consolas, monospace; font-size: 0.92em; }
+  .todo { background: var(--todo); border-bottom: 1px dotted #b38f00; }
+  .note { font-size: 9.5pt; color: var(--muted); }
+  a { color: #0645ad; }
+  @media print { .page { padding: 0; } a { color: inherit; text-decoration: none; } .todo { background: none; border-bottom: 1px dotted #999; } }
+</style>
+</head><body><div class="page">
+<h1>46750 – Optimization in Modern Power Systems</h1>
+<h1 class="subtitle">Assignment 1</h1>
+<p></p>
+<h2><strong class="lead">Deadline: October 18, 2026, at 23:59</strong></h2>
+<h2>Instructions and deliverables</h2>
+<p>This assignment should be carried out in <strong>groups of 4 students</strong>. Each group should provide a single submission, including the following:</p>
+<ul>
+<li><strong>Concise report (pdf)</strong> submitted in DTU Learn, using the provided LaTeX template, available for download in <a href="/d2l/common/dialogs/quickLink/quickLink.d2l?ou=325361&amp;type=content&amp;rcode=dtu-901374" target="_blank" rel="noopener">Assignment_1_report_template</a>.&nbsp;<strong><span style="color: #990006;">Using this template is recommended but not mandatory.</span> </strong>The report has <strong>no page limit; </strong>however efficient writting is rewarded. The report should include, in the order of the template:
+<ul>
+<li>Group participation table, giving the contribution (in %) of each student to each grading criterion and overall.</li>
+<li>AI use disclosure: which AI tools were used, for what (e.g. code debugging, proofreading, literature search), and how the group checked the output. Using AI tools is allowed; not disclosing their use is not.</li>
+<li>Nomenclature: sets, indices, parameters, decision variables and dual variables, with units, introduced once and used consistently throughout.</li>
+<li>Concise answers to each question, including: rigorous and compact mathematical formulations, with definition of all <em>new</em> notations and description of all <em>new</em> equations; motivation and description of relevant modeling steps; relevant numerical analysis and insights; adequate visual aids and tables.</li>
+</ul>
+</li>
+<li><strong>Working, well-documented, and well-structured code</strong>, in the programming language of your choice.
+<ul>
+<li><em>Getting the input data and the starter code.</em> All input data and a working Python starter code are provided in the public template repository <a href="https://github.com/lemitri-DTU/template-assignment-1">https://github.com/lemitri-DTU/template-assignment-1</a>&nbsp;or available for download in . To get your own copy: on the repository page, click&nbsp;<strong>Use this template → Create a new repository</strong>&nbsp;to create your group's repository under one member's GitHub account (recommended — it keeps the full folder structure and lets the group work with git), or&nbsp;<strong>Code → Download ZIP</strong>&nbsp;if you prefer to work without GitHub. The input data is in the&nbsp;<code>data/</code> folder, one sub-folder per question; the repository README documents every data field with its units, how to run the starter code, and the expectations regarding code documentation and reproducibility. <span style="color: #990006;"><strong>Using the Python starter code is optional; the input data must be used as provided.</strong></span></li>
+<li><em>Submitting your code.</em>&nbsp;Choose one of the two, and say in your report which one you chose: attach your complete project code as a single&nbsp;<code>.zip</code>&nbsp;file to your submission in DTU Learn, or give the link to your group's GitHub repository on the front page of your report. A linked repository must be accessible to the graders (public, or private with the teaching team invited) and must not be modified after the deadline — the last commit before the deadline is what is graded.</li>
+</ul>
+</li>
+</ul>
+<h2>When to start working on what</h2>
+<p>The assignment is designed to be solved&nbsp;<em>along with</em>&nbsp;the course, not after it: each part becomes doable the week its material is covered in the lectures. Table 1 tells you, for each week, which parts of the assignment you can start (and should aim to finish) that week. Do not wait until everything has been covered — groups that start each part in the week listed below spread the work evenly over the period; groups that start after the duality lectures end up doing the whole assignment in the last two weeks.</p>
+<table class="timeline" style="width: 820px;">
+<tbody>
+<tr>
+<th>Week</th>
+<th>Lecture topic</th>
+<th>You can start working on</th>
+</tr>
+<tr>
+<td>1–2</td>
+<td>Introduction to optimization; single-time-step problems (economic dispatch, OPF), with a preview of multi-time-step problems</td>
+<td>Set up the repository and run the starter code. Formulations and their properties: 1.(a), 2.(a). All of Question 2 can be completed from this week on — 2.(b)–(d) require no duality: formulate, hypothesize, implement, verify. Implementation: 1.(e) (the model can be coded and solved; the extraction of dual variables is a small addition once week 3 is covered). Question 3 can also be started: the multi-time-step preview is enough for the formulation 3.(a), the hypotheses 3.(c), the implementation 3.(d) and the base case 3.(e).</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Duality and KKT conditions</td>
+<td>All duality derivations: 1.(b), 1.(d).i–iv; 3.(b).</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Economic interpretation of duality; introduction to sensitivity analysis</td>
+<td>All interpretations: 1.(c), 1.(d).v. The numerical validation 1.(f) — its analysis of the dual variables uses this week’s interpretation material. Design the sensitivity analysis 3.(f) — this week’s introduction to sensitivity analysis tells you how to choose parameters and ranges.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Multi-time-step problems</td>
+<td>The battery part 3.(g) — this week’s multi-time-step lectures cover storage dynamics. Bonus 2.(e). Finish the experiments of 3.(f) and draft the comparison 2.(d). By the end of this week a complete draft of the report should exist.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Model validation and sensitivity analysis</td>
+<td>Sharpen the numerical-analysis sections and the conclusions of 1.(f), 2.(d), 3.(f) and 3.(g).iv–v with the validation and sensitivity material; final proofreading and submission.</td>
+</tr>
+</tbody>
+</table>
+<p>Table 1: Which weeks of the course cover the material needed for each part of the assignment — i.e. when to start working on each question.</p>
+<h2 id="grading">Grading</h2>
+<p>Each group receives a grade between&nbsp;<strong>0 and 105 (100 points + 5 bonus points)</strong>. Every question is graded against the four criteria of the course's&nbsp;<strong>Grading criteria, detailed in the&nbsp;<a href="/d2l/common/dialogs/quickLink/quickLink.d2l?ou=325361&amp;type=content&amp;rcode=dtu-898218" target="_blank" rel="noopener">Grading guidelines and examples</a>&nbsp;page.</strong></p>
+<p>The points available for each question of this assignment are split between the criteria according to what the question asks for (Table 2).</p>
+<p>One optional&nbsp;<strong>bonus question</strong>&nbsp;(2.(e)) carries up to 5 points. It covers the full cycle — formulation, implementation and a numerical experiment you design — and is graded across all four criteria. Attempt it only once the regular questions are complete: it rewards depth, not volume.</p>
+<table class="rubric" style="width: 820px;">
+<tbody>
+<tr>
+<th>Question</th>
+<th>Content assessed</th>
+<th>Mathematical<br>models</th>
+<th>Writing</th>
+<th>Code</th>
+<th>Numerical<br>results</th>
+<th>Total</th>
+</tr>
+<tr class="parent">
+<td class="q">1.(a)</td>
+<td class="c">Formulation, properties, hourly decomposition and its meaning</td>
+<td>3</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">4</td>
+</tr>
+<tr class="parent">
+<td class="q">1.(b)</td>
+<td class="c">Lagrange function, dual problem, KKT conditions, strong duality, necessity/sufficiency</td>
+<td>3</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">4</td>
+</tr>
+<tr class="parent">
+<td class="q">1.(c)</td>
+<td class="c">Interpretation of the duals (balance, PV limit, load bounds) and their uniqueness</td>
+<td>1</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">1.(d)</td>
+<td class="c">Structure of the optimal solutions from the KKT conditions (price ladder)</td>
+<td>6</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td class="t">8</td>
+</tr>
+<tr class="child">
+<td class="q">i.</td>
+<td class="c">No simultaneous import and export: demonstration and interpretation</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">1</td>
+</tr>
+<tr class="child">
+<td class="q">ii.</td>
+<td class="c">Price ladder of the load: three regimes, closed form, interpretation</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">iii.</td>
+<td class="c">PV production and curtailment: regimes, thresholds, interpretation</td>
+<td>1</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">iv.</td>
+<td class="c">Extension beyond L_min &lt; PV_max &lt; L_max: modified regimes</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">1</td>
+</tr>
+<tr class="child">
+<td class="q">v.</td>
+<td class="c">Decision rule, ties and uniqueness of primal and dual solutions</td>
+<td>1</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="parent">
+<td class="q">1.(e)</td>
+<td class="c">Implementation, including extraction of the dual variables</td>
+<td>–</td>
+<td>–</td>
+<td>3</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">1.(f)</td>
+<td class="c">Numerical validation: base cases A and B, hour-by-hour ladder verification, comparison of the two cases, duals incl. any not uniquely determined</td>
+<td>–</td>
+<td>1</td>
+<td>–</td>
+<td>4</td>
+<td class="t">5</td>
+</tr>
+<tr class="tot">
+<td></td>
+<td>Question 1 – total</td>
+<td colspan="4"></td>
+<td>27</td>
+</tr>
+<tr class="parent">
+<td class="q">2.(a)</td>
+<td class="c">Generic separable disutility: formulation, properties, decomposition, Question 1 as a special case</td>
+<td>3</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">4</td>
+</tr>
+<tr class="parent">
+<td class="q">2.(b)</td>
+<td class="c">Linear disutility</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td class="t">12</td>
+</tr>
+<tr class="child">
+<td class="q">i.</td>
+<td class="c">Disutility function; LP reformulation and its equivalence</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">ii.</td>
+<td class="c">Hypotheses: corner (bang-bang) response, candidate load values, regimes of c, edge cases</td>
+<td>2</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="child">
+<td class="q">iii.</td>
+<td class="c">Implementation</td>
+<td>–</td>
+<td>–</td>
+<td>2</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">iv.</td>
+<td class="c">Numerical analysis: base case, sweep of c_L, regimes identified from the sweep, hypotheses confirmed</td>
+<td>–</td>
+<td>1</td>
+<td>–</td>
+<td>4</td>
+<td class="t">5</td>
+</tr>
+<tr class="parent">
+<td class="q">2.(c)</td>
+<td class="c">Strictly convex (quadratic) disutility</td>
+<td>4</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td class="t">10</td>
+</tr>
+<tr class="child">
+<td class="q">i.</td>
+<td class="c">Disutility function; hourly problem and its class</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">ii.</td>
+<td class="c">Hypotheses: gradual response vs jumps, above-reference consumption, edge cases</td>
+<td>2</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="child">
+<td class="q">iii.</td>
+<td class="c">Implementation</td>
+<td>–</td>
+<td>–</td>
+<td>2</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">iv.</td>
+<td class="c">Numerical analysis: base case and sweep of c, contrast with (b).iv</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>3</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">2.(d)</td>
+<td class="c">Multi-model comparison incl. the linear utility of Question 1; explanation from the shape of the objectives; recommendations</td>
+<td>–</td>
+<td>3</td>
+<td>–</td>
+<td>5</td>
+<td class="t">8</td>
+</tr>
+<tr class="tot">
+<td></td>
+<td>Question 2 – total</td>
+<td colspan="4"></td>
+<td>34</td>
+</tr>
+<tr class="bonus">
+<td class="q" style="background-color: #ecf0f1; border-color: #000000;">2.(e)</td>
+<td class="c" style="background-color: #ecf0f1; border-color: #000000;">Bonus – non-separable disutility: formulation and properties, implementation, base case, temporal-structure experiment (counted above 100)</td>
+<td style="background-color: #ecf0f1; border-color: #000000;">4</td>
+<td style="background-color: #ecf0f1; border-color: #000000;">2</td>
+<td style="background-color: #ecf0f1; border-color: #000000;">2</td>
+<td style="background-color: #ecf0f1; border-color: #000000;">2</td>
+<td class="t" style="background-color: #ecf0f1; border-color: #000000;">+10</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(a)</td>
+<td class="c">Formulation building on 2.(c): new data and constraint; class, convexity, feasibility condition, loss of hourly decomposability</td>
+<td>2</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(b)</td>
+<td class="c">Lagrange function, dual problem and KKT conditions; strong duality</td>
+<td>3</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">4</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(c)</td>
+<td class="c">Qualitative hypotheses: consumption above the reference, consumption above the minimum requirement, and their conditions</td>
+<td>2</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(d)</td>
+<td class="c">Implementation</td>
+<td>–</td>
+<td>–</td>
+<td>2</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(e)</td>
+<td class="c">Base case against the unconstrained consumer of 2.(c); hypotheses checked</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>3</td>
+<td class="t">3</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(f)</td>
+<td class="c">Sensitivity analysis: choice of parameters and ranges, patterns revealed, presentation, conclusions</td>
+<td>–</td>
+<td>1</td>
+<td>–</td>
+<td>4</td>
+<td class="t">5</td>
+</tr>
+<tr class="parent">
+<td class="q">3.(g)</td>
+<td class="c">A small battery</td>
+<td>4</td>
+<td>2</td>
+<td>3</td>
+<td>5</td>
+<td class="t">14</td>
+</tr>
+<tr class="child">
+<td class="q">i.</td>
+<td class="c">Formulation incl. state-of-charge dynamics; end-of-horizon choice justified against an alternative</td>
+<td>2</td>
+<td>1</td>
+<td>–</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="child">
+<td class="q">ii.</td>
+<td class="c">Simultaneous charging/discharging: argument for the given data, risk cases and fixes</td>
+<td>2</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td class="t">2</td>
+</tr>
+<tr class="child">
+<td class="q">iii.</td>
+<td class="c">Implementation</td>
+<td>–</td>
+<td>–</td>
+<td>3</td>
+<td>–</td>
+<td class="t">3</td>
+</tr>
+<tr class="child">
+<td class="q">iv.</td>
+<td class="c">Numerical analysis: base case vs (e), overlap check, effect of the battery incl. its value</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>3</td>
+<td class="t">3</td>
+</tr>
+<tr class="child">
+<td class="q">v.</td>
+<td class="c">Sensitivity analysis on the value of the battery: environment and battery parameters, conclusions</td>
+<td>–</td>
+<td>1</td>
+<td>–</td>
+<td>2</td>
+<td class="t">3</td>
+</tr>
+<tr class="tot">
+<td></td>
+<td>Question 3 – total</td>
+<td colspan="4"></td>
+<td>34</td>
+</tr>
+<tr class="parent">
+<td class="q">Global</td>
+<td class="c">Writing – overall structure, formatting and presentation of the report (graded once, across all questions)</td>
+<td>–</td>
+<td>5</td>
+<td>–</td>
+<td>–</td>
+<td class="t">5</td>
+</tr>
+<tr class="tot">
+<td class="q"></td>
+<td class="c">Total per criterion (without bonus)</td>
+<td>35</td>
+<td>25</td>
+<td>12</td>
+<td>28</td>
+<td class="t">100</td>
+</tr>
+<tr class="bonus">
+<td class="q"></td>
+<td class="c">Bonus question 2.(e) (counted above 100)</td>
+<td>4</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td class="t">+10</td>
+</tr>
+</tbody>
+</table>
+<p>Table 2: Points per question and per criterion. For questions with sub-questions, the indented rows show how the points of the question are distributed between its sub-questions. The bonus question is counted above the 100 points of the regular questions.</p>
+<table class="summary">
+<tbody>
+<tr>
+<th colspan="2">Points per question</th>
+<th colspan="2">Points per criterion</th>
+</tr>
+<tr>
+<td>Question 1</td>
+<td>27</td>
+<td>Mathematical models</td>
+<td>35</td>
+</tr>
+<tr>
+<td>Question 2</td>
+<td>34</td>
+<td>Writing (incl. 5 global)</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Question 3</td>
+<td>34</td>
+<td>Numerical results</td>
+<td>28</td>
+</tr>
+<tr>
+<td>Global (writing)</td>
+<td>5</td>
+<td>Code</td>
+<td>12</td>
+</tr>
+<tr class="tot">
+<td>Total</td>
+<td>100</td>
+<td>Total</td>
+<td>100</td>
+</tr>
+<tr class="tot">
+<td>Bonus 2.(e)</td>
+<td>+10</td>
+<td>Maximum</td>
+<td>110</td>
+</tr>
+</tbody>
+</table>
+<p style="text-align: center;">Table 3: Summary of the points per question and per criterion.</p>
+<p>The group grade is adjusted individually according to each student's overall participation share, as reported in the participation table of the report, following the rules provided&nbsp;<strong>&nbsp;</strong>in the&nbsp;<a href="/d2l/common/dialogs/quickLink/quickLink.d2l?ou=325361&amp;type=content&amp;rcode=dtu-898218" target="_blank" rel="noopener">Grading guidelines and examples</a> page. Besides, a sample report is provided for reference: <a href="/d2l/common/dialogs/quickLink/quickLink.d2l?ou=325361&amp;type=content&amp;rcode=dtu-898219" target="_blank" rel="noopener">Sample report - Assignment 1 (2023)</a>.</p>
+<h2 id="lo">Learning objectives</h2>
+<p>This assignment aims at evaluating the understanding of fundamental optimization concepts and their application to simple decision-making problems in power systems (modeling steps 1–5). Table 4 lists the learning objectives (LOs) of the course and, for each of them, the questions of this assignment through which it is assessed.</p>
+<table class="lo">
+<tbody>
+<tr>
+<th>LO</th>
+<th>Learning objective</th>
+<th>Assessed in</th>
+</tr>
+<tr>
+<td>LO1</td>
+<td>Describe the fundamental principles of convex optimization and linear programming, including problem structure, feasibility, optimality, and computational complexity.</td>
+<td>1.(a),&nbsp;1.(d);&nbsp;2.(a),&nbsp;2.(b).i,&nbsp;2.(c).i;&nbsp;3.(a),&nbsp;3.(g).i; bonus&nbsp;2.(e)</td>
+</tr>
+<tr>
+<td>LO2</td>
+<td>Explain and compare methods for optimization under uncertainty, examining their problem structure, underlying assumptions, and computational trade-offs.</td>
+<td>Not assessed in Assignment 1</td>
+</tr>
+<tr>
+<td>LO3</td>
+<td>Formulate and analyze the dual and optimality conditions of convex optimization problems.</td>
+<td>1.(b);&nbsp;3.(b)</td>
+</tr>
+<tr>
+<td>LO4</td>
+<td>Interpret the geometric and techno-economic implications of the dual and optimality conditions of optimization problems in power systems, by linking them to marginal costs, resource valuations, and operational constraints.</td>
+<td>1.(c),&nbsp;1.(d),&nbsp;1.(f)</td>
+</tr>
+<tr>
+<td>LO5</td>
+<td>Translate real-life decision-making problems in power systems from natural language into well-defined mathematical optimization models, identifying objectives, decision variables, constraints, and input data.</td>
+<td>1.(a);&nbsp;2.(a),&nbsp;2.(b).i,&nbsp;2.(c).i;&nbsp;3.(a),&nbsp;3.(g).i; bonus&nbsp;2.(e)</td>
+</tr>
+<tr>
+<td>LO6</td>
+<td>Critically evaluate the solutions of optimization models by analyzing how modeling choices affect feasibility, optimality, and computational complexity, and extract actionable insights for operational or planning decisions.</td>
+<td>1.(f);&nbsp;2.(b).ii/iv,&nbsp;2.(c).ii/iv,&nbsp;2.(d);&nbsp;3.(c),&nbsp;3.(f),&nbsp;3.(g).iv–v; bonus&nbsp;2.(e)</td>
+</tr>
+<tr>
+<td>LO7</td>
+<td>Collaboratively design and implement scientific code to solve real-life power systems optimization problems, integrating contributions across group members and documenting workflows clearly.</td>
+<td>1.(e);&nbsp;2.(b).iii,&nbsp;2.(c).iii;&nbsp;3.(d),&nbsp;3.(g).iii; code repository and participation table</td>
+</tr>
+<tr>
+<td>LO8</td>
+<td>Effectively communicate the solutions of complex decision-making problems in power systems to a broad audience through clear and compelling narratives and visualization aids.</td>
+<td>1.(f);&nbsp;2.(b).iv,&nbsp;2.(c).iv,&nbsp;2.(d);&nbsp;3.(f),&nbsp;3.(g).iv–v</td>
+</tr>
+<tr>
+<td>LO9</td>
+<td>Communicate the formulation, solution process, and insights of complex optimization problems to a broad audience through clear written analysis, compelling narratives, and visualization aids.</td>
+<td>All questions (report as a whole)</td>
+</tr>
+</tbody>
+</table>
+<p>Table 4: Learning objectives of the course and the questions of Assignment 1 assessing them.</p>
+<h2>Data provided</h2>
+<p>All input data for the base case simulations in Questions 1-3 is provided in the public template repository <a href="https://github.com/lemitri-DTU/template-assignment-1">https://github.com/lemitri-DTU/template-assignment-1</a>&nbsp;<span style="font-size: 11pt;">(see the repository README). <em>When asked to select your own data, please provide the chosen value in the appendix and source code.</em></span><strong></strong></p>
+<h2>Problem statement</h2>
+<p>The objective of this assignment is to model and analyze an active distribution network with flexible residential consumers. You will build consumer-level flexibility models, analyze the structure of these optimization problems and derive meaningful techno-economic insights for flexible consumers.</p>
+<p>It studies the consumption decisions of a single flexible consumer in three steps of increasing complexity: a price-elastic hourly consumption (Question 1), the same decision under different models of the consumer's comfort preferences reflected in the objective function (Question 2), and finally an intertemporal requirement expressed as a constraint: a minimum daily energy consumption (Question 3). Questions 2 &amp; 3 each change a single element compared to the previous question, so that the impact of every modeling choice can be isolated.</p>
+<h3>1. Price-elastic hourly consumption decisions of a flexible consumer</h3>
+<p>We consider a flexible residential consumer who owns the following assets:</p>
+<ul>
+<li>A single flexible electrical load:
+<ul>
+<li>Hourly consumption can be completely adjusted between its minimum and maximum bounds (in KWh/h), <em>L</em><sup>min</sup> and <em>L</em><sup>max</sup></li>
+<li>The consumer is price-elastic: every kWh consumed in any hour is worth a constant marginal consumption utility&nbsp;<em>u</em><sup>L</sup>&nbsp;(in DKK/kWh) to the consumer.</li>
+<li>The consumer aims at maximizing its daily&nbsp;<em>net utility</em> (in DKK) - also called <em>surplus</em></li>
+</ul>
+</li>
+<li>A rooftop photovoltaic (PV) system:
+<ul>
+<li>The hourly available PV production PV<sub>t</sub><sup>max</sup> (in KWh/h) for the following day is perfectly forecasted.</li>
+<li>Producing one kWh of PV costs <em>c</em><sup>PV</sup> (fixed marginal production cost; in DKK/kWh). IN the dataset provided, two different regimes of prices are considered: Case A with a cheap PV (<em>c</em><sup>PV</sup> &lt; <em>u</em><sup>L</sup>) and&nbsp;Case B with an expensive PV (<em>c</em><sup>PV</sup> &gt; <em>u</em><sup>L</sup>).</li>
+</ul>
+</li>
+</ul>
+<p>The consumer is connected to the distribution grid under the following techno-economic conditions:</p>
+<ul>
+<li>It can import or export electricity to the grid, without any restriction.</li>
+<li>It faces known, <em>positive</em> hourly electricity prices <em>p<sub>t</sub></em> (in DKK/kWh) over a 24-hour horizon, at which electricity is bought from or sold to the retailer.</li>
+<li>Fixed (positive) grid tariffs&nbsp;<em>τ</em><sup>imp</sup> and <em>τ</em><sup>exp</sup> are charged by the distribution system operator (DSO) on every unit imported from or exported to the grid (in DKK/kWh), respectively.&nbsp;The prosumer therefore does not face the market price&nbsp;<em>p<sub>t</sub></em> directly, but the resulting <em>effective </em>import and export prices, p<em><sub>t</sub><sup>imp</sup></em> and&nbsp;p<em><sub>t</sub><sup>exp</sup></em>, which you will need to express in terms of&nbsp;<em>&nbsp;<em>p<sub>t</sub>, τ</em><sup>imp</sup> </em>and<em> <em>τ</em><sup>exp</sup> </em>. We assume that the export grid tariff is always smaller than the hourly electricity prices&nbsp;<em>p<sub>t</sub></em></li>
+</ul>
+<ol class="alpha">
+<li>Formulate the daily problem of this consumer: define the input data, decision variables, objective function and constraints, and state its properties: problem class, convexity, conditions on the input data under which it is feasible and bounded, and its size. Show that the daily problem decomposes into 24 independent hourly problems, write the hourly problem, and explain what this decomposition means computationally and economically.</li>
+<li>Formulate the Lagrange function, the dual problem, and the KKT conditions of the hourly problem. Does strong duality hold? Are the KKT conditions necessary and/or sufficient optimality conditions? Justify your answer from the properties stated in (a).</li>
+<li>In your own words, give the techno-economic interpretation of the dual variables associated with the hourly power balance, the PV availability limits, and the hourly load bounds. Express what the dual of the power balance is equal to in hours when the consumer is (i) importing, (ii) exporting, and (iii) when it neither imports nor exports and its load is strictly within its bounds.</li>
+<li><em>Price ladder. </em>In this question, we only consider Case A&nbsp;(<em>c</em><sup>PV</sup> &lt; <em>u</em><sup>L</sup>). Without numerically solving the hourly problem, use the strong duality and KKT conditions to derive the structure of its optimal solutions under different cost structures<em>:</em>
+<ol class="roman">
+<li>Is it ever optimal for the consumer to import and export in the same hour? Demonstrate your answer. Which of the above-mentioned conditions on the price structure ensures this? Interpret this condition.&nbsp;</li>
+<li><em>Load consumption.</em> Assuming that <em>L</em><sup>min</sup> &lt; PV<sub>t</sub><sup>max</sup> &lt; <em>L</em><sup>max</sup> for every hour, identify three regimes for the optimal load in hour <em>t</em>, characterised by the relationship between <em>u<sup>L</sup></em>, the effective import price, and the effective export price: one in which the optimal load is at its upper bound, one in which it is at its lower bound, and one in which it is between these bounds. State the conditions defining each regime, express the optimal value of the load in each regime, and interpret the three cases: what is the prosumer doing in each, and why does the optimum switch where it does?</li>
+<li><em>PV production.</em> Still assuming that <em>L</em><sup>min</sup> &lt; PV<sub>t</sub><sup>max</sup> &lt; <em>L</em><sup>max</sup> for every hour,&nbsp;identify the regimes of curtailment and the thresholds on <em>c</em><sup>PV</sup> that separate them.&nbsp;Interpret these conditions.</li>
+<li>Relax the previous assumption that&nbsp;<em>L</em><sup>min</sup> &lt; PV<sub>t</sub><sup>max</sup> &lt; <em>L</em><sup>max</sup> for every hour, and extend the analysis in ii and iii. to account for cases in which PV<sub>t</sub><sup>max</sup> &lt; <em>L</em><sup>min</sup> or&nbsp;PV<sub>t</sub><sup>max</sup><span style="font-size: 11pt;"> &gt;L</span><sup>max</sup>. In which of the price regimes considered above does this change the optimal load consumption and PV curtailment? Express the new optimal solutions for these cases.&nbsp;</li>
+<li>Summarize ii-iv as a decision rule: in each hour the consumer compares two given values, <em>u</em> and <em>c</em><sup>PV</sup>, with the two effective import and export prices. What happens when one of these comparisons is a tie, and what does it imply for the uniqueness of the primal and dual solutions?</li>
+</ol>
+</li>
+<li>Implement this optimization problem in a programming language of your choice, following the guidelines provided in the repository. Your code must return the primal solution, the objective value (and separately the procurement cost and the utility), and the dual variables of the constraints discussed in (c).</li>
+<li><em>Numerical validation. </em>Solve the base case A. Present and analyze the main hourly results. Verify the price ladder of (d).ii–iii hour by hour. Solve the base case B. Present and analyze the main hourly results. Then explain the differences between the two cases and how the price ladder of (d).ii–iii is impacted. In both cases, analyze the values of dual variables (including any that is not uniquely determined).</li>
+</ol>
+<h3 id="q2">2. Modeling the consumer's preferences in the objective function: separable disutility functions</h3>
+<p>We keep the parameters of Question 1 (case A) but change how the load preferences are represented in the objective. Instead of a constant marginal utility per kWh, the consumer has a preferred hourly consumption profile&nbsp;<em>ℓ</em><sup>ref</sup><sub><em>t</em></sub> (<em>reference profile</em>) and experiences a <em>non-negative&nbsp;disutility</em> when its consumption deviates from it, such that this disutility is minimal and equal to 0 when there is no deviation. All other costs and constraints remain the same. As in Question 1, every disutility considered is <em>separable per hour</em>.</p>
+<ol>
+<li style="list-style-type: none;">
+<ol style="list-style-type: lower-alpha;">
+<li>Consider a generic convex and differentiable disutility function. Adapt the problem of Question 1.(a): define all new notations (input parameters and decision variables), formulate the objective and constraints,&nbsp;and state how its properties (problem class, convexity, feasibility, decomposability per hour) compare with those of Question 1. Show that the objective of Question 1 corresponds to one particular choice of disutility function and reference profile: identify it, and note which of the assumptions above it relaxes.</li>
+<li>The disutility is now a linear function of the absolute deviation from the reference profile, with a linear coefficient <em>c<sup>L</sup></em>&nbsp;&gt; 0 in DKK/kWh. This function is not differentiable at 0.
+<ol>
+<li style="list-style-type: none;">
+<ol style="list-style-type: lower-roman;">
+<li>Write the corresponding hourly disutility function. Reformulate the hourly problem as a linear program by introducing appropriate <em>continuous</em> auxiliary variables and <em>linear</em> objective and constraints.</li>
+<li>Before solving, discuss qualitatively how the optimal load is expected to respond to&nbsp;<em>c<sup>L</sup></em>, using a simple hourly cost-benefit argument (no duality is needed):&nbsp;For given effective import and export prices, do you expect the load to vary gradually when <em>c<sup>L</sup>&nbsp;</em>varies? Or to jump between a few candidate values? Do you expect the load to ever consume&nbsp;<em>more</em> than its reference profile, and why?&nbsp;You will verify these hypotheses in <em>iv</em>.</li>
+<li>Implement this model, following the guidelines of the repository.</li>
+<li>Solve the base case and present the optimal hourly schedule against the reference profile. Then vary&nbsp;<em>c<sup>L</sup></em> over a range that spans the regimes you hypothesized in ii. Report for each run, the daily procurement cost, the total disutility, the daily energy consumed, the total absolute deviation, and the number of hours in which the deviation bound is binding. Identify from the sweep the values of&nbsp;<em>c<sup>L</sup></em> at which the behaviour changes and relate them to the effective prices and marginal PV production cost. Do the results confirm your hypotheses in ii?</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>The disutility is now a strictly convex quadratic function of the deviation with a quadratic coefficient <em>c<sup>Q</sup></em>&nbsp;&gt; 0 in DKK/kWh<sup>2</sup>&nbsp;(and no linear coefficient <em>c<sup>L</sup></em>=0).
+<ol>
+<li style="list-style-type: none;">
+<ol style="list-style-type: lower-roman;">
+<li>Derive the corresponding disutility function, and write the resulting hourly problem and state its problem class.</li>
+<li>Before solving, discuss qualitatively how the optimal load is expected to respond to&nbsp;<em>c<sup>Q</sup></em>, using a simple hourly cost-benefit argument (no duality is needed):&nbsp;For given effective import and export prices, do you expect the load to vary gradually when&nbsp;<em>c<sup>Q</sup>&nbsp;</em>varies? Or to jump between a few candidate values? If so, express these values and thresholds. Do you expect the load to ever consume <em>more</em> than its reference profile, and why?&nbsp;You will verify these hypotheses in <em>iv</em>.</li>
+<li>Implement this model, following the guidelines of the repository.</li>
+<li>Solve the base case and present the optimal hourly schedule against the reference profile. Then repeat a similar sweep over&nbsp;<em>c<sup>Q</sup></em> as in (b).iv for this model, with the same table of metrics. Do the results confirm your hypotheses of ii?</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>Multi-model comparison. Using the base case and two or three scenarios selected from (b).iv and (c).iv, compare the linear and quadratic disutility models with each other. Analyze the metrics above and the shape of the resulting load profiles. Contrast the response to <em>c<sup>Q</sup></em> in (c).iv with that observed in (b).iv for <em>c<sup>L</sup></em>.&nbsp;In your own words, explain the impact of the objective functions: why does one model produce corner (bang-bang) solutions and the other a smooth, gradual response? Conclude with a recommendation: for which types of flexible loads and consumer preferences is each objective the more appropriate choice, and what does the choice imply for how a consumer would have to express its preferences?</li>
+<li>All the disutility functions above are separable in time: the discomfort caused by a deviation in hour&nbsp;<em>t</em>&nbsp;does not depend on what happens in the other hours. For many loads this is not realistic: a thermal load whose temperature drifts, or a consumer who accepts a short interruption but not a long one, suffers more from&nbsp;<em>sustained</em>&nbsp;deviations in consecutive hours than from the same total deviation spread over the day.<br>
+<ol>
+<li style="list-style-type: none;">
+<ol style="list-style-type: lower-roman;">
+<li>Propose a disutility function that is <em>not</em> separable in time and has this property. Express it mathematically (one formulation suffices; several are possible), and state whether it is convex, how the problem class changes, and whether the problem still decomposes into hourly problems.</li>
+<li>Select adequate values for the cost parameters of this disutility function (base case) and implement this model, following the guidelines of the repository.</li>
+<li>
+<p dir="ltr">Solve the base case and plot the optimal hourly schedule against the reference profile. Compare it with the schedules obtained in (b).iv and (c).iv: where do the deviations occur, how large are they, and how does the temporal coupling of your disutility function explain the difference?</p>
+</li>
+<li>Investigate how the <em>temporal structure</em> of prices affects this consumer: what happens when prices alternate quickly between high and low from hour to hour, versus remaining high for several consecutive hours? Design a numerical experiment that isolates this effect, solve all the models of (c), (d) and (e), and compare the daily surplus and total deviations. Justify why your experiment allows a fair comparison — both across price profiles and across models.</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h3>3. Modeling the consumer's requirements in the constraints: a minimum daily energy consumption</h3>
+<p>We keep the consumer of Question 2.(c), with a&nbsp;quadratic disutility, and add a single new requirement: over the whole day, the consumer must consume at least a minimum total energy&nbsp;<em>E</em><sup>min</sup> (in kWh). Think of a load that must complete a daily duty whatever the prices: an electric vehicle that must be charged by the morning, a water heater, a batch process. This is the first constraint of the assignment that <em>couples the hours</em> of the day.</p>
+<ol class="alpha">
+<li>Formulate the daily problem: starting from the model of Question 2.(c), define the new input data and the new constraint, and state how the properties of the problem change compared with Question 2: problem class, convexity, feasibility (state a condition on <em>E</em><sup>min</sup>, the reference profile, and the load bounds under which the problem is feasible), and whether the problem still decomposes into 24 independent hourly problems, and why.</li>
+<li>Formulate the Lagrange function, the dual problem and the KKT conditions of the daily problem, denoting by <em>μ</em> ≥ 0 the multiplier of the minimum-energy requirement. Does strong duality hold?</li>
+<li>Before solving — and without using the KKT conditions of (b) — discuss qualitatively the shape of the optimal solutions: Will the consumer ever consume&nbsp;<em>above</em> its hourly reference profile - why, and under which conditions? Will the consumer ever consume&nbsp;<em>above</em> its daily&nbsp;minimum requirement - why, and under which conditions? You will verify these hypotheses in (d) and (e).</li>
+<li>Implement this model, following the guidelines of the repository.&nbsp;</li>
+<li>For the base case, present the optimal schedule against the reference profile and against the unconstrained consumer of Question 2.(c) on the same data, and check the hypotheses of (c) on the results.</li>
+<li><em>Sensitivity analysis. </em>Design and run your own numerical experiments to reveal how the behaviour of this consumer changes across parameter values: you choose the most relevant parameters to vary (for instance <em>E</em><sup>min</sup>, the disutility coefficient, the hourly bounds, the level or the spread of the effective prices, etc - vary at least two of them, one at a time), over which ranges, and which results to present. Aim to reveal&nbsp;<em>qualitatively different patterns of behaviour</em> rather than to be exhaustive: a few well-chosen experiments, clearly presented and explained, will be rewarded over a large number of uncommented runs. Conclude on what determines when and how the minimum-energy requirement changes this consumer's behaviour.</li>
+<li>A <em>small battery</em>. The consumer now also owns a small battery, which it can charge from the grid or from its PV production and discharge to serve its load or to export. Its energy capacity (in kWh), charging and discharging power limits (in kW), charging and discharging efficiencies, and its initial state of charge are provided in the repository.
+<ol class="roman">
+<li>Extend the formulation of (a): define the new input data and decision variables, and write the new constraints, including the state-of-charge dynamics that link consecutive hours. One modeling choice is deliberately left to you: how to treat the state of charge at the <em>end of the horizon</em> — in the constraints (for instance, requiring it to return to its initial level) or in the objective (for instance, valuing the energy left in the battery at the end of the day). Choose one representation, express it mathematically, and briefly justify your choice against at least one alternative: what behaviour do you expect each to produce in the last hours of the day?</li>
+<li>Your model will contain separate charging and discharging variables: discuss whether the two can be strictly positive in the same hour at an optimal solution. Argue why or why not for the data of this assignment (considering the efficiencies and price structure provided). State under which circumstances simultaneous charging and discharging would become a real risk, and how this could be fixed. No duality analysis or KKT conditions are required in this part.</li>
+<li>Implement this model, following the guidelines of the repository.</li>
+<li><em>Numerical analysis. </em>Solve the base case with the battery (check in your results that charging and discharging never overlap, as argued in ii) and compare with (d): how does the battery change the optimal schedule, the deviations from the reference, the role of the minimum-energy requirement, and the net utility&nbsp;<em>(value of the battery)</em>?</li>
+<li><em>Sensitivity analysis. </em>Design and run your own sensitivity analysis to investigate what impacts the <em>value of the battery - </em>defined as the difference between the consumer's total net utility with and without the battery, all else being equal. Select at least two <em>relevant</em> parameters to vary: one describing the environment the battery operates in (e.g. the hourly variation of prices over the day, the overall price level, or the temporal correlation between high prices and high net load) and at least one describing the battery itself (e.g. its capacity, power limits, or efficiencies) and conduct a sweep for each parameter (independently) with at least three values. Present only the results you find interesting, and explain in your own words why each parameter increases, decreases, or barely affects the value of the battery. Aim to reveal&nbsp;<em>qualitatively different patterns of behaviour</em> rather than to be exhaustive: a few well-chosen experiments, clearly presented and explained, will be rewarded over a large number of uncommented runs.&nbsp;Conclude: in what kind of environment is consumer-level storage worth the most, and which of its technical characteristics matter?</li>
+</ol>
+</li>
+</ol>
+</div></body></html>
