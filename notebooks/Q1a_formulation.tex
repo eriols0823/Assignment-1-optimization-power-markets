@@ -112,24 +112,78 @@ under which a point satisfying every constraint exists).}
 about what happens if a costless arbitrage between buying and selling were possible).}
 
 \paragraph{Size.}
-\todo{Number of variables and number of constraints, as a function of the 24-hour
-horizon.}
+Each hour has four decision variables ($\load$, $\qimp$, $\qexp$, $\pvprod$), so the daily
+problem has $4 \times 24 = 96$ variables. Each hour also has seven constraints: the power
+balance \eqref{eq:c_balance} (an equality), the two load bounds \eqref{eq:c_load_bounds},
+the non-negativity of import and export \eqref{eq:c_import_nonneg}--\eqref{eq:c_export_nonneg},
+and the two PV bounds \eqref{eq:c_pv_limit}. This gives $7 \times 24 = 168$ constraints in
+total, of which 24 are equalities and 144 are inequalities. If the simple bounds on the
+variables are not counted as constraints, only the 24 power-balance equalities remain.
 
 \subsubsection{Hourly decomposition}
 
 \paragraph{Decomposition.}
-\todo{Show that the daily problem decomposes into 24 independent hourly problems: identify
-every term of the objective and every constraint, and check whether any of them links two
-different hours together.}
+The daily objective \eqref{eq:daily_net_utility} is a sum over hours, and every term of
+that sum only involves the variables of its own hour $t$. Likewise, every constraint
+\eqref{eq:c_balance}--\eqref{eq:c_pv_limit} only involves variables of a single hour: no
+constraint links hour $t$ with any other hour. There is therefore no dependence between
+different hours, and the daily problem splits into 24 independent hourly problems.
 
 \paragraph{The hourly problem.}
-\todo{Write out the single-hour problem explicitly (its own objective and constraints, for
-one generic hour $t$).}
+For a generic hour $t \in \T$, the problem has the same structure as the daily one without
+the summation, with the data specific to that hour ($p_t$, and hence $\pimp$ and $\pexp$,
+and $\PVmax$):
+\begin{align}
+    \max_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
+    & U_t = \uL \, \load - \pimp \, \qimp + \pexp \, \qexp - \cpv \, \pvprod \\
+    \text{s.t.} \quad
+    & \load = \pvprod + \qimp - \qexp, \\
+    & \Lmin \leq \load \leq \Lmax, \\
+    & \qimp \geq 0, \quad \qexp \geq 0, \\
+    & 0 \leq \pvprod \leq \PVmax.
+\end{align}
 
 \paragraph{Computational meaning.}
-\todo{What does this decomposition change about how the problem can be solved (size of the
-problem actually being solved, parallelisability, ...)?}
+Since the hours are independent, the 24 hourly problems can be solved separately, in any
+order, and even in parallel. Each of them is also much smaller than the daily problem: 4
+variables and 7 constraints instead of 96 and 168.
+
+This can be seen in the compact matrix form
+\begin{equation}
+    \min_{\mathbf{x} \in \mathbb{R}^N} \; z = \mathbf{c}^\top \mathbf{x}
+    \quad \text{s.t.} \quad A\mathbf{x} \geq \mathbf{b}, \quad \mathbf{x} \geq \mathbf{0},
+\end{equation}
+where $\mathbf{x}, \mathbf{c} \in \mathbb{R}^N$ are the vectors of decision variables and
+costs, $\mathbf{b} \in \mathbb{R}^M$ is the right-hand-side vector, and
+$A \in \mathbb{R}^{M \times N}$ is the left-hand-side constraint matrix, with one row per
+constraint and one column per decision variable. Ordering the variables by hour,
+$\mathbf{x} = (\mathbf{x}_0, \dots, \mathbf{x}_{23})$, the absence of constraints between
+different hours makes $A$ block diagonal, with one block $A_t$ per hour:
+\begin{equation}
+    A = \begin{pmatrix}
+        A_0 & & \\
+        & \ddots & \\
+        & & A_{23}
+    \end{pmatrix},
+    \qquad
+    \mathbf{c} = \begin{pmatrix} \mathbf{c}_0 \\ \vdots \\ \mathbf{c}_{23} \end{pmatrix},
+    \qquad
+    \mathbf{b} = \begin{pmatrix} \mathbf{b}_0 \\ \vdots \\ \mathbf{b}_{23} \end{pmatrix}.
+\end{equation}
+The problem therefore splits into 24 independent problems
+$\min \, \mathbf{c}_t^\top \mathbf{x}_t$ s.t. $A_t \mathbf{x}_t \geq \mathbf{b}_t$,
+$\mathbf{x}_t \geq \mathbf{0}$, one per hour.
+\todo{Write explicitly $\mathbf{x}_t$, $\mathbf{c}_t$, $A_t$ and $\mathbf{b}_t$ for the
+hourly problem above: this requires putting it in the form of the matrix formulation
+(minimisation, constraints as $\geq$, variables $\geq 0$), so decide how you handle the
+maximisation and the variable bounds.}
 
 \paragraph{Economic meaning.}
-\todo{What does this decomposition say about the structure of the consumer's
-decision-making across the day?}
+The load is flexible, but it is not subject to reaching a total consumption over the day:
+the consumer only chooses how much to consume in each hour, between $\Lmin$ and $\Lmax$. For
+example, consuming less in hour $t$ (say, not running the washing machine then) does not
+oblige the consumer to consume more in another hour, and the value $\uL$ of each kWh does
+not depend on when it is consumed. Therefore, to decide in hour $t$ only the data of that
+hour are needed: not just the price, but also the tariffs and the PV available in that
+hour. The flexibility of the load does not break the independence between hours; what would
+break it is a minimum daily energy requirement or a battery.
