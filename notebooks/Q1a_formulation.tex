@@ -38,7 +38,8 @@
 \subsubsection{Input data}
 \begin{itemize}
     \item $\T = \{0, \dots, 23\}$: the set of hours of the day.
-    \item $\Lmin$, $\Lmax$: minimum and maximum hourly load consumption (kWh/h).
+    \item $\Lmin$, $\Lmax$: minimum and maximum hourly load consumption (kWh/h), with
+    $0 \leq \Lmin \leq \Lmax$.
     \item $\PVmax$, for every $t \in \T$: maximum available PV production in hour $t$
     (kWh/h).
     \item $p_t$: hourly electricity price in hour $t$ (DKK/kWh).
@@ -69,8 +70,8 @@ import tariff is added to the market price, and the export tariff is subtracted 
     \item $\qimp \geq 0$: electricity imported from the grid in hour $t$ (kWh/h).
     \item $\qexp \geq 0$: electricity exported to the grid in hour $t$ (kWh/h).
     \item $\load$: load consumed in hour $t$ (kWh/h); its bounds are given by constraint
-    \eqref{eq:c_load_bounds} below (no battery, so it cannot act as anything other than
-    actual consumption, which is defined to be non-negative in this exercise).
+    \eqref{eq:c_load_bounds} below (non-negative since $\Lmin \geq 0$: a load can only
+    consume, not generate, electricity).
     \item $\pvprod$: PV production used in hour $t$ (kWh/h).
 \end{itemize}
 
