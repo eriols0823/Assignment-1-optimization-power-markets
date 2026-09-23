@@ -1,0 +1,56 @@
+% Question 1.(b) -- Lagrange function, dual problem and KKT conditions of the hourly problem
+%
+% SCAFFOLD ONLY: structure and \todo prompts, no derivation. Fill each \todo with your own work.
+% Task text (course_materials/Assignment_1_Instructions.html, Question 1.(b)):
+%   "Formulate the Lagrange function, the dual problem, and the KKT conditions of the hourly
+%    problem. Does strong duality hold? Are the KKT conditions necessary and/or sufficient
+%    optimality conditions? Justify your answer from the properties stated in (a)."
+% Grading (Table 2, row 1.(b)): mathematical model + writing; no code.
+% Source material: Lecture 3 notes -- sections 3 (Lagrangian), 4 (Lagrange duality),
+%   5 (LP duality), 6 (KKT).
+%
+% Called from the end of sources/1_.tex with \input{sources/1b_duality}.
+% Whatever multipliers you introduce: add them to sources/9_nomenclat.tex (with units) and, if
+% you create macros for them, put the \newcommand next to the others in main.tex.
+
+\subsection{(b) Lagrangian, dual problem and KKT conditions}
+
+\subsubsection{Setting up}
+\paragraph{Hourly problem in the form used here.}
+\todo{Restate the hourly problem of (a) for a generic hour $t$ (one line, refer to the
+equations of (a)). Decide and state your conventions: do you keep it as a maximisation or
+turn it into a minimisation as in the lecture notes? How is each constraint written
+($\leq 0$, $\geq 0$, $= 0$)? The signs of all multipliers below depend on these choices, so
+fix them once here.}
+
+\paragraph{Multipliers.}
+\todo{Associate one dual variable to each constraint: give a table or list (name, the
+constraint it belongs to, its sign restriction, its unit). Decide which constraints get a
+multiplier and which ones stay as variable bounds ($x \geq 0$) -- say which and why.}
+
+\subsubsection{Lagrange function}
+\todo{Write the Lagrangian of the hourly problem with your multipliers.}
+
+\subsubsection{Dual problem}
+\paragraph{Dual function.}
+\todo{Write the dual function (minimise/maximise the Lagrangian over the primal variables).
+State the condition on the multipliers for which it is finite, and where it comes from.}
+
+\paragraph{Dual problem.}
+\todo{Write the dual problem: objective, constraints on the multipliers. Which problem class
+is it?}
+
+\subsubsection{KKT conditions}
+\todo{Write the four groups of conditions for your problem, one line each per variable or
+constraint: (i) stationarity, (ii) primal feasibility, (iii) dual feasibility, (iv)
+complementary slackness.}
+
+\subsubsection{Strong duality}
+\todo{Does strong duality hold? Justify from the properties of the problem stated in (a)
+(problem class, feasibility, boundedness), and state what it implies for the primal and dual
+optimal values.}
+
+\subsubsection{Necessity and sufficiency of the KKT conditions}
+\todo{Are the KKT conditions necessary, sufficient, both, or neither for optimality of this
+problem? Justify from the properties stated in (a), separately for necessity and for
+sufficiency.}
