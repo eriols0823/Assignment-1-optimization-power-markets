@@ -1,0 +1,210 @@
+\documentclass[12pt,oneside,a4paper,english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin2]{inputenc}
+\usepackage[margin=2.25cm,headheight=26pt,includeheadfoot]{geometry}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage[framed, numbered]{matlab-prettifier}
+\usepackage{changepage}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{titling}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{lscape}
+\usepackage{booktabs,caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage[english,intoc]{nomencl}
+\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{tabularx}
+
+% --- handy macros for this assignment ---
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\qimp}[1][t]{q^{\mathrm{imp}}_{#1}}
+\newcommand{\qexp}[1][t]{q^{\mathrm{exp}}_{#1}}
+\newcommand{\pimp}[1][t]{p^{\mathrm{imp}}_{#1}}        % effective import price
+\newcommand{\pexp}[1][t]{p^{\mathrm{exp}}_{#1}}        % effective export price
+\newcommand{\cpv}{c^{\mathrm{PV}}}
+\newcommand{\Emin}{E^{\min}}
+\newcommand{\lref}[1][t]{\hat{\ell}_{#1}}
+\newcommand{\uL}{u^{L}}
+\newcommand{\load}[1][t]{\ell_{#1}}
+\newcommand{\pvprod}[1][t]{q^{\mathrm{PV}}_{#1}}
+\newcommand{\Lmin}{L^{\min}}
+\newcommand{\Lmax}{L^{\max}}
+\newcommand{\PVmax}[1][t]{PV_{#1}^{\max}}
+\newcommand{\tauexp}{\tau^{\mathrm{exp}}}
+\newcommand{\tauimp}{\tau^{\mathrm{imp}}}
+
+% --- nomenclature: all symbols are declared in sources/9_nomenclat.tex, with their units
+\makenomenclature
+
+
+% --- set footer and header ---
+\pagestyle{fancy}
+\fancyhf{}
+
+\setlength{\parindent}{2em}
+\title{46750 - Optimization in Modern Power Systems - Assignment 1} % to reference as \title, dont use \maketitle
+\makeatletter\let\Title\@title\makeatother
+
+% Code listings: Python (the recommended starter code is Python)
+\lstset{language=Python,
+basicstyle=\small\ttfamily,
+keywordstyle=\color{blue},
+commentstyle=\color{gray},
+numbers=left,
+numberstyle={\scriptsize\color{black}},
+numbersep=0.5cm,
+frame=single,
+breaklines=true,
+showstringspaces=false
+}
+
+\newlist{steps}{enumerate}{1}
+\setlist[steps, 1]{leftmargin=1.5cm,label = Step \arabic*:}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+
+
+\newcommand{\todo}[1]{{\color{red}\bfseries [TODO: #1]}}
+% --- End of page settings ---
+
+
+%\lhead{\Title}
+\rhead{\nouppercase{\rightmark}}
+\lhead{\Title}
+\rfoot{\includegraphics[height=1.25cm]{root/logo.pdf}} % right header logo
+\setlength\headheight{16pt}
+\setlength{\footskip}{50pt}
+\lhead{\Title} %rightH title
+\cfoot{\thepage}
+
+% --- End of page settings ---
+
+
+
+\begin{document}
+\pagenumbering{roman} 
+\input{sources/0_frontpage.tex}
+
+\newpage 
+
+
+\newpage
+\doublespacing
+%\addcontentsline{toc}{section}{Table of Contents}
+\renewcommand{\baselinestretch}{1}\normalsize
+\tableofcontents
+\renewcommand{\baselinestretch}{1}\normalsize
+%\singlespacing
+\thispagestyle{fancy} % force page style
+
+\newpage
+
+\section*{Group participation table}
+\addcontentsline{toc}{section}{Group participation table}
+% Fill in the contribution of each student, in percent, to each grading criterion and to the
+% assignment as a whole. Each of the four criterion columns sums to 100%. The "Overall" column
+% reflects the share of the total time spent by each student and need NOT be a weighted average of
+% the criterion columns, since the criteria differ in the time they require. The overall share is
+% the one used for the individual grade adjustment (see the assignment text).
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{l>{\centering\arraybackslash}p{2.7cm}>{\centering\arraybackslash}p{1.8cm}>{\centering\arraybackslash}p{1.8cm}>{\centering\arraybackslash}p{2.2cm}>{\centering\arraybackslash}p{1.8cm}}
+    \toprule
+    \textbf{Student} & \textbf{Mathematical models} & \textbf{Writing} & \textbf{Code} & \textbf{Numerical results} & \textbf{Overall} \\
+    \midrule
+    Student 1 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
+    Student 2 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
+    Student 3 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
+    Student 4 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
+    \midrule
+    \textbf{Sum} & 100\,\% & 100\,\% & 100\,\% & 100\,\% & 100\,\% \\
+    \bottomrule
+  \end{tabular}
+  \caption{Contribution of each group member to each grading criterion and to the assignment
+  overall (in \% of the group total). The overall column reflects the time spent and is not a
+  weighted average of the criterion columns.}
+  \label{tab:participation}
+\end{table}
+\todo{Optionally add two or three sentences on how the work was organized (who led which question, how the review was done).}
+
+% ------------------------------------------------------------ AI use disclosure
+\section*{AI use disclosure}
+\addcontentsline{toc}{section}{AI use disclosure}
+% State which AI tools were used (e.g. ChatGPT, Claude, GitHub Copilot), for which tasks
+% (e.g. debugging, code documentation, proofreading, brainstorming, plotting), and how the group
+% checked the output (e.g. re-derived by hand, tested against a closed-form solution).
+% Write "No AI tool was used." if that is the case. Using AI tools is allowed; not disclosing it is not.
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Tool} & \textbf{Used for} & \textbf{How the output was verified} \\
+    \midrule
+    Claude (Claude Code, Sonnet~5)
+    &
+    Repository organisation and code-scaffolding (folder structure, empty \texttt{notebooks/}
+    templates for report figures -- no analysis content); LaTeX proofreading and typesetting
+    (equation syntax, macros, nomenclature) for formulas the group wrote itself; merging the
+    group members' LaTeX drafts into one report with a consistent structure and notation;
+    explaining the assignment brief/rubric and course concepts on request; brainstorming what
+    a formulation should cover. Not used for: formulating, deriving or solving any graded
+    question.
+    &
+    Mathematical formulations, derivations, hypotheses and numerical analyses were done
+    entirely by the group by hand; LaTeX/code suggestions were compiled/run and checked by the
+    group before being kept.
+    \\
+    \bottomrule
+  \end{tabularx}
+  \caption{AI tools used in this assignment.}
+  \label{tab:ai}
+\end{table}
+
+\newpage 
+\pagenumbering{arabic} 
+\fancyfoot[C]{Page \thepage\ of \pageref{EndOfText}}
+
+
+\label{EndOfText}
+
+
+\newpage
+% \printnomenclature (inside 9_nomenclat) prints its own "Nomenclature" heading, and the
+% `intoc` option of the package adds it to the table of contents.
+\input{sources/9_nomenclat}
+
+\newpage
+\section{Question 1}
+\input{sources/1_}
+
+\newpage
+\section{Question 2}
+\input{sources/2_}
+
+\newpage
+\section{Question 3}
+\input{sources/3_}
+
+\newpage
+\section{Appendix A} \label{ch6}
+
+\label{endOfDoc}
+\end{document}

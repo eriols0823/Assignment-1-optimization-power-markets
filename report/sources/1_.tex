@@ -1,65 +1,36 @@
-% Question 1.(a) -- Formulation, properties, hourly decomposition and its meaning
-%
-% SCAFFOLD ONLY: structure and section headers, no content, no equations. Fill in every
-% \todo{...} with your own formulation/derivation -- nothing below is a hint at the answer,
-% only at what the answer needs to contain.
-%
-% Source of the exact task text: course_materials/Assignment_1_Instructions.html
-% ("Problem statement" section, part 1, sub-question (a)).
-% Grading (Table 2, row 1.(a)): 3 pts mathematical models, 1 pt writing -- no code/numerical
-% points here, so this content (once merged) is the actual deliverable for 1.(a).
-%
-% THIS IS A FRAGMENT, not a standalone document: no \documentclass, \usepackage or
-% \begin{document} here -- your main.tex already provides all of that, plus \todo and the
-% notation macros used below (\T, \qimp, \qexp, \pimp, \pexp, \cpv, \Emin, \lref, \uL, \load,
-% \pvprod). Make sure main.tex's preamble also has these (add them next to your other
-% \newcommand definitions, and update \pvprod if you still have the old p^{PV} version):
-%
-%   \newcommand{\Lmin}{L^{\min}}
-%   \newcommand{\Lmax}{L^{\max}}
-%   \newcommand{\PVmax}[1][t]{PV_{#1}^{\max}}
-%   \newcommand{\tauexp}{\tau^{\mathrm{exp}}}
-%   \newcommand{\tauimp}{\tau^{\mathrm{imp}}}
-%   \newcommand{\pvprod}[1][t]{q^{\mathrm{PV}}_{#1}}   % renamed from p^{PV}_t to q^{PV}_t
-%
-% Indexing: t = 0, ..., 23, matching src/data_loader.py (data.hours = np.arange(24)) -- keep
-% this consistent with the code you write in (e).
-%
-% Copy this file into your Overleaf project's `sources/` folder (e.g. as
-% sources/1a_formulation.tex) and call it from main.tex, inside \section{Question 1}:
-%
-%   \section{Question 1}
-%   \input{sources/1a_formulation}
-%   \input{sources/1b_duality}
-%   ...
-
 \subsection{(a) Formulation, properties and hourly decomposition}
+
+In every hour, the consumer decides how much to consume, how much PV to use, and how much
+to buy from or sell to the grid, so as to maximize its daily net utility (utility from
+consuming, minus the cost of buying and producing energy, plus the revenue from selling).
+
+\subsubsection{Sets and indices}
+\begin{itemize}
+    \item $t \in \T = \{0, \dots, 23\}$: the 24 hours of the day.
+\end{itemize}
 
 \subsubsection{Input data}
 \begin{itemize}
-    \item $\T = \{0, \dots, 23\}$: the set of hours of the day.
-    \item $\Lmin$, $\Lmax$: minimum and maximum hourly load consumption (kWh/h), with
-    $0 \leq \Lmin \leq \Lmax$.
-    \item $\PVmax$, for every $t \in \T$: maximum available PV production in hour $t$
-    (kWh/h).
     \item $p_t$: hourly electricity price in hour $t$ (DKK/kWh).
-    \item $\tauexp$: export grid tariff (DKK/kWh), with the assumption
+    \item $\tauimp$, $\tauexp$: import and export grid tariffs (DKK/kWh), with the
+    assumption
     \begin{equation}
         \tauexp < p_t, \qquad \forall t \in \T,
         \label{eq:tariff_assumption}
     \end{equation}
     i.e.\ the export tariff is always smaller than the hourly electricity price.
-\end{itemize}
-\begin{itemize}
     \item $\uL$: marginal consumption utility (DKK/kWh) -- a constant, the same in every
     hour.
     \item $\cpv$: PV marginal production cost (DKK/kWh) -- a constant, the same in every
     hour.
-    \item $\tauimp$: import grid tariff (DKK/kWh).
+    \item $\PVmax$: maximum available PV production in hour $t$ (kWh/h).
+    \item $\Lmin$, $\Lmax$: minimum and maximum hourly load consumption (kWh/h), with
+    $0 \leq \Lmin \leq \Lmax$.
 \end{itemize}
-The effective import and export prices used in the objective
-\eqref{eq:daily_net_utility} follow directly from the market price and the tariffs: the
-import tariff is added to the market price, and the export tariff is subtracted from it.
+The consumer does not face the market price directly but the \emph{effective} import and
+export prices used in the objective \eqref{eq:daily_net_utility}, which follow from the
+market price and the tariffs: the import tariff is added to the market price (what the
+consumer pays), and the export tariff is subtracted from it (what the consumer is paid).
 \begin{align}
     \pimp &= p_t + \tauimp, & \forall t \in \T, \label{eq:effective_import_price} \\
     \pexp &= p_t - \tauexp, & \forall t \in \T. \label{eq:effective_export_price}
@@ -85,33 +56,58 @@ import tariff is added to the market price, and the export tariff is subtracted 
 \end{equation}
 
 \subsubsection{Constraints}
+
+\paragraph{Power balance.}
+Whatever is consumed has to come from PV production or from imports, minus whatever is
+exported:
+\begin{equation}
+    \load = \pvprod + \qimp - \qexp, \qquad \forall t \in \T. \label{eq:c_balance}
+\end{equation}
+
+\paragraph{Load bounds.}
+\begin{equation}
+    \Lmin \leq \load \leq \Lmax, \qquad \forall t \in \T. \label{eq:c_load_bounds}
+\end{equation}
+
+\paragraph{PV limits.}
+\begin{equation}
+    0 \leq \pvprod \leq \PVmax, \qquad \forall t \in \T. \label{eq:c_pv_limit}
+\end{equation}
+
+\paragraph{Non-negativity of imports and exports.}
 \begin{align}
-    \load &= \pvprod + \qimp - \qexp, & \forall t \in \T, \label{eq:c_balance} \\
-    \Lmin \leq \load &\leq \Lmax, & \forall t \in \T, \label{eq:c_load_bounds} \\
     \qimp &\geq 0, & \forall t \in \T, \label{eq:c_import_nonneg} \\
-    \qexp &\geq 0, & \forall t \in \T, \label{eq:c_export_nonneg} \\
-    0 \leq \pvprod &\leq \PVmax, & \forall t \in \T. \label{eq:c_pv_limit}
+    \qexp &\geq 0, & \forall t \in \T. \label{eq:c_export_nonneg}
 \end{align}
 
 \subsubsection{Properties of the problem}
 
-\paragraph{Problem class.}
-\todo{Is it linear, quadratic, a MILP, ...? Justify directly from the objective and
-constraints written above -- don't just assert it.}
-
-\paragraph{Convexity.}
-\todo{State and justify the convexity of the problem (feasible set and objective
-function), from its problem class.}
+\paragraph{Problem class and convexity.}
+The objective \eqref{eq:daily_net_utility} and all the constraints
+\eqref{eq:c_balance}--\eqref{eq:c_export_nonneg} are linear in the decision variables, so the
+problem is a Linear Program (LP). An LP is a convex problem: its feasible set is a
+polyhedron (an intersection of half-spaces and hyperplanes), and its objective is linear,
+hence both concave and convex.
 
 \paragraph{Feasibility.}
-\todo{Give the condition(s) on the input data under which the problem is feasible (i.e.
-under which a point satisfying every constraint exists).}
+The problem is feasible as long as $\Lmin \leq \Lmax$ and $\PVmax \geq 0$ for every
+$t \in \T$. Import and export are unrestricted, so nothing else can make the problem
+infeasible: for any load in $[\Lmin, \Lmax]$ the balance \eqref{eq:c_balance} can be
+satisfied through the grid.
 
 \paragraph{Boundedness.}
-\todo{Give the condition(s) on the input data under which the objective is bounded (think
-about what happens if a costless arbitrage between buying and selling were possible).}
+The load and the PV production are bounded, so the objective could only be unbounded through
+$\qimp$ and $\qexp$: importing and exporting large, equal amounts of energy at the same time
+leaves the balance \eqref{eq:c_balance} unchanged, and would make the objective arbitrarily
+large if it were profitable. This is not the case, since the effective prices satisfy
+\begin{equation}
+    \pexp = p_t - \tauexp < p_t + \tauimp = \pimp, \qquad \forall t \in \T,
+\end{equation}
+because both tariffs are positive: importing always costs more than exporting pays, so
+simultaneous import and export always loses money. Hence the objective is bounded.
 
 \paragraph{Size.}
+%\todo{Number of variables and number of constraints, as a function of the 24-hour horizon.}
 Each hour has four decision variables ($\load$, $\qimp$, $\qexp$, $\pvprod$), so the daily
 problem has $4 \times 24 = 96$ variables. Each hour also has seven constraints: the power
 balance \eqref{eq:c_balance} (an equality), the two load bounds \eqref{eq:c_load_bounds},
@@ -123,13 +119,17 @@ variables are not counted as constraints, only the 24 power-balance equalities r
 \subsubsection{Hourly decomposition}
 
 \paragraph{Decomposition.}
+%\todo{Show that the daily problem decomposes into 24 independent hourly problems: identify
+%every term of the objective and every constraint, and check whether any of them links two
+%different hours together.}
 The daily objective \eqref{eq:daily_net_utility} is a sum over hours, and every term of
 that sum only involves the variables of its own hour $t$. Likewise, every constraint
-\eqref{eq:c_balance}--\eqref{eq:c_pv_limit} only involves variables of a single hour: no
+\eqref{eq:c_balance}--\eqref{eq:c_export_nonneg} only involves variables of a single hour: no
 constraint links hour $t$ with any other hour. There is therefore no dependence between
 different hours, and the daily problem splits into 24 independent hourly problems.
 
 \paragraph{The hourly problem.}
+%\todo{Write out the single-hour problem explicitly (its own objective and constraints, for one generic hour $t$).}
 For a generic hour $t \in \T$, the problem has the same structure as the daily one without
 the summation, with the data specific to that hour ($p_t$, and hence $\pimp$ and $\pexp$,
 and $\PVmax$):
@@ -144,6 +144,8 @@ and $\PVmax$):
 \end{align}
 
 \paragraph{Computational meaning.}
+%\todo{What does this decomposition change about how the problem can be solved (size of the
+%problem actually being solved, parallelisability, ...)?}
 Since the hours are independent, the 24 hourly problems can be solved separately, in any
 order, and even in parallel. Each of them is also much smaller than the daily problem: 4
 variables and 7 constraints instead of 96 and 168.
@@ -179,11 +181,15 @@ hourly problem above: this requires putting it in the form of the matrix formula
 maximisation and the variable bounds.}
 
 \paragraph{Economic meaning.}
+%\todo{What does this decomposition say about the structure of the consumer's
+%decision-making across the day?}
+
 The load is flexible, but it is not subject to reaching a total consumption over the day:
 the consumer only chooses how much to consume in each hour, between $\Lmin$ and $\Lmax$. For
 example, consuming less in hour $t$ (say, not running the washing machine then) does not
 oblige the consumer to consume more in another hour, and the value $\uL$ of each kWh does
 not depend on when it is consumed. Therefore, to decide in hour $t$ only the data of that
 hour are needed: not just the price, but also the tariffs and the PV available in that
-hour. The flexibility of the load does not break the independence between hours; what would
-break it is a minimum daily energy requirement or a battery.
+hour, and the consumer does not need to plan ahead across the day. The flexibility of the
+load does not break the independence between hours; what would break it is a minimum daily
+energy requirement or a battery.

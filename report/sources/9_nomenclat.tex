@@ -1,0 +1,30 @@
+% Global nomenclature. The optional argument of \nomenclature only sets the sort order:
+% [a] sets, [b] input parameters, [c] decision variables. Add new symbols (e.g. dual variables)
+% here as they are introduced. Needs "Recompile from scratch" in Overleaf the first time.
+
+% --- sets and indices
+\nomenclature[a]{$t$}{Hour index}
+\nomenclature[a]{$\mathcal{T}$}{Set of hours of the day, $\{0, \dots, 23\}$}
+
+% --- input parameters
+\nomenclature[b]{$p_t$}{Market electricity price in hour $t$ (DKK/kWh)}
+\nomenclature[b]{$\tau^{\mathrm{imp}}$}{Import grid tariff (DKK/kWh)}
+\nomenclature[b]{$\tau^{\mathrm{exp}}$}{Export grid tariff (DKK/kWh)}
+\nomenclature[b]{$p^{\mathrm{imp}}_t$}{Effective import price in hour $t$, $p_t + \tau^{\mathrm{imp}}$ (DKK/kWh)}
+\nomenclature[b]{$p^{\mathrm{exp}}_t$}{Effective export price in hour $t$, $p_t - \tau^{\mathrm{exp}}$ (DKK/kWh)}
+\nomenclature[b]{$u^{L}$}{Marginal consumption utility (DKK/kWh)}
+\nomenclature[b]{$c^{\mathrm{PV}}$}{PV marginal production cost (DKK/kWh)}
+\nomenclature[b]{$PV^{\max}_t$}{Maximum available PV production in hour $t$ (kWh/h)}
+\nomenclature[b]{$L^{\min}$}{Minimum hourly load (kWh/h)}
+\nomenclature[b]{$L^{\max}$}{Maximum hourly load (kWh/h)}
+\nomenclature[b]{$\hat{\ell}_t$}{Reference load in hour $t$ (kWh/h)}
+\nomenclature[b]{$D_t(\cdot)$}{Disutility of deviating from the reference load in hour $t$ (DKK)}
+\nomenclature[b]{$E^{\min}$}{Minimum total daily energy consumption (kWh)}
+
+% --- decision variables
+\nomenclature[c]{$\ell_t$}{Load consumed in hour $t$ (kWh/h)}
+\nomenclature[c]{$q^{\mathrm{PV}}_t$}{PV production used in hour $t$ (kWh/h)}
+\nomenclature[c]{$q^{\mathrm{imp}}_t$}{Energy imported from the grid in hour $t$ (kWh/h)}
+\nomenclature[c]{$q^{\mathrm{exp}}_t$}{Energy exported to the grid in hour $t$ (kWh/h)}
+
+\printnomenclature

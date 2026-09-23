@@ -1,0 +1,39 @@
+\subsection{(a) Generic separable disutility}
+
+Instead of a constant marginal utility per kWh consumed, the consumer now has a preferred
+consumption profile $\lref$ (kWh/h) and experiences a disutility $D_t(\load)$ (DKK) when its
+load deviates from it. $D_t$ is convex, differentiable, non-negative, and equal to $0$ at
+$\load = \lref$. All the other parameters, variables and constraints are those of
+Question~1, and the disutility is still separable per hour.
+
+\subsubsection{Objective function}
+The term $\uL \, \load$ of \eqref{eq:daily_net_utility} is replaced by $-D_t(\load)$:
+\begin{equation}
+    \max_{\{\load, \qimp, \qexp, \pvprod\}_{t \in \T}} \quad
+    \sum_{t \in \T} \Big( - D_t(\load) - \pimp \, \qimp + \pexp \, \qexp - \cpv \, \pvprod \Big)
+    \label{eq:q2_objective}
+\end{equation}
+subject to the same constraints \eqref{eq:c_balance}--\eqref{eq:c_export_nonneg} as in Question~1.
+
+\subsubsection{Properties compared with Question 1}
+\begin{itemize}
+    \item \textbf{Problem class and convexity:} since $D_t$ is convex, $-D_t$ is concave, so
+    \eqref{eq:q2_objective} maximizes a concave function over the same polyhedron as in
+    Question~1: it is still a convex optimization problem, but in general no longer an LP. It
+    stays an LP only if $D_t$ is piecewise linear, and becomes a QP if $D_t$ is quadratic.
+    \item \textbf{Decomposability:} it still holds. $D_t$ only involves the load $\load$ of
+    hour $t$, so every term of the objective and every constraint still involves a single
+    hour, and the hourly decomposition argument of Question~1 applies unchanged.
+    \item \todo{Feasibility compared with Question 1.}
+\end{itemize}
+
+\subsubsection{Question 1 as a particular case}
+Choosing the constant reference $\lref = \Lmax$ and the linear disutility
+\begin{equation}
+    D_t(\load) = \uL \, (\Lmax - \load)
+\end{equation}
+gives $-D_t(\load) = \uL \, \load - \uL \, \Lmax$, that is, the objective of Question~1 up to
+the constant $-24 \, \uL \, \Lmax$, which does not change the optimal solution. On the feasible
+set $\load \leq \Lmax$, so $D_t \geq 0$, and $D_t = 0$ exactly at the reference.
+\todo{Which of the assumptions on the disutility (convex, differentiable, non-negative, zero
+at the reference) does this choice relax? Check it against the brief.}
