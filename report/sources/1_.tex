@@ -582,12 +582,6 @@ from \eqref{eq:kkt_stat_imp}--\eqref{eq:kkt_stat_exp}:
 
 \paragraph{Step 3: what the grid does in each regime.}
 \begin{itemize}
-    \item \textbf{Regime 2} (${\load}^* = \Lmax$). The PV production cannot cover the load,
-    since ${\pvprod}^* \leq \PVmax < \Lmax$. From the balance \eqref{eq:c_balance},
-    \begin{equation}
-        {\qimp}^* - {\qexp}^* = \Lmax - {\pvprod}^* \geq \Lmax - \PVmax > 0,
-    \end{equation}
-    so the consumer imports from the grid: ${\qimp}^* > 0$ and ${\qexp}^* = 0$.
     \item \textbf{Regime 1} (${\load}^* = \Lmin$). By Step 1, $\uL \leq {\lbal}^*$, and in
     case A $\cpv < \uL$, so ${\lbal}^* > \cpv$. The stationarity of the PV production
     \eqref{eq:kkt_stat_pv} reads
@@ -603,6 +597,12 @@ from \eqref{eq:kkt_stat_imp}--\eqref{eq:kkt_stat_exp}:
     \end{equation}
     By (i) the consumer does not import and export at the same time, so ${\qimp}^* = 0$ and
     ${\qexp}^* > 0$: the surplus PV is exported.
+    \item \textbf{Regime 2} (${\load}^* = \Lmax$). The PV production cannot cover the load,
+    since ${\pvprod}^* \leq \PVmax < \Lmax$. From the balance \eqref{eq:c_balance},
+    \begin{equation}
+        {\qimp}^* - {\qexp}^* = \Lmax - {\pvprod}^* \geq \Lmax - \PVmax > 0,
+    \end{equation}
+    so the consumer imports from the grid: ${\qimp}^* > 0$ and ${\qexp}^* = 0$.
     \item \textbf{Regime 3} ($\Lmin < {\load}^* < \Lmax$). By Step 1, ${\lbal}^* = \uL$, so
     again ${\lbal}^* > \cpv$ in case A, and the same argument as in regime 1 gives
     ${\pvprod}^* = \PVmax$. As for the grid, importing would imply ${\lbal}^* = \pimp$, i.e.\
