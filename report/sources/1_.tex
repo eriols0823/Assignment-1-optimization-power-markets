@@ -514,27 +514,34 @@ With both tariffs non-negative, this would force $\tauimp = \tauexp = 0$.
 This contradicts \eqref{eq:tariff_positive}, since both tariffs are positive. Hence no optimal
 solution can import and export in the same hour.
 
-\paragraph{Condition and interpretation.}
+\paragraph{Which condition ensures it.}
 The problem statement makes three assumptions on the price structure: positive hourly prices
 \eqref{eq:price_positive}, positive grid tariffs \eqref{eq:tariff_positive}, and an export
 tariff below the hourly price \eqref{eq:tariff_assumption}. The result is ensured by the
 positivity of the grid tariffs \eqref{eq:tariff_positive}, which is the only one used in the
-proof; all that is really needed is $\tauimp + \tauexp > 0$, i.e.\ $\pexp < \pimp$. The other
-two are not needed for this result. The market price $p_t$ cancels in
-$\pimp - \pexp = \tauimp + \tauexp$, so its sign plays no role. The assumption
-$\tauexp < p_t$ only guarantees that $\pexp > 0$, i.e.\ that exporting is actually paid;
-without it the prosumer would have no incentive to export in any hour, which would rule out
-simultaneous import and export anyway. The power balance
-\eqref{eq:c_balance} only depends on the difference $\qimp - \qexp$, so importing and exporting
-at the same time does not change what the consumer can consume. However, every kWh that is
-bought and sold in the same hour costs $\pimp - \pexp = \tauimp + \tauexp > 0$: it is a pure
-loss. Without tariffs this loss would be zero, and simultaneous import and export would no
-longer be excluded.
+proof. All that is really needed is $\tauimp + \tauexp > 0$, i.e.\ $\pexp < \pimp$.
 
-Outside the model, the same conclusion is physically sensible: a household usually has a
-single connection point to the grid, where in practice only the net power flows, and any
-additional flow in both directions would only add losses (for instance Joule losses in the
-cables).
+The other two assumptions are not needed for this result:
+\begin{itemize}
+    \item \textbf{Positive prices:} the market price $p_t$ cancels in
+    $\pimp - \pexp = \tauimp + \tauexp$, so its sign plays no role.
+    \item \textbf{Export tariff below the price:} $\tauexp < p_t$ only guarantees that
+    $\pexp > 0$, i.e.\ that exporting is actually paid; without it the prosumer would have no
+    incentive to export in any hour, which would rule out simultaneous import and export
+    anyway.
+\end{itemize}
+
+\paragraph{Interpretation.}
+The power balance \eqref{eq:c_balance} only depends on the difference $\qimp - \qexp$, so
+importing and exporting at the same time does not change what the consumer can consume.
+However, every kWh that is bought and sold in the same hour costs
+$\pimp - \pexp = \tauimp + \tauexp > 0$: it is a pure loss. Without tariffs this loss would be
+zero, and simultaneous import and export would no longer be excluded.
+
+\paragraph{Outside the model.}
+The same conclusion is physically sensible: a household usually has a single connection point
+to the grid, where in practice only the net power flows, and any additional flow in both
+directions would only add losses (for instance Joule losses in the cables).
 
 \subsubsection{(ii) Load consumption}
 \todo{Assume $\Lmin < \PVmax < \Lmax$. Three regimes for the optimal load: at $\Lmax$, at
