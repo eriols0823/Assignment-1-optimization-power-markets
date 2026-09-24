@@ -194,4 +194,201 @@ hour, and the consumer does not need to plan ahead across the day. The flexibili
 load does not break the independence between hours; what would break it is a minimum daily
 energy requirement or a battery.
 
-\input{sources/1b_duality}
+\subsection{(b) Lagrangian, dual problem and KKT conditions}
+
+\subsubsection{Setting up}
+\paragraph{Hourly problem in the form used here.}
+To follow the notation of the lecture notes, the hourly problem of (a) for a generic hour
+$t \in \T$ is written as a minimisation: instead of maximising the utility, we minimise the
+cost $C_t$, which is the hourly utility with the opposite sign. The equality constraints are
+written as $h(x) = 0$ and the inequality constraints as $g(x) \leq 0$, so that every
+non-negativity constraint $x \geq 0$ becomes the explicit constraint $-x \leq 0$ and gets its
+own multiplier. This makes the derivation of the KKT conditions more mechanical and less
+error-prone.
+
+\paragraph{Multipliers.}
+One multiplier is associated with each of the seven constraints of the hourly problem: a free
+multiplier for the equality, and a non-negative one for each inequality $g(x) \leq 0$. Since
+the hourly cost is in DKK and every constraint is expressed in kWh/h, all multipliers are in
+DKK/kWh. For the two-sided bounds on the load and on the PV production, a bar below the
+multiplier ($\underline{\mu}$) marks the lower bound and a bar above it ($\overline{\mu}$)
+marks the upper bound.
+\begin{align}
+    \min_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
+    & C_t = -\uL \, \load + \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod \\
+    \text{s.t.} \quad
+    & \load - \pvprod - \qimp + \qexp = 0
+        & & : \; \lbal \in \mathbb{R} \label{eq:b_balance} \\
+    & \Lmin - \load \leq 0
+        & & : \; \muLlo \geq 0 \label{eq:b_load_lo} \\
+    & \load - \Lmax \leq 0
+        & & : \; \muLup \geq 0 \label{eq:b_load_up} \\
+    & -\pvprod \leq 0
+        & & : \; \muPVlo \geq 0 \label{eq:b_pv_lo} \\
+    & \pvprod - \PVmax \leq 0
+        & & : \; \muPVup \geq 0 \label{eq:b_pv_up} \\
+    & -\qimp \leq 0
+        & & : \; \muimp \geq 0 \label{eq:b_imp} \\
+    & -\qexp \leq 0
+        & & : \; \muexp \geq 0 \label{eq:b_exp}
+\end{align}
+
+\subsubsection{Lagrange function}
+Following the recipe of the lecture notes, the Lagrangian is the objective plus each
+constraint multiplied by its multiplier, $\mathcal{L} = f + \lambda h + \boldsymbol{\mu}^\top
+g$:
+\begin{align}
+    \mathcal{L} = \;
+    & \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod - \uL \, \load \nonumber \\
+    & + \lbal \big( \load - \pvprod - \qimp + \qexp \big) \nonumber \\
+    & + \muLlo \big( \Lmin - \load \big) + \muLup \big( \load - \Lmax \big) \nonumber \\
+    & - \muPVlo \, \pvprod + \muPVup \big( \pvprod - \PVmax \big) \nonumber \\
+    & - \muimp \, \qimp - \muexp \, \qexp .
+    \label{eq:lagrangian}
+\end{align}
+Grouping the terms by primal variable, and leaving the constant terms on their own, gives
+\begin{align}
+    \mathcal{L} = \;
+    & \big( \muLlo \Lmin - \muLup \Lmax - \muPVup \PVmax \big) \nonumber \\
+    & + \big( -\uL + \lbal - \muLlo + \muLup \big) \load \nonumber \\
+    & + \big( \cpv - \lbal - \muPVlo + \muPVup \big) \pvprod \nonumber \\
+    & + \big( \pimp - \lbal - \muimp \big) \qimp \nonumber \\
+    & + \big( -\pexp + \lbal - \muexp \big) \qexp .
+    \label{eq:lagrangian_grouped}
+\end{align}
+
+\subsubsection{Dual problem}
+\paragraph{Dual function.}
+The dual function is the infimum of the Lagrangian over the primal variables, which are now
+free in $\mathbb{R}$ since all their bounds have been turned into constraints with multipliers:
+\begin{equation}
+    q(\lambda, \boldsymbol{\mu}) = \inf_{\load,\, \pvprod,\, \qimp,\, \qexp \in \mathbb{R}}
+    \mathcal{L}(\load, \pvprod, \qimp, \qexp, \lambda, \boldsymbol{\mu}).
+\end{equation}
+The Lagrangian \eqref{eq:lagrangian_grouped} is affine in the primal variables, which have
+no sign restriction. If any of the four coefficients in brackets is not identically zero, the
+corresponding variable can be sent to $\pm\infty$ so that $\mathcal{L} \to -\infty$.
+Therefore $q$ is finite only when the four coefficients vanish simultaneously:
+\begin{align}
+    -\uL + \lbal - \muLlo + \muLup &= 0, \label{eq:dual_cond_load} \\
+    \cpv - \lbal - \muPVlo + \muPVup &= 0, \label{eq:dual_cond_pv} \\
+    \pimp - \lbal - \muimp &= 0, \label{eq:dual_cond_imp} \\
+    -\pexp + \lbal - \muexp &= 0, \label{eq:dual_cond_exp}
+\end{align}
+and in that case only the constant terms remain:
+\begin{equation}
+    q(\lambda, \boldsymbol{\mu}) =
+    \begin{cases}
+        \muLlo \Lmin - \muLup \Lmax - \muPVup \PVmax
+        & \text{if \eqref{eq:dual_cond_load}--\eqref{eq:dual_cond_exp} hold,} \\
+        -\infty & \text{otherwise.}
+    \end{cases}
+\end{equation}
+
+\paragraph{Dual problem.}
+The dual problem maximises the dual function over the domain where it is finite, with dual
+feasibility $\boldsymbol{\mu} \geq \mathbf{0}$:
+\begin{align}
+    \max_{\lbal,\, \muLlo,\, \muLup,\, \muPVlo,\, \muPVup,\, \muimp,\, \muexp} \quad
+    & d = \muLlo \Lmin - \muLup \Lmax - \muPVup \PVmax \\
+    \text{s.t.} \quad
+    & \lbal - \muLlo + \muLup = \uL \\
+    & \lbal + \muPVlo - \muPVup = \cpv \\
+    & \lbal + \muimp = \pimp \\
+    & \lbal - \muexp = \pexp \\
+    & \muLlo,\, \muLup,\, \muPVlo,\, \muPVup,\, \muimp,\, \muexp \geq 0, \quad
+      \lbal \in \mathbb{R}.
+\end{align}
+The multipliers $\muimp$ and $\muexp$ only appear in their own equality, where they act as
+non-negative slack variables: $\muimp = \pimp - \lbal \geq 0$ and $\muexp = \lbal - \pexp
+\geq 0$. Eliminating them gives the equivalent reduced dual problem
+\begin{align}
+    \max_{\lbal,\, \muLlo,\, \muLup,\, \muPVlo,\, \muPVup} \quad
+    & d = \muLlo \Lmin - \muLup \Lmax - \muPVup \PVmax \label{eq:dual_reduced} \\
+    \text{s.t.} \quad
+    & \lbal - \muLlo + \muLup = \uL \\
+    & \lbal + \muPVlo - \muPVup = \cpv \\
+    & \pexp \leq \lbal \leq \pimp \label{eq:dual_lambda_bounds} \\
+    & \muLlo,\, \muLup,\, \muPVlo,\, \muPVup \geq 0, \quad \lbal \in \mathbb{R}.
+\end{align}
+Its objective is linear in the multipliers and its feasible set is defined only by affine
+equalities and inequalities, so the dual problem is also a Linear Program.
+
+\subsubsection{KKT conditions}
+\todo{Write the four groups of conditions for your problem, one line each per variable or
+constraint: (i) stationarity, (ii) primal feasibility, (iii) dual feasibility, (iv)
+complementary slackness. Hint: stationarity is exactly the four equations
+\eqref{eq:dual_cond_load}--\eqref{eq:dual_cond_exp} above.}
+
+\subsubsection{Strong duality}
+\todo{Does strong duality hold? Justify from the properties of the problem stated in (a)
+(problem class, feasibility, boundedness), and state what it implies for the primal and dual
+optimal values.}
+
+\subsubsection{Necessity and sufficiency of the KKT conditions}
+\todo{Are the KKT conditions necessary, sufficient, both, or neither for optimality of this
+problem? Justify from the properties stated in (a), separately for necessity and for
+sufficiency.}
+
+\subsection{(c) Interpretation of the dual variables}
+% HINTS (not final text) -- everything below marked "draft" was written during the 1.(b)
+% work and should be reviewed and rewritten in the author's own words.
+
+\paragraph{Load bounds (draft).}
+The multiplier $\muLlo$ of the lower load bound $\Lmin - \load \leq 0$ is only active when
+the load sits at its floor ($\load = \Lmin$): by complementary slackness, $\load > \Lmin$
+forces $\muLlo = 0$. Its value measures how much the obligation to consume at least $\Lmin$
+costs the consumer: the marginal saving if $\Lmin$ could be lowered by one kWh. Symmetrically,
+$\muLup$ is only positive when the load sits at its ceiling ($\load = \Lmax$), and measures the
+marginal gain if $\Lmax$ could be increased by one kWh. If $\Lmin < \Lmax$ they cannot both be
+positive at the same time.
+
+\paragraph{Power balance.}
+\todo{Interpretation of $\lbal$ as the marginal value of one more kWh in that hour (the
+internal price of electricity for the prosumer), and the units.
+Hint for the three cases asked in the brief (importing, exporting, neither with the load
+strictly within its bounds): combine the dual-feasibility equalities
+\eqref{eq:dual_cond_load}, \eqref{eq:dual_cond_imp} and \eqref{eq:dual_cond_exp} with
+complementary slackness of the multipliers of the corresponding constraints, case by case.}
+
+\paragraph{PV availability limits.}
+\todo{Interpretation of $\muPVlo$ and $\muPVup$ in the same style as the load bounds above:
+when is each of them active, and what does its value measure? Hint: the equality
+\eqref{eq:dual_cond_pv} relates them to $\lbal$ and $\cpv$.}
+
+\subsection{(d) Price ladder (case A)}
+Only case A is considered, i.e.\ $\cpv < \uL$.
+% HINTS (not final text). The brief asks to use strong duality and KKT, without solving the
+% problem numerically. All the tools are in (b): stationarity \eqref{eq:dual_cond_load}--
+% \eqref{eq:dual_cond_exp}, dual feasibility, complementary slackness, and the bounds on
+% $\lbal$ in \eqref{eq:dual_lambda_bounds}.
+
+\subsubsection{(i) Simultaneous import and export}
+\todo{Is it ever optimal to import and export in the same hour? Demonstrate it. Hint:
+complementary slackness on $\muimp$ and $\muexp$ says what happens to them when
+$\qimp > 0$ and $\qexp > 0$; then compare with $\pexp \leq \lbal \leq \pimp$. The brief asks
+which of the conditions on the price structure stated in the problem statement (positive
+tariffs, $\tauexp < p_t$) ensures the result, and to interpret it.}
+
+\subsubsection{(ii) Load consumption}
+\todo{Assume $\Lmin < \PVmax < \Lmax$. Three regimes for the optimal load: at $\Lmax$, at
+$\Lmin$, and in between, characterised by the ordering of $\uL$, $\pimp$ and $\pexp$. Hint:
+start from the load equation \eqref{eq:dual_cond_load} and the possible values of $\muLlo$,
+$\muLup$ given where the load is, and use the bounds on $\lbal$. Give the conditions, the
+optimal load in each regime, and interpret what the prosumer does in each.}
+
+\subsubsection{(iii) PV production}
+\todo{Same assumption on $\PVmax$. Regimes of curtailment and the thresholds on $\cpv$ that
+separate them, from the PV equation \eqref{eq:dual_cond_pv}; interpret them. Case A is
+$\cpv < \uL$, which is what makes the comparison with $\pexp$, $\pimp$ relevant.}
+
+\subsubsection{(iv) Relaxing the assumption on the PV availability}
+\todo{Extend (ii) and (iii) to $\PVmax < \Lmin$ and $\PVmax > \Lmax$: in which price regimes
+does the optimal load and the curtailment change, and what are the new solutions?}
+
+\subsubsection{(v) Decision rule and ties}
+\todo{Summarise (ii)--(iv) as a rule: each hour the consumer compares $\uL$ and $\cpv$ with
+the two effective prices. What happens when one comparison is a tie, and what does it imply
+for the uniqueness of the primal and dual solutions? Hint: think about which multipliers or
+which primal variables can take several values when an inequality holds with equality
+(degenerate case, $\geq 0$ allowing $0$).}
