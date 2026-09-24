@@ -207,12 +207,21 @@ own multiplier. This makes the derivation of the KKT conditions more mechanical 
 error-prone.
 
 \paragraph{Multipliers.}
-One multiplier is associated with each of the seven constraints of the hourly problem: a free
-multiplier for the equality, and a non-negative one for each inequality $g(x) \leq 0$. Since
-the hourly cost is in DKK and every constraint is expressed in kWh/h, all multipliers are in
-DKK/kWh. For the two-sided bounds on the load and on the PV production, a bar below the
-multiplier ($\underline{\mu}$) marks the lower bound and a bar above it ($\overline{\mu}$)
-marks the upper bound.
+Each constraint gets a multiplier, which works as a price: the Lagrangian adds to the cost
+every constraint times its multiplier, so breaking a constraint has a price. There are two
+kinds:
+\begin{itemize}
+    \item $\lbal$ goes with the power balance, which is an equality. The balance can be broken
+    in both directions (too much or too little energy supplied), so $\lbal$ can be positive
+    or negative. It is the price of the energy in the balance in hour $t$.
+    \item The six $\mu$ go with the inequalities. A limit only has a price when it is
+    exceeded, so $\mu \geq 0$. Each one prices its own limit: $\muLlo$ and $\muLup$ the load
+    going below $\Lmin$ or above $\Lmax$; $\muPVlo$ and $\muPVup$ the PV production going
+    below zero or above $\PVmax$; $\muimp$ and $\muexp$ a negative import or export.
+\end{itemize}
+All multipliers are in DKK/kWh, since the hourly cost is in DKK and the constraints are in
+kWh/h. For the load and PV bounds, a bar below the multiplier ($\underline{\mu}$) marks the
+lower bound and a bar above it ($\overline{\mu}$) the upper bound.
 \begin{align}
     \min_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
     & C_t = -\uL \, \load + \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod \\
@@ -317,7 +326,12 @@ equalities and inequalities, so the dual problem is also a Linear Program.
 \subsubsection{KKT conditions}
 The Karush--Kuhn--Tucker (KKT) conditions collect the relations that a primal-dual pair
 $({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*, {\lbal}^*, \boldsymbol{\mu}^*)$ must satisfy to be
-optimal. Whether they are necessary and/or sufficient for this problem is discussed below.
+optimal. The superscript $^*$ marks the value at the optimum, that is, the final value once the
+problem has been solved. The primal variables ${\load}^*$, ${\pvprod}^*$, ${\qimp}^*$ and
+${\qexp}^*$ are then the consumer's optimal decisions (how much to consume, how much PV to use,
+and how much to import and export), while ${\lbal}^*$ and $\boldsymbol{\mu}^*$ are the optimal
+prices of the constraints defined above. Whether the KKT conditions are necessary and/or
+sufficient for this problem is discussed below.
 
 \paragraph{1. Stationarity (first-order conditions).}
 Differentiating the Lagrangian \eqref{eq:lagrangian} with respect to each of the four
