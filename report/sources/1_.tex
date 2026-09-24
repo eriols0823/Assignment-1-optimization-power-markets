@@ -544,6 +544,60 @@ to the grid, where in practice only the net power flows, and any additional flow
 directions would only add losses (for instance Joule losses in the cables).
 
 \subsubsection{(ii) Load consumption}
+We assume $\Lmin < \PVmax < \Lmax$ for every hour. The regimes are classified by the position
+of the optimal load ${\load}^*$ with respect to its bounds.
+
+\paragraph{Step 1: stationarity of the load.}
+The stationarity condition \eqref{eq:kkt_stat_load} can be rewritten as
+\begin{equation}
+    {\lbal}^* = \uL + {\muLlo}^* - {\muLup}^*.
+    \label{eq:d_ii_lambda}
+\end{equation}
+Since $\Lmin < \Lmax$, the load cannot be at both bounds at once, so at most one of the two
+load constraints is active. By complementary slackness and dual feasibility, there are three
+regimes:
+\begin{itemize}
+    \item \textbf{Regime 1: ${\load}^* = \Lmin$.} The upper bound is not active, so
+    ${\muLup}^* = 0$, while ${\muLlo}^* \geq 0$. Then \eqref{eq:d_ii_lambda} gives
+    ${\lbal}^* = \uL + {\muLlo}^* \geq \uL$, i.e.\ $\uL \leq {\lbal}^*$.
+    \item \textbf{Regime 2: ${\load}^* = \Lmax$.} The lower bound is not active, so
+    ${\muLlo}^* = 0$, while ${\muLup}^* \geq 0$. Then \eqref{eq:d_ii_lambda} gives
+    ${\lbal}^* = \uL - {\muLup}^* \leq \uL$, i.e.\ $\uL \geq {\lbal}^*$.
+    \item \textbf{Regime 3: $\Lmin < {\load}^* < \Lmax$.} Neither bound is active, so
+    ${\muLlo}^* = {\muLup}^* = 0$, and \eqref{eq:d_ii_lambda} gives ${\lbal}^* = \uL$.
+\end{itemize}
+
+\paragraph{Step 2: the value of $\lbal^*$ according to the grid.}
+By (i), at most one of ${\qimp}^*$ and ${\qexp}^*$ is positive in each hour, so there are three
+cases. The multipliers ${\muimp}^*$ and ${\muexp}^*$ follow from complementary slackness and
+from \eqref{eq:kkt_stat_imp}--\eqref{eq:kkt_stat_exp}:
+\begin{itemize}
+    \item \textbf{Import} (${\qimp}^* > 0$, ${\qexp}^* = 0$): ${\muimp}^* = 0$, so
+    ${\lbal}^* = \pimp$, and ${\muexp}^* = \pimp - \pexp > 0$.
+    \item \textbf{Export} (${\qexp}^* > 0$, ${\qimp}^* = 0$): ${\muexp}^* = 0$, so
+    ${\lbal}^* = \pexp$, and ${\muimp}^* = \pimp - \pexp > 0$.
+    \item \textbf{No exchange} (${\qimp}^* = {\qexp}^* = 0$): both multipliers are only known
+    to be non-negative, so $\pexp \leq {\lbal}^* \leq \pimp$.
+\end{itemize}
+
+\paragraph{Step 3: what the grid does in each regime.}
+\begin{itemize}
+    \item \textbf{Regime 2} (${\load}^* = \Lmax$). The PV production cannot cover the load,
+    since ${\pvprod}^* \leq \PVmax < \Lmax$. From the balance \eqref{eq:c_balance},
+    \begin{equation}
+        {\qimp}^* - {\qexp}^* = \Lmax - {\pvprod}^* \geq \Lmax - \PVmax > 0,
+    \end{equation}
+    so the consumer imports from the grid: ${\qimp}^* > 0$ and ${\qexp}^* = 0$.
+    \item \textbf{Regime 1} (${\load}^* = \Lmin$). Since $\Lmin < \PVmax$, the consumer
+    exports part of its PV production.
+    \todo{Justify it: the balance alone does not rule out importing or no exchange. Use the
+    stationarity of $\pvprod$, \eqref{eq:kkt_stat_pv}, with $\cpv < \uL$ and the relation
+    between $\uL$ and ${\lbal}^*$ of Step 1.}
+    \item \textbf{Regime 3} ($\Lmin < {\load}^* < \Lmax$).
+    \todo{Which grid states are possible, and how much PV is used? The load ${\load}^*$ will
+    follow from the balance.}
+\end{itemize}
+
 \todo{Assume $\Lmin < \PVmax < \Lmax$. Three regimes for the optimal load: at $\Lmax$, at
 $\Lmin$, and in between, characterised by the ordering of $\uL$, $\pimp$ and $\pexp$. Hint:
 start from the load equation \eqref{eq:dual_cond_load} and the possible values of $\muLlo$,
