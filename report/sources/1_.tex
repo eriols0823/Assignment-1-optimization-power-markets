@@ -315,20 +315,113 @@ Its objective is linear in the multipliers and its feasible set is defined only 
 equalities and inequalities, so the dual problem is also a Linear Program.
 
 \subsubsection{KKT conditions}
-\todo{Write the four groups of conditions for your problem, one line each per variable or
-constraint: (i) stationarity, (ii) primal feasibility, (iii) dual feasibility, (iv)
-complementary slackness. Hint: stationarity is exactly the four equations
-\eqref{eq:dual_cond_load}--\eqref{eq:dual_cond_exp} above.}
+The Karush--Kuhn--Tucker (KKT) conditions collect the relations that a primal-dual pair
+$({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*, {\lbal}^*, \boldsymbol{\mu}^*)$ must satisfy to be
+optimal. Whether they are necessary and/or sufficient for this problem is discussed below.
+
+\paragraph{1. Stationarity (first-order conditions).}
+Differentiating the Lagrangian \eqref{eq:lagrangian} with respect to each of the four
+unconstrained primal variables yields the four stationarity conditions:
+\begin{align}
+    \nabla_{\load} \mathcal{L} &= -\uL + {\lbal}^* - {\muLlo}^* + {\muLup}^* = 0, \label{eq:kkt_stat_load} \\
+    \nabla_{\pvprod} \mathcal{L} &= \cpv - {\lbal}^* - {\muPVlo}^* + {\muPVup}^* = 0, \label{eq:kkt_stat_pv} \\
+    \nabla_{\qimp} \mathcal{L} &= \pimp - {\lbal}^* - {\muimp}^* = 0, \label{eq:kkt_stat_imp} \\
+    \nabla_{\qexp} \mathcal{L} &= -\pexp + {\lbal}^* - {\muexp}^* = 0, \label{eq:kkt_stat_exp}
+\end{align}
+which are identical to equations \eqref{eq:dual_cond_load}--\eqref{eq:dual_cond_exp} derived for
+the dual function.
+
+\paragraph{2. Primal feasibility.}
+The optimal primal solution must satisfy the equality and inequality constraints of the
+hourly problem:
+\begin{align}
+    & {\load}^* - {\pvprod}^* - {\qimp}^* + {\qexp}^* = 0, \label{eq:kkt_pf_bal} \\
+    & \Lmin - {\load}^* \leq 0, \label{eq:kkt_pf_load_lb} \\
+    & {\load}^* - \Lmax \leq 0, \label{eq:kkt_pf_load_ub} \\
+    & -{\pvprod}^* \leq 0, \label{eq:kkt_pf_pv_lb} \\
+    & {\pvprod}^* - \PVmax \leq 0, \label{eq:kkt_pf_pv_ub} \\
+    & -{\qimp}^* \leq 0, \label{eq:kkt_pf_imp} \\
+    & -{\qexp}^* \leq 0. \label{eq:kkt_pf_exp}
+\end{align}
+
+\paragraph{3. Dual feasibility.}
+The multipliers associated with the inequalities written as $g(x) \leq 0$ must be
+non-negative, while the power-balance multiplier ${\lbal}^*$ is free in sign:
+\begin{align}
+    & {\muLlo}^* \geq 0, \quad {\muLup}^* \geq 0, \quad {\muPVlo}^* \geq 0, \quad {\muPVup}^* \geq 0, \label{eq:kkt_df_mu} \\
+    & {\muimp}^* \geq 0, \quad {\muexp}^* \geq 0, \quad {\lbal}^* \in \mathbb{R}. \label{eq:kkt_df_grid}
+\end{align}
+
+\paragraph{4. Complementary slackness.}
+One orthogonality condition holds per inequality constraint: a multiplier and its constraint
+cannot both be non-zero.
+\begin{align}
+    & {\muLlo}^* \big( \Lmin - {\load}^* \big) = 0, \label{eq:kkt_cs_load_lb} \\
+    & {\muLup}^* \big( {\load}^* - \Lmax \big) = 0, \label{eq:kkt_cs_load_ub} \\
+    & {\muPVlo}^* \big( -{\pvprod}^* \big) = 0, \label{eq:kkt_cs_pv_lb} \\
+    & {\muPVup}^* \big( {\pvprod}^* - \PVmax \big) = 0, \label{eq:kkt_cs_pv_ub} \\
+    & {\muimp}^* \big( -{\qimp}^* \big) = 0, \label{eq:kkt_cs_imp} \\
+    & {\muexp}^* \big( -{\qexp}^* \big) = 0. \label{eq:kkt_cs_exp}
+\end{align}
+The power-balance equality constraint does not carry a complementary slackness condition.
 
 \subsubsection{Strong duality}
-\todo{Does strong duality hold? Justify from the properties of the problem stated in (a)
-(problem class, feasibility, boundedness), and state what it implies for the primal and dual
-optimal values.}
+Strong duality holds for the hourly problem: the duality gap is zero, and the optimal value
+of the primal problem equals the optimal value of the dual problem, $C_t^* = d^*$. This
+follows from the properties established in (a):
+\begin{itemize}
+    \item \textbf{Problem class:} as shown in (a), the hourly problem is a Linear Program:
+    its objective is linear and all its constraints are affine. Linear programs are convex
+    optimisation problems.
+    \item \textbf{Feasibility and Slater's condition:} for problems with only affine
+    constraints, Slater's condition reduces to primal feasibility (lecture notes,
+    Section~4). The hourly problem was shown in (a) to be feasible whenever
+    $\Lmin \leq \Lmax$ and $\PVmax \geq 0$; for instance, $\load = \Lmin$, $\pvprod = 0$,
+    $\qimp = \Lmin$, $\qexp = 0$ is always feasible. Slater's condition is therefore satisfied.
+    \item \textbf{Boundedness:} it was also shown in (a) that, since $\pexp < \pimp$ (the
+    tariffs are positive), the cost cannot be driven to $-\infty$ through simultaneous
+    imports and exports. By LP strong duality (lecture notes, Section~5), if the primal LP
+    has an optimal solution, so does its dual, and both optimal values coincide.
+\end{itemize}
+Consequently, $C_t({\mathbf{x}}^*) = q({\lbal}^*, \boldsymbol{\mu}^*)$: the primal solution
+certifies the optimality of the dual solution, and vice versa.
 
 \subsubsection{Necessity and sufficiency of the KKT conditions}
-\todo{Are the KKT conditions necessary, sufficient, both, or neither for optimality of this
-problem? Justify from the properties stated in (a), separately for necessity and for
-sufficiency.}
+The KKT conditions \eqref{eq:kkt_stat_load}--\eqref{eq:kkt_cs_exp} are \textbf{both necessary
+and sufficient} for optimality in this problem.
+
+\paragraph{Necessity.}
+According to Section~6 of the lecture notes, the KKT conditions are necessary if strong
+duality holds, the primal and dual solutions ${\mathbf{x}}^*$ and $({\lbal}^*, \boldsymbol{\mu}^*)$ are
+optimal, and the functions are differentiable. In our hourly problem:
+\begin{itemize}
+    \item The objective and all the constraint functions are linear, hence differentiable.
+    \item Strong duality holds, as shown above, and since the LP has an optimal solution its
+    dual has one too.
+\end{itemize}
+Therefore, if $({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*)$ is a primal optimal solution, there
+exist multipliers $({\lbal}^*, \boldsymbol{\mu}^*)$ such that the complete set of conditions
+\eqref{eq:kkt_stat_load}--\eqref{eq:kkt_cs_exp} holds.
+
+\paragraph{Sufficiency.}
+According to Section~6, the KKT conditions are sufficient if the primal problem is convex. In
+our hourly problem:
+\begin{itemize}
+    \item The objective function $C_t$ is linear, hence convex.
+    \item Every inequality constraint function is affine, hence convex.
+    \item The power-balance equality constraint function is affine.
+\end{itemize}
+Under convexity, the Lagrangian is convex in the primal variables for any
+$\boldsymbol{\mu} \geq \mathbf{0}$. The stationarity conditions
+\eqref{eq:kkt_stat_load}--\eqref{eq:kkt_stat_exp} ensure that the primal candidate is a global
+minimiser of $\mathcal{L}$, and complementary slackness
+\eqref{eq:kkt_cs_load_lb}--\eqref{eq:kkt_cs_exp} guarantees that $q(\lbal, \boldsymbol{\mu}) =
+\mathcal{L} = C_t$. Thus, any point satisfying the KKT system is a global optimum.
+
+\paragraph{Conclusion.}
+Since both requirements are met by the properties established in (a), the KKT conditions
+fully characterise the optimal solution: a candidate is optimal \emph{if and only if} it
+satisfies the KKT system.
 
 \subsection{(c) Interpretation of the dual variables}
 % HINTS (not final text) -- everything below marked "draft" was written during the 1.(b)
