@@ -588,21 +588,76 @@ from \eqref{eq:kkt_stat_imp}--\eqref{eq:kkt_stat_exp}:
         {\qimp}^* - {\qexp}^* = \Lmax - {\pvprod}^* \geq \Lmax - \PVmax > 0,
     \end{equation}
     so the consumer imports from the grid: ${\qimp}^* > 0$ and ${\qexp}^* = 0$.
-    \item \textbf{Regime 1} (${\load}^* = \Lmin$). Since $\Lmin < \PVmax$, the consumer
-    exports part of its PV production.
-    \todo{Justify it: the balance alone does not rule out importing or no exchange. Use the
-    stationarity of $\pvprod$, \eqref{eq:kkt_stat_pv}, with $\cpv < \uL$ and the relation
-    between $\uL$ and ${\lbal}^*$ of Step 1.}
-    \item \textbf{Regime 3} ($\Lmin < {\load}^* < \Lmax$).
-    \todo{Which grid states are possible, and how much PV is used? The load ${\load}^*$ will
-    follow from the balance.}
+    \item \textbf{Regime 1} (${\load}^* = \Lmin$). By Step 1, $\uL \leq {\lbal}^*$, and in
+    case A $\cpv < \uL$, so ${\lbal}^* > \cpv$. The stationarity of the PV production
+    \eqref{eq:kkt_stat_pv} reads
+    \begin{equation}
+        {\lbal}^* = \cpv - {\muPVlo}^* + {\muPVup}^*,
+    \end{equation}
+    and since ${\lbal}^* > \cpv$ and the multipliers are non-negative, necessarily
+    ${\muPVup}^* > 0$. By complementary slackness \eqref{eq:kkt_cs_pv_ub}, the PV production
+    is at its limit, ${\pvprod}^* = \PVmax$ (and then ${\muPVlo}^* = 0$, since $\PVmax > 0$).
+    The balance \eqref{eq:c_balance} gives
+    \begin{equation}
+        {\qimp}^* - {\qexp}^* = \Lmin - \PVmax < 0.
+    \end{equation}
+    By (i) the consumer does not import and export at the same time, so ${\qimp}^* = 0$ and
+    ${\qexp}^* > 0$: the surplus PV is exported.
+    \item \textbf{Regime 3} ($\Lmin < {\load}^* < \Lmax$). By Step 1, ${\lbal}^* = \uL$, so
+    again ${\lbal}^* > \cpv$ in case A, and the same argument as in regime 1 gives
+    ${\pvprod}^* = \PVmax$. As for the grid, importing would imply ${\lbal}^* = \pimp$, i.e.\
+    $\uL = \pimp$, and exporting would imply $\uL = \pexp$: both are ties between $\uL$ and an
+    effective price, which are left for (v). Unless $\uL$ equals one of the two prices, there is
+    no exchange with the grid, ${\qimp}^* = {\qexp}^* = 0$, and the balance gives
+    \begin{equation}
+        {\load}^* = \PVmax + 0 - 0 = \PVmax,
+    \end{equation}
+    which is indeed strictly between $\Lmin$ and $\Lmax$ by assumption. The consumer runs on
+    its own PV production alone.
 \end{itemize}
 
-\todo{Assume $\Lmin < \PVmax < \Lmax$. Three regimes for the optimal load: at $\Lmax$, at
-$\Lmin$, and in between, characterised by the ordering of $\uL$, $\pimp$ and $\pexp$. Hint:
-start from the load equation \eqref{eq:dual_cond_load} and the possible values of $\muLlo$,
-$\muLup$ given where the load is, and use the bounds on $\lbal$. Give the conditions, the
-optimal load in each regime, and interpret what the prosumer does in each.}
+\paragraph{Step 4: conditions and optimal load.}
+Combining Steps 1 to 3 gives the three regimes:
+\begin{itemize}
+    \item \textbf{Regime 1:} the consumer exports, so ${\lbal}^* = \pexp$ and Step 1 gives
+    $\uL \leq \pexp$. The optimal load is ${\load}^* = \Lmin$.
+    \item \textbf{Regime 2:} the consumer imports, so ${\lbal}^* = \pimp$ and Step 1 gives
+    $\uL \geq \pimp$. The optimal load is ${\load}^* = \Lmax$.
+    \item \textbf{Regime 3:} no exchange with the grid and $\uL = {\lbal}^*$ with
+    $\pexp \leq {\lbal}^* \leq \pimp$, so in the non-degenerate case
+    $\pexp < \uL < \pimp$. The optimal load is ${\load}^* = \PVmax$.
+\end{itemize}
+
+
+\paragraph{Summary and interpretation.}
+\begin{center}
+\begin{tabular}{lccc}
+    \toprule
+    & Condition & Optimal load ${\load}^*$ & Grid \\
+    \midrule
+    Regime 1 & $\uL \leq \pexp$ & $\Lmin$ & exports \\
+    Regime 2 & $\uL \geq \pimp$ & $\Lmax$ & imports \\
+    Regime 3 & $\pexp < \uL < \pimp$ & $\PVmax$ & no exchange \\
+    \bottomrule
+\end{tabular}
+\end{center}
+The value $\uL$ of consuming one more kWh is compared with what the consumer would get for
+that kWh by selling it ($\pexp$) and with what it would cost to buy it ($\pimp$). The optimum
+switches exactly where this comparison changes sign:
+\begin{itemize}
+    \item \textbf{Regime 1} ($\uL \leq \pexp$): consuming is worth less than selling. The
+    consumer reduces its load to the minimum $\Lmin$, uses all its PV production
+    (${\pvprod}^* = \PVmax$) and exports the surplus $\PVmax - \Lmin > 0$.
+    \item \textbf{Regime 2} ($\uL \geq \pimp$): consuming is worth at least as much as buying,
+    so the consumer raises its load to the maximum $\Lmax$ and imports what its PV production
+    does not cover. How much PV is used in this regime is studied in (iii).
+    \item \textbf{Regime 3} ($\pexp < \uL < \pimp$): buying is too expensive for the value of
+    consuming ($\uL < \pimp$), but selling PV production is not worth it either
+    ($\uL > \pexp$). The consumer uses all its PV production and adjusts its flexible load to
+    match it exactly, with no exchange with the grid: ${\load}^* = \PVmax$.
+\end{itemize}
+The width of this intermediate regime is the gap $\pimp - \pexp = \tauimp + \tauexp$ between
+the two effective prices, so it exists because of the tariffs.
 
 \subsubsection{(iii) PV production}
 \todo{Same assumption on $\PVmax$. Regimes of curtailment and the thresholds on $\cpv$ that
