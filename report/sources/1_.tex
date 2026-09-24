@@ -12,8 +12,8 @@ consuming, minus the cost of buying and producing energy, plus the revenue from 
 \subsubsection{Input data}
 \begin{itemize}
     \item $p_t$: hourly electricity price in hour $t$ (DKK/kWh).
-    \item $\tauimp$, $\tauexp$: import and export grid tariffs (DKK/kWh), with the
-    assumption
+    \item $\tauimp$, $\tauexp$: import and export grid tariffs (DKK/kWh), both positive, with
+    the assumption
     \begin{equation}
         \tauexp < p_t, \qquad \forall t \in \T,
         \label{eq:tariff_assumption}
@@ -471,11 +471,31 @@ Only case A is considered, i.e.\ $\cpv < \uL$.
 % $\lbal$ in \eqref{eq:dual_lambda_bounds}.
 
 \subsubsection{(i) Simultaneous import and export}
-\todo{Is it ever optimal to import and export in the same hour? Demonstrate it. Hint:
-complementary slackness on $\muimp$ and $\muexp$ says what happens to them when
-$\qimp > 0$ and $\qexp > 0$; then compare with $\pexp \leq \lbal \leq \pimp$. The brief asks
-which of the conditions on the price structure stated in the problem statement (positive
-tariffs, $\tauexp < p_t$) ensures the result, and to interpret it.}
+No, it is never optimal to import and export in the same hour. We show it by contradiction.
+Since the KKT conditions are necessary for optimality in this problem (see (b)), any optimal
+solution comes with multipliers that satisfy them.
+
+Suppose that in an hour $t$ an optimal solution has ${\qimp}^* > 0$ and ${\qexp}^* > 0$. Then the
+constraints $-\qimp \leq 0$ and $-\qexp \leq 0$ are not active, so by complementary slackness
+\eqref{eq:kkt_cs_imp}--\eqref{eq:kkt_cs_exp}, ${\muimp}^* = {\muexp}^* = 0$. The stationarity
+conditions \eqref{eq:kkt_stat_imp} and \eqref{eq:kkt_stat_exp} then give
+\begin{equation}
+    {\lbal}^* = \pimp
+    \qquad \text{and} \qquad
+    {\lbal}^* = \pexp,
+\end{equation}
+so $\pimp = \pexp$. But by \eqref{eq:effective_import_price} and
+\eqref{eq:effective_export_price}, $\pimp - \pexp = \tauimp + \tauexp$, which is strictly
+positive because both tariffs are positive. This is a contradiction, so an optimal solution
+cannot import and export in the same hour.
+
+\paragraph{Condition and interpretation.}
+The result is ensured by the positivity of the grid tariffs: all that is needed is
+$\tauimp + \tauexp > 0$, i.e.\ $\pexp < \pimp$. The power balance \eqref{eq:c_balance} only
+depends on the difference $\qimp - \qexp$, so importing and exporting at the same time does not
+change what the consumer can consume. However, every kWh that is bought and sold in the same
+hour costs $\pimp - \pexp = \tauimp + \tauexp > 0$: it is a pure loss. Without tariffs this
+loss would be zero, and simultaneous import and export would no longer be excluded.
 
 \subsubsection{(ii) Load consumption}
 \todo{Assume $\Lmin < \PVmax < \Lmax$. Three regimes for the optimal load: at $\Lmax$, at

@@ -27,13 +27,12 @@ total energy $\Emin$ (kWh) over the whole day:
 \end{itemize}
 
 \subsection{(b) Lagrangian, dual problem and KKT conditions of the daily problem}
-\todo{Notation clash to decide before writing this: the brief calls $\mu \geq 0$ the multiplier
-of the minimum-energy constraint \eqref{eq:c_min_energy}, but in Question~1.(b) the symbol
-$\mu$ is already used for the hourly inequality multipliers ($\muLlo$, $\muLup$, $\muPVlo$,
-$\muPVup$, $\muimp$, $\muexp$, always with a bar, a superscript and the index $t$). Either
-keep plain $\mu$ for the minimum energy (no ambiguity, since the others are never written
-without decorations) and say so explicitly, or rename one of the two families, and update
-\texttt{9\_nomenclat.tex} accordingly.}
+Following the brief, the multiplier of the minimum-energy constraint \eqref{eq:c_min_energy}
+is denoted by $\muE \geq 0$. It is a multiplier of the same kind as those of Question~1.(b):
+it belongs to an inequality, which in the form $g(x) \leq 0$ reads
+$\Emin - \sum_{t \in \T} \load \leq 0$, and it is in DKK/kWh. Unlike the hourly multipliers, it
+has no hour index, since the constraint applies to the whole day.
+
 \todo{Lagrangian, dual problem and KKT conditions of the daily problem, with the multiplier
 of \eqref{eq:c_min_energy}. Does strong duality hold? Needs 3.(a) (model of 2.(c) plus the
 new constraint) to be complete.}
