@@ -1,5 +1,10 @@
-% Question 3 -- draft so far (Ignacio's notes). 3.(a) is only partly written: the parts that
-% do not depend on 2.(c) are below; the rest is left as TODO.
+% Question 3 -- draft so far. 3.(a): definitions and daily problem are written (they only restate
+% the brief); the properties (problem class, convexity, feasibility) are left as TODO with hints.
+%
+% NOTE ON 2.(c): Question 3 starts from the quadratic disutility of 2.(c), which is not written
+% yet. Below the disutility is kept generic, D_t(l_t), as in 2.(a) (convex, differentiable). This
+% is enough to write 3.(b): the KKT conditions only need D_t'(l_t). Once 2.(c) is written, D_t is
+% replaced by the quadratic disutility and the properties below are specialised.
 %
 % 3.(c) (qualitative hypotheses), Ignacio's note: the reasoning -- does the consumer ever
 % consume above its hourly reference, and above E^min -- follows from a cost-benefit argument
@@ -10,11 +15,28 @@
 
 \subsubsection{New input data and constraint}
 Starting from the model of Question~2.(c), the consumer must now consume at least a minimum
-total energy $\Emin$ (kWh) over the whole day:
+total energy $\Emin$ (kWh) over the whole day. This is the only new input datum, and it adds a
+single new constraint:
 \begin{equation}
     \sum_{t \in \T} \load \geq \Emin.
     \label{eq:c_min_energy}
 \end{equation}
+
+\subsubsection{Daily problem}
+The daily problem keeps the objective of Question~2 and all the constraints of Question~1, and
+adds \eqref{eq:c_min_energy}. With $D_t$ the disutility of the deviation of the load from the
+reference $\lref$ (in Question~3, the quadratic disutility of 2.(c)):
+\begin{align}
+    \max_{\{\load, \qimp, \qexp, \pvprod\}_{t \in \T}} \quad
+    & \sum_{t \in \T} \Big( - D_t(\load) - \pimp \, \qimp + \pexp \, \qexp - \cpv \, \pvprod \Big)
+    \label{eq:q3_objective} \\
+    \text{s.t.} \quad
+    & \load = \pvprod + \qimp - \qexp, & \forall t \in \T, \nonumber \\
+    & \Lmin \leq \load \leq \Lmax, & \forall t \in \T, \nonumber \\
+    & 0 \leq \pvprod \leq \PVmax, & \forall t \in \T, \nonumber \\
+    & \qimp \geq 0, \quad \qexp \geq 0, & \forall t \in \T, \nonumber \\
+    & \sum_{t \in \T} \load \geq \Emin. & \nonumber
+\end{align}
 
 \subsubsection{Change in the properties}
 \begin{itemize}
@@ -22,11 +44,28 @@ total energy $\Emin$ (kWh) over the whole day:
     of the assignment that links different hours, since it involves the loads of all 24
     hours. The daily problem can therefore no longer be split into 24 independent hourly
     problems: it has to be solved as a single 24-hour problem.
-    \item \todo{Problem class and convexity compared with Question 2.}
-    \item \todo{Feasibility: condition on $\Emin$, the reference profile and the load bounds.}
+    \item \todo{Problem class and convexity compared with Question 2. Hint: look at what the
+    new constraint is (linear or not) and at the class of the objective of 2.(c); does adding
+    it change the class or the convexity of the problem?}
+    \item \todo{Feasibility: give a condition on $\Emin$, the reference profile and the load
+    bounds under which the problem is feasible. Hint: think about the largest total energy the
+    consumer can consume in one day given the load bounds, and whether the reference profile
+    actually restricts what is feasible. This condition is needed again in 3.(b), to justify
+    strong duality.}
 \end{itemize}
 
 \subsection{(b) Lagrangian, dual problem and KKT conditions of the daily problem}
+% HINTS (not final text) for whoever writes 3.(b):
+% - Set up as in 1.(b): minimisation, h(x) = 0 and g(x) <= 0, one multiplier per constraint. The
+%   hourly multipliers of 1.(b) are reused (macros \lbal, \muLlo, ..., all with the hour index t);
+%   the new one is \muE (already in main.tex), a single scalar for the whole day.
+% - The Lagrangian is the sum over t of the hourly terms of 1.(b), with D_t in place of the
+%   linear utility, plus the term of the minimum-energy constraint.
+% - In the stationarity condition of the load, D_t'(l_t) appears and \muE appears in every
+%   hour: this is how the multiplier couples the hours in the KKT conditions.
+% - Strong duality and necessity/sufficiency of KKT: same route as in 1.(b) (problem class from
+%   (a), Slater's condition reduces to feasibility when the constraints are affine), and the
+%   feasibility condition of 3.(a) is what is needed here.
 Following the brief, the multiplier of the minimum-energy constraint \eqref{eq:c_min_energy}
 is denoted by $\muE \geq 0$. It is a multiplier of the same kind as those of Question~1.(b):
 it belongs to an inequality, which in the form $g(x) \leq 0$ reads
@@ -34,5 +73,4 @@ $\Emin - \sum_{t \in \T} \load \leq 0$, and it is in DKK/kWh. Unlike the hourly 
 has no hour index, since the constraint applies to the whole day.
 
 \todo{Lagrangian, dual problem and KKT conditions of the daily problem, with the multiplier
-of \eqref{eq:c_min_energy}. Does strong duality hold? Needs 3.(a) (model of 2.(c) plus the
-new constraint) to be complete.}
+of \eqref{eq:c_min_energy}. Does strong duality hold?}

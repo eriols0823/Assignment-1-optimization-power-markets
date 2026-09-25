@@ -843,6 +843,17 @@ and, in the third, none if $\cpv < \pimp$ and full if $\cpv > \pimp$.
 \end{tabularx}
 \end{center}
 
+\paragraph{Interpretation.}
+If there is too little sun ($\PVmax < \Lmin$), the consumer depends on the grid for its
+consumption: it always imports, and its decisions on the load become all-or-nothing, either
+$\Lmin$ or $\Lmax$, with no intermediate level. If there is too much sun ($\PVmax > \Lmax$),
+the consumer has energy to spare: whenever consuming is worth more than selling
+($\uL > \pexp$), it runs the load at its maximum. The question is then what to do with the
+surplus. If producing costs less than what the grid pays ($\cpv < \pexp$), the surplus is
+sold. If not ($\pexp < \cpv < \pimp$), selling it would lose money, so the PV is curtailed to
+what the load needs. And if the PV is more expensive than the grid ($\cpv > \pimp$), it is
+switched off and the whole load is imported.
+
 \subsubsection{(v) Decision rule and ties}
 \todo{Summarise (ii)--(iv) as a rule: each hour the consumer compares $\uL$ and $\cpv$ with
 the two effective prices. What happens when one comparison is a tie, and what does it imply
