@@ -91,6 +91,10 @@ class FlexibleConsumerModel:
         """
         d, m, T = self.data, self.m, self.T
 
+        p_imp = d.energy_price + d.import_tariff
+        p_exp = d.energy_price - d.export_tariff
+
+
         # --- Decision variables --------------------------------------------------------
         # TODO: identify and declare the decision variables of your formulation.
         # Store every variable family in self.var["<name>"]: solve() then returns its hourly
@@ -108,6 +112,8 @@ class FlexibleConsumerModel:
         #   a bound you want a dual for must be an explicit constraint, not lb=/ub= (see the README).
         # * naming the families "import", "export", "load", "pv" makes the standard plots of
         #   src/plotting.py work out of the box.
+
+
 
         # --- Objective ---------------------------------------------------------------
         # TODO: express the objective function and its direction (GRB.MINIMIZE or GRB.MAXIMIZE):
