@@ -660,6 +660,47 @@ The width of this intermediate regime is the gap $\pimp - \pexp = \tauimp + \tau
 the two effective prices, so it exists because of the tariffs.
 
 \subsubsection{(iii) PV production}
+We keep the assumption $\Lmin < \PVmax < \Lmax$. Curtailment means producing less PV than what
+is available. The regimes are classified by the position of ${\pvprod}^*$ with respect to its
+bounds, and the thresholds on $\cpv$ come from comparing it with ${\lbal}^*$.
+
+\paragraph{Step 1: stationarity of the PV production.}
+The stationarity condition \eqref{eq:kkt_stat_pv} can be rewritten as
+\begin{equation}
+    \cpv = {\lbal}^* + {\muPVlo}^* - {\muPVup}^*.
+    \label{eq:d_iii_cpv}
+\end{equation}
+Since $\PVmax > \Lmin \geq 0$, the PV production cannot be at both bounds at once, so at most
+one of the two PV constraints is active. There are three regimes:
+\begin{itemize}
+    \item \textbf{Full curtailment:} ${\pvprod}^* = 0$. The upper bound is not active, so
+    ${\muPVup}^* = 0$, while ${\muPVlo}^* \geq 0$. Then \eqref{eq:d_iii_cpv} gives
+    $\cpv = {\lbal}^* + {\muPVlo}^* \geq {\lbal}^*$, i.e.\ $\cpv \geq {\lbal}^*$.
+    \item \textbf{Partial curtailment:} $0 < {\pvprod}^* < \PVmax$. Neither bound is active,
+    so ${\muPVlo}^* = {\muPVup}^* = 0$, and \eqref{eq:d_iii_cpv} gives $\cpv = {\lbal}^*$.
+    \item \textbf{No curtailment:} ${\pvprod}^* = \PVmax$. The lower bound is not active, so
+    ${\muPVlo}^* = 0$, while ${\muPVup}^* \geq 0$. Then \eqref{eq:d_iii_cpv} gives
+    $\cpv = {\lbal}^* - {\muPVup}^* \leq {\lbal}^*$, i.e.\ $\cpv \leq {\lbal}^*$.
+\end{itemize}
+
+\paragraph{Step 2: the thresholds for each load regime.}
+In each of the three load regimes of (ii), ${\lbal}^*$ takes the value found there:
+${\lbal}^* = \pexp$ in regime 1 (the consumer exports), ${\lbal}^* = \pimp$ in regime 2 (the
+consumer imports), and ${\lbal}^* = \uL$ in regime 3 (no exchange). Substituting it in the three
+conditions of Step 1 gives the relation between $\cpv$ and the prices for each combination:
+\begin{center}
+\begin{tabular}{lccc}
+    \toprule
+    & Full curtailment & Partial curtailment & No curtailment \\
+    & (${\pvprod}^* = 0$) & ($0 < {\pvprod}^* < \PVmax$) & (${\pvprod}^* = \PVmax$) \\
+    \midrule
+    Load regime 1 (${\lbal}^* = \pexp$) & $\cpv \geq \pexp$ & $\cpv = \pexp$ & $\cpv \leq \pexp$ \\
+    Load regime 2 (${\lbal}^* = \pimp$) & $\cpv \geq \pimp$ & $\cpv = \pimp$ & $\cpv \leq \pimp$ \\
+    Load regime 3 (${\lbal}^* = \uL$) & $\cpv \geq \uL$ & $\cpv = \uL$ & $\cpv \leq \uL$ \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
 \todo{Same assumption on $\PVmax$. Regimes of curtailment and the thresholds on $\cpv$ that
 separate them, from the PV equation \eqref{eq:dual_cond_pv}; interpret them. Case A is
 $\cpv < \uL$, which is what makes the comparison with $\pexp$, $\pimp$ relevant.}
