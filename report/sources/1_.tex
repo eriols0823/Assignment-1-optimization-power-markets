@@ -760,8 +760,88 @@ zero, so it is almost always cheaper to consume or sell what the panels produce 
 switch them off, and curtailment tends to be rare.
 
 \subsubsection{(iv) Relaxing the assumption on the PV availability}
-\todo{Extend (ii) and (iii) to $\PVmax < \Lmin$ and $\PVmax > \Lmax$: in which price regimes
-does the optimal load and the curtailment change, and what are the new solutions?}
+The Steps 1 of (ii) and (iii) do not depend on the assumption $\Lmin < \PVmax < \Lmax$, so
+they still hold. What changes is which state of the grid goes with each regime, which was
+decided with the balance. We stay in case A ($\cpv < \uL$).
+
+\paragraph{Case $\PVmax < \Lmin$.}
+Even with all the PV production, the load cannot be covered: ${\pvprod}^* \leq \PVmax < \Lmin
+\leq {\load}^*$. The balance \eqref{eq:c_balance} gives
+\begin{equation}
+    {\qimp}^* - {\qexp}^* = {\load}^* - {\pvprod}^* \geq \Lmin - \PVmax > 0,
+\end{equation}
+so in every hour the consumer imports, ${\qimp}^* > 0$ and ${\qexp}^* = 0$, and
+${\lbal}^* = \pimp$. The export price $\pexp$ plays no role.
+\begin{itemize}
+    \item \textbf{Load:} by Step 1 of (ii), ${\load}^* = \Lmax$ if $\uL \geq \pimp$ and
+    ${\load}^* = \Lmin$ if $\uL \leq \pimp$. The intermediate regime disappears: the load
+    cannot follow the PV production, since ${\load}^* = \PVmax$ would violate $\load \geq \Lmin$.
+    \item \textbf{PV:} by Step 1 of (iii), there is no curtailment if $\cpv < \pimp$, with
+    ${\qimp}^* = {\load}^* - \PVmax$, and full curtailment if $\cpv > \pimp$, with
+    ${\qimp}^* = {\load}^*$.
+\end{itemize}
+Compared with (ii) and (iii):
+\begin{itemize}
+    \item $\uL \leq \pexp$: the load is still $\Lmin$ and the PV is still fully used. Only the
+    grid changes: it imports $\Lmin - \PVmax$ instead of exporting.
+    \item $\pexp < \uL < \pimp$: the load changes from $\PVmax$ to $\Lmin$. The PV is still
+    fully used, since $\cpv < \uL < \pimp$, and the difference is imported.
+    \item $\uL \geq \pimp$: nothing changes.
+\end{itemize}
+
+\paragraph{Case $\PVmax > \Lmax$.}
+Now the PV capacity exceeds the maximum load, $\PVmax > \Lmax \geq {\load}^*$. In case A the
+only prior restriction is $\cpv < \uL$, so $\cpv$ can fall in any of the three ranges defined
+by the two effective prices.
+\begin{itemize}
+    \item \textbf{Range A: $\cpv < \pexp$.} Selling PV production always leaves a positive
+    margin, so there is no curtailment, ${\pvprod}^* = \PVmax$. Since
+    $\PVmax > \Lmax \geq {\load}^*$, there is a surplus that is exported,
+    ${\qexp}^* = \PVmax - {\load}^* > 0$ and ${\qimp}^* = 0$, so ${\lbal}^* = \pexp$. The load
+    compares $\uL$ with ${\lbal}^* = \pexp$: it is $\Lmin$ if $\uL \leq \pexp$ (selling a kWh
+    pays more than consuming it) and $\Lmax$ if $\uL > \pexp$ (consuming it is worth more than
+    selling it). The intermediate regime ${\load}^* = \PVmax$ cannot exist, since it would
+    exceed $\Lmax$.
+    \item \textbf{Range B: $\pexp < \cpv < \pimp$.} Producing for export would lose money, but
+    producing to supply the load is profitable, since $\cpv < \uL$ and $\cpv < \pimp$. The PV
+    production supplies exactly the load and the rest is curtailed,
+    ${\pvprod}^* = {\load}^*$ (partial curtailment, $\PVmax - {\load}^* > 0$), and there is no
+    exchange with the grid. Partial curtailment gives ${\lbal}^* = \cpv$
+    (${\muPVlo}^* = {\muPVup}^* = 0$). Then ${\muLup}^* = \uL - {\lbal}^* = \uL - \cpv > 0$,
+    which forces ${\load}^* = \Lmax$.
+    \item \textbf{Range C: $\cpv > \pimp$.} The grid is cheaper than the PV, so the PV is
+    switched off, ${\pvprod}^* = 0$ (full curtailment), and the whole load is imported,
+    ${\qimp}^* = {\load}^*$, so ${\lbal}^* = \pimp$. This range requires
+    $\pimp < \cpv < \uL$, so $\uL > {\lbal}^*$ and the load is at its limit,
+    ${\load}^* = \Lmax$ and ${\qimp}^* = \Lmax$.
+\end{itemize}
+
+\paragraph{Comparison with (ii) and (iii).}
+The table shows, for each price regime of (ii), what changes in the load and in the
+curtailment in each case. The curtailment of the original regimes is: none in the first two,
+and, in the third, none if $\cpv < \pimp$ and full if $\cpv > \pimp$.
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    Regime of (ii) & Original & $\PVmax < \Lmin$ & $\PVmax > \Lmax$ \\
+    \midrule
+    $\uL \leq \pexp$
+    & load $\Lmin$, no curtailment
+    & no change (the grid imports instead of exporting)
+    & no change \\
+    $\pexp < \uL < \pimp$
+    & load $\PVmax$, no curtailment
+    & load $\Lmin$; no change in curtailment
+    & load $\Lmax$; curtailment: none if $\cpv < \pexp$, partial if $\cpv > \pexp$ \\
+    $\uL \geq \pimp$
+    & load $\Lmax$; curtailment: none if $\cpv < \pimp$, full if $\cpv > \pimp$
+    & no change
+    & load $\Lmax$; curtailment: none if $\cpv < \pexp$, partial if $\pexp < \cpv < \pimp$, full
+    if $\cpv > \pimp$ \\
+    \bottomrule
+\end{tabularx}
+\end{center}
 
 \subsubsection{(v) Decision rule and ties}
 \todo{Summarise (ii)--(iv) as a rule: each hour the consumer compares $\uL$ and $\cpv$ with
