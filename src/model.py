@@ -94,6 +94,26 @@ class FlexibleConsumerModel:
         p_imp = d.energy_price + d.import_tariff
         p_exp = d.energy_price - d.export_tariff
 
+        # --- Legend: report (LaTeX) -> code ---------------------------------------------
+        # Parameters (d = self.data; arrays are indexed by hour, scalars are not)
+        #   p_t            d.energy_price[t]              DKK/kWh
+        #   tau^imp        d.import_tariff                DKK/kWh
+        #   tau^exp        d.export_tariff                DKK/kWh
+        #   p^imp_t        p_imp[t]                       DKK/kWh   (p_t + tau^imp)
+        #   p^exp_t        p_exp[t]                       DKK/kWh   (p_t - tau^exp)
+        #   u^L            d.consumption_utility          DKK/kWh   (scalar)
+        #   c^PV           d.pv_marginal_cost             DKK/kWh   (scalar)
+        #   L^min, L^max   d.load_min_kWh, d.load_max_kWh kWh/h     (scalars)
+        #   PV^max_t       d.pv_available[t]              kWh/h
+        # Variables (declared below, used as self.var["<name>"][t])
+        #   l_t            self.var["load"][t]            kWh/h
+        #   q^PV_t         self.var["pv"][t]              kWh/h
+        #   q^imp_t        self.var["import"][t]          kWh/h
+        #   q^exp_t        self.var["export"][t]          kWh/h
+        # Constraint families (used as self.con["<name>"]; their duals come out as dual_<name>)
+        #   balance, load_lo, load_up, pv_lo, pv_up, imp_nonneg, exp_nonneg
+        #   -> lambda_t, mu^L_lo, mu^L_up, mu^PV_lo, mu^PV_up, mu^imp, mu^exp of Question 1.(b)
+
 
         # --- Decision variables --------------------------------------------------------
         # TODO: identify and declare the decision variables of your formulation.
@@ -113,12 +133,17 @@ class FlexibleConsumerModel:
         # * naming the families "import", "export", "load", "pv" makes the standard plots of
         #   src/plotting.py work out of the box.
 
-
+        self.var["import"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="import")
+        self.var["export"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="export")
+        self.var["load"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="load")
+        self.var["pv"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="pv")
 
         # --- Objective ---------------------------------------------------------------
         # TODO: express the objective function and its direction (GRB.MINIMIZE or GRB.MAXIMIZE):
         #   m.setObjective(gp.quicksum(<expression in t> for t in T), <direction>)
         # The input-data attributes (with units) are documented in src/data_loader.py (InputData).
+
+        m.setObjective(gp.quicksum(u^L[t] * self.var["load"][t] - p_imp[t] * self.var["import"][t] + p_exp[t] * self.var["export"][t] - c^PV[t] * self.var["pv"][t] for t in T), GRB.MINIMIZE)
 
         # --- Constraints -------------------------------------------------------------
         # TODO: add the constraints of your formulation.
