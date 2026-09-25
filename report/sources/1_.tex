@@ -554,7 +554,9 @@ The stationarity condition \eqref{eq:kkt_stat_load} can be rewritten as
     \label{eq:d_ii_lambda}
 \end{equation}
 Since $\Lmin < \Lmax$, the load cannot be at both bounds at once, so at most one of the two
-load constraints is active. By complementary slackness and dual feasibility, there are three
+load constraints is active. By complementary slackness
+\eqref{eq:kkt_cs_load_lb}--\eqref{eq:kkt_cs_load_ub}, the multiplier of a constraint is zero
+whenever that constraint is not active, so together with dual feasibility there are three
 regimes:
 \begin{itemize}
     \item \textbf{Regime 1: ${\load}^* = \Lmin$.} The upper bound is not active, so
@@ -670,8 +672,10 @@ The stationarity condition \eqref{eq:kkt_stat_pv} can be rewritten as
     \cpv = {\lbal}^* + {\muPVlo}^* - {\muPVup}^*.
     \label{eq:d_iii_cpv}
 \end{equation}
-Since $\PVmax > \Lmin \geq 0$, the PV production cannot be at both bounds at once, so at most
-one of the two PV constraints is active. There are three regimes:
+By complementary slackness \eqref{eq:kkt_cs_pv_lb}--\eqref{eq:kkt_cs_pv_ub}, the multiplier of
+a constraint is zero whenever that constraint is not active. Since $\PVmax > \Lmin \geq 0$,
+the PV production cannot be at both bounds at once, so at most one of the two PV constraints
+is active. There are three regimes:
 \begin{itemize}
     \item \textbf{Full curtailment:} ${\pvprod}^* = 0$. The upper bound is not active, so
     ${\muPVup}^* = 0$, while ${\muPVlo}^* \geq 0$. Then \eqref{eq:d_iii_cpv} gives
@@ -701,9 +705,24 @@ conditions of Step 1 gives the relation between $\cpv$ and the prices for each c
 \end{tabular}
 \end{center}
 
-\todo{Same assumption on $\PVmax$. Regimes of curtailment and the thresholds on $\cpv$ that
-separate them, from the PV equation \eqref{eq:dual_cond_pv}; interpret them. Case A is
-$\cpv < \uL$, which is what makes the comparison with $\pexp$, $\pimp$ relevant.}
+\paragraph{Step 3: using case A.}
+In case A, $\cpv < \uL$. This rules out some combinations of the table:
+\begin{itemize}
+    \item \textbf{Load regime 1:} $\uL \leq \pexp$, so $\cpv < \uL \leq \pexp$. Only ``no
+    curtailment'' remains, with the strict inequality $\cpv < \pexp$.
+    \item \textbf{Load regime 3:} $\cpv < \uL = {\lbal}^*$. Only ``no curtailment'' remains,
+    with $\cpv < \uL$.
+    \item \textbf{Load regime 2:} $\uL \geq \pimp$ and $\cpv < \uL$ do not order $\cpv$ with
+    respect to $\pimp$, so the three columns remain possible, each under its own condition
+    in the table.
+\end{itemize}
+Hence curtailment can only occur in load regime 2, that is, when the consumer imports from the
+grid, and the threshold that decides it is $\pimp$.
+
+\todo{Step 4: in load regime 2, the value of ${\pvprod}^*$ and of ${\qimp}^*$ (from the
+balance) on each side of the threshold $\pimp$, and the interpretation in words: what the
+consumer compares in each regime and why curtailment only happens there. Partial curtailment
+requires $\cpv = \pimp$, which is a tie, treated in (v).}
 
 \subsubsection{(iv) Relaxing the assumption on the PV availability}
 \todo{Extend (ii) and (iii) to $\PVmax < \Lmin$ and $\PVmax > \Lmax$: in which price regimes
