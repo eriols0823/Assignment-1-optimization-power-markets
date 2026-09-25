@@ -719,10 +719,45 @@ In case A, $\cpv < \uL$. This rules out some combinations of the table:
 Hence curtailment can only occur in load regime 2, that is, when the consumer imports from the
 grid, and the threshold that decides it is $\pimp$.
 
-\todo{Step 4: in load regime 2, the value of ${\pvprod}^*$ and of ${\qimp}^*$ (from the
-balance) on each side of the threshold $\pimp$, and the interpretation in words: what the
-consumer compares in each regime and why curtailment only happens there. Partial curtailment
-requires $\cpv = \pimp$, which is a tie, treated in (v).}
+\paragraph{Step 4: load regime 2.}
+In this regime ${\load}^* = \Lmax$, ${\qexp}^* = 0$ and ${\lbal}^* = \pimp$, so the balance
+\eqref{eq:c_balance} gives
+\begin{equation}
+    {\qimp}^* = \Lmax - {\pvprod}^*.
+\end{equation}
+The two sides of the threshold $\pimp$ are:
+\begin{itemize}
+    \item \textbf{No curtailment} ($\cpv < \pimp$): ${\pvprod}^* = \PVmax$, so
+    ${\qimp}^* = \Lmax - \PVmax > 0$, by the assumption $\PVmax < \Lmax$.
+    \item \textbf{Full curtailment} ($\cpv > \pimp$): ${\pvprod}^* = 0$, so
+    ${\qimp}^* = \Lmax$: the whole demand is supplied by the grid.
+\end{itemize}
+The exact case $\cpv = \pimp$ is a tie with partial curtailment, which is analysed in (v).
+
+\paragraph{Interpretation.}
+Producing a kWh with the PV panels costs $\cpv$, so the consumer compares it with what that
+kWh is worth in each regime.
+\begin{itemize}
+    \item \textbf{Load regime 2} (the consumer is already consuming as much as it can and
+    imports): the alternative to the PV is buying from the grid at $\pimp$. If
+    $\cpv < \pimp$, the PV is cheaper than the grid, so the consumer uses all of it and buys
+    only the remaining deficit $\Lmax - \PVmax$. If $\cpv > \pimp$, the grid is cheaper than
+    the PV, so it is optimal to switch the PV off and supply the whole load from imports.
+    \item \textbf{Load regime 1:} $\cpv < \pexp$, so even the PV that is not consumed can be
+    sold at a profit. There is no reason to curtail.
+    \item \textbf{Load regime 3:} $\cpv < \uL = {\lbal}^*$: producing a kWh costs less than
+    what it is worth to the consumer, so all the PV production is consumed and there is no
+    curtailment.
+\end{itemize}
+In the three regimes the rule is the same: the PV is used as long as $\cpv \leq {\lbal}^*$,
+the internal price of energy. In regimes 1 and 3 case A guarantees it, while in regime 2 the
+internal price is $\pimp$, which can be below $\cpv$. That is why curtailment can only happen
+there: the consumer has already decided to consume as much as possible, and the marginal energy
+comes from the grid, so the PV only competes with the import price.
+
+Outside the model, in a real installation the variable cost of PV production is practically
+zero, so it is almost always cheaper to consume or sell what the panels produce than to
+switch them off, and curtailment tends to be rare.
 
 \subsubsection{(iv) Relaxing the assumption on the PV availability}
 \todo{Extend (ii) and (iii) to $\PVmax < \Lmin$ and $\PVmax > \Lmax$: in which price regimes
@@ -733,4 +768,6 @@ does the optimal load and the curtailment change, and what are the new solutions
 the two effective prices. What happens when one comparison is a tie, and what does it imply
 for the uniqueness of the primal and dual solutions? Hint: think about which multipliers or
 which primal variables can take several values when an inequality holds with equality
-(degenerate case, $\geq 0$ allowing $0$).}
+(degenerate case, $\geq 0$ allowing $0$). Hint from (iii): the tie $\cpv = \pimp$ in load
+regime 2 gives partial curtailment, $0 < {\pvprod}^* < \PVmax$, and then
+${\qimp}^* = \Lmax - {\pvprod}^*$ is not unique.}
