@@ -6,9 +6,9 @@ The class below separates the three steps you will repeat for every question:
     model.build()                         # 2. declare variables, objective, constraints
     results = model.solve()               # 3. optimise and collect primal AND dual values
 
-``build()`` is the only method you need to complete for Question 1; the other questions
-are variations of it (a different objective, an extra constraint). Copy this file or
-subclass ``FlexibleConsumerModel`` and override ``build()`` to keep one model per question.
+``build()`` implements the hourly prosumer problem of Question 1 (linear utility, PV, grid with
+tariffs); the other questions are variations of it (a different objective, an extra constraint).
+Subclass ``FlexibleConsumerModel`` and override ``build()`` to keep one model per question.
 
 Two conventions make the dual variables easy to read out afterwards:
 
@@ -52,13 +52,20 @@ class Results:
         self.hourly.to_csv(folder / f"{stem}_hourly.csv", index_label="hour")
         with open(folder / f"{stem}_summary.txt", "w", encoding="utf-8") as f:
             f.write(f"status    : {self.status}\nobjective : {self.objective:.4f} DKK\n")
+            if self.meta.get("utility") is not None:
+                f.write(f"utility   : {self.meta['utility']:.4f} DKK\n")
+            if self.meta.get("procurement_cost") is not None:
+                f.write(f"cost      : {self.meta['procurement_cost']:.4f} DKK\n")
             for k, v in self.duals.items():
                 f.write(f"dual[{k}] : {v:.4f}\n")
 
     def __str__(self) -> str:
         cols = [c for c in self.hourly.columns if not c.startswith("dual_")]
+        split = ""
+        if self.meta.get("utility") is not None and self.meta.get("procurement_cost") is not None:
+            split = f" (utility {self.meta['utility']:.2f} - cost {self.meta['procurement_cost']:.2f})"
         return (
-            f"status: {self.status} | objective: {self.objective:.2f} DKK\n"
+            f"status: {self.status} | objective: {self.objective:.2f} DKK{split}\n"
             f"daily totals (kWh): " + ", ".join(f"{c}={self.hourly[c].sum():.1f}" for c in cols if c in ("import", "export", "load", "pv"))
             + (f"\nduals: {self.duals}" if self.duals else "")
         )
@@ -83,11 +90,13 @@ class FlexibleConsumerModel:
 
     # ------------------------------------------------------------------ 2. build
     def build(self) -> "FlexibleConsumerModel":
-        """Declare decision variables, objective and constraints.
+        """Declare the variables, objective and constraints of the Question 1 problem.
 
-        TODO (Question 1): complete this method with the variables, objective and constraints
-        of the problem you formulated in Question 1. Keep the naming pattern below so
-        that ``solve()`` can return the primal and dual values automatically.
+        Over the 24 hours, maximise the net utility
+            sum_t ( uL * load_t - p_imp_t * import_t + p_exp_t * export_t - cPV * pv_t )
+        subject to the hourly power balance, the load bounds, the PV availability limits and the
+        non-negativity of imports and exports. Every family is stored in ``self.var`` /
+        ``self.con`` so that ``solve()`` returns its primal and dual values automatically.
         """
         d, m, T = self.data, self.m, self.T
 
@@ -114,45 +123,51 @@ class FlexibleConsumerModel:
         #   balance, load_lo, load_up, pv_lo, pv_up, imp_nonneg, exp_nonneg
         #   -> lambda_t, mu^L_lo, mu^L_up, mu^PV_lo, mu^PV_up, mu^imp, mu^exp of Question 1.(b)
 
-
         # --- Decision variables --------------------------------------------------------
-        # TODO: identify and declare the decision variables of your formulation.
-        # Store every variable family in self.var["<name>"]: solve() then returns its hourly
-        # values automatically as a column of results.hourly.
-        # Pattern for hourly variables (one per hour):
-        #   self.var["<name>"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="<name>")
-        # Pattern for a single (daily) variable:
-        #   self.var["<name>"] = m.addVar(lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="<name>")
-        # Notes:
-        # * gurobipy indexes the names automatically: name="<name>" in addVars(T, ...) creates
-        #   <name>[0], <name>[1], ..., <name>[23] - no need to build per-hour names yourself.
-        # * vtype: the same format takes GRB.BINARY or GRB.INTEGER if you ever need them (the
-        #   problem then becomes a MILP and dual values are no longer defined; solve() skips them).
-        # * lb defaults to 0 in gurobipy: a free variable needs an explicit lb=-GRB.INFINITY, and
-        #   a bound you want a dual for must be an explicit constraint, not lb=/ub= (see the README).
-        # * naming the families "import", "export", "load", "pv" makes the standard plots of
-        #   src/plotting.py work out of the box.
-
+        # All four families are free (lb = -inf): every bound is an explicit constraint below, so
+        # that each one has a dual value (a variable bound would report its sensitivity in RC, not
+        # in Pi). The names "import", "export", "load", "pv" are the ones src/plotting.py expects.
         self.var["import"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="import")
         self.var["export"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="export")
         self.var["load"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="load")
         self.var["pv"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="pv")
 
-        # --- Objective ---------------------------------------------------------------
-        # TODO: express the objective function and its direction (GRB.MINIMIZE or GRB.MAXIMIZE):
-        #   m.setObjective(gp.quicksum(<expression in t> for t in T), <direction>)
-        # The input-data attributes (with units) are documented in src/data_loader.py (InputData).
-
-        m.setObjective(gp.quicksum(u^L[t] * self.var["load"][t] - p_imp[t] * self.var["import"][t] + p_exp[t] * self.var["export"][t] - c^PV[t] * self.var["pv"][t] for t in T), GRB.MINIMIZE)
+        # --- Objective: daily net utility (DKK), maximised --------------------------------
+        m.setObjective(
+            gp.quicksum(
+                d.consumption_utility * self.var["load"][t]
+                - p_imp[t] * self.var["import"][t]
+                + p_exp[t] * self.var["export"][t]
+                - d.pv_marginal_cost * self.var["pv"][t]
+                for t in T),
+            GRB.MAXIMIZE)
 
         # --- Constraints -------------------------------------------------------------
-        # TODO: add the constraints of your formulation.
-        # Pattern for hourly constraints (one per hour, duals returned as a 24-vector; names are
-        # indexed automatically, like for the variables):
-        #   self.con["<name>"] = m.addConstrs(
-        #       (<lhs expression> - <rhs expression> <= 0 for t in T), name="<name>")
-        # Pattern for a single constraint (dual returned as a scalar):
-        #   self.con["<name>"] = m.addConstr(<lhs expression> - <rhs expression> <= 0, name="<name>")
+        # Sign convention (same as Question 1.(b), primal feasibility of the KKT conditions):
+        # the balance is written as h(x) = 0 and every inequality as g(x) <= 0, term by term as in
+        # the report. The objective is a maximisation, so Gurobi's dual Pi = d(objective)/d(rhs) is
+        # >= 0 for every "<= 0" constraint. Hence, in results.hourly, dual_<name> is directly the
+        # multiplier of the report: lambda_t (free) for the balance, mu >= 0 for the inequalities.
+        # (A constraint written as ">= 0" would return the opposite sign, <= 0.)
+        # h: balance                     l - q^PV - q^imp + q^exp = 0
+        self.con["balance"] = m.addConstrs(
+            (self.var["load"][t] - self.var["pv"][t] - self.var["import"][t] + self.var["export"][t] == 0 for t in T),
+            name="balance")
+        # g: load bounds                 L^min - l <= 0   and   l - L^max <= 0
+        self.con["load_lo"] = m.addConstrs(
+            (d.load_min_kWh - self.var["load"][t] <= 0 for t in T), name="load_lo")
+        self.con["load_up"] = m.addConstrs(
+            (self.var["load"][t] - d.load_max_kWh <= 0 for t in T), name="load_up")
+        # g: PV limits                   -q^PV <= 0   and   q^PV - PV^max <= 0
+        self.con["pv_lo"] = m.addConstrs(
+            (-self.var["pv"][t] <= 0 for t in T), name="pv_lo")
+        self.con["pv_up"] = m.addConstrs(
+            (self.var["pv"][t] - d.pv_available[t] <= 0 for t in T), name="pv_up")
+        # g: non-negativity of grid flows   -q^imp <= 0   and   -q^exp <= 0
+        self.con["imp_nonneg"] = m.addConstrs(
+            (-self.var["import"][t] <= 0 for t in T), name="imp_nonneg")
+        self.con["exp_nonneg"] = m.addConstrs(
+            (-self.var["export"][t] <= 0 for t in T), name="exp_nonneg")
 
         m.update()
         return self
@@ -164,7 +179,7 @@ class FlexibleConsumerModel:
         m.update()
         if m.NumConstrs == 0 and m.NumQConstrs == 0:
             raise NotImplementedError(
-                "The model has no constraints: complete FlexibleConsumerModel.build() in src/model.py first."
+                "The model has no constraints: call build() before solve(), and make sure build() adds them."
             )
         m.optimize()
         status = _status_name(m.Status)
@@ -174,6 +189,11 @@ class FlexibleConsumerModel:
 
     # --------------------------------------------------------------- extraction
     def _extract_results(self, status: str) -> Results:
+        """Collect the primal values, duals, objective and its split into utility and cost.
+
+        ``hourly`` has one column per variable family and one ``dual_<name>`` column per constraint
+        family; ``meta['utility']`` and ``meta['procurement_cost']`` (DKK) add up to the objective.
+        """
         d, T = self.data, list(self.T)
         hourly = pd.DataFrame(index=pd.Index(T, name="hour"))
         hourly["price"] = d.energy_price
@@ -199,13 +219,19 @@ class FlexibleConsumerModel:
                 # No duals available (e.g. model with integer variables)
                 pass
 
+        # objective = utility - procurement cost
+        utility = None if d.consumption_utility is None else d.consumption_utility * hourly["load"].sum()
+        p_imp = hourly["price"] + d.import_tariff
+        p_exp = hourly["price"] - d.export_tariff
+        cost = (p_imp * hourly["import"] - p_exp * hourly["export"] + d.pv_marginal_cost * hourly["pv"]).sum()
+
         return Results(
             question=d.question,
             status=status,
             objective=self.m.ObjVal,
             hourly=hourly,
             duals=duals,
-            meta={"scalar_variables": scalars},
+            meta={"scalar_variables": scalars, "utility": utility, "procurement_cost": cost},
         )
 
 
