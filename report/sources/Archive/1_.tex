@@ -1,6 +1,3 @@
-This part introduces the basic optimization model for a flexible residential consumer with an adjustable electrical load. The consumer has solar PVs and is able to import and export electricity from the grid. The goal for the consumer is to maximize its' utility, which is done by expressing the optimization problem. Firstly the mathematical formulation for this will be derived. After that the dual problem and KKT conditions will be determined as well as interpreted in regards to the utility optimization problem. With the dual problem and KKT conditions determined they can be used to derive the optimal consumption, PV usage, import and export decisions for each hour. From these results, theoretical expectations and numerical results will be discussed. Question 1 mainly serves as a starting point for the later questions, where the problem becomes more complicated by adding consumer preference profiles, more constraints and flexibility options.
-
-
 \subsection{(a) Formulation, properties and hourly decomposition}
 
 In every hour, the consumer decides how much to consume, how much PV to use, and how much
@@ -185,7 +182,10 @@ different hours makes $A$ block diagonal, with one block $A_t$ per hour:
 The problem therefore splits into 24 independent problems
 $\min \, \mathbf{c}_t^\top \mathbf{x}_t$ s.t. $A_t \mathbf{x}_t \geq \mathbf{b}_t$,
 $\mathbf{x}_t \geq \mathbf{0}$, one per hour.
-
+\todo{Write explicitly $\mathbf{x}_t$, $\mathbf{c}_t$, $A_t$ and $\mathbf{b}_t$ for the
+hourly problem above: this requires putting it in the form of the matrix formulation
+(minimisation, constraints as $\geq$, variables $\geq 0$), so decide how you handle the
+maximisation and the variable bounds.}
 
 \paragraph{Economic meaning.}
 %\todo{What does this decomposition say about the structure of the consumer's
@@ -208,32 +208,27 @@ energy requirement or a battery.
 To follow the notation of the lecture notes, the hourly problem of (a) for a generic hour
 $t \in \T$ is written as a minimisation: instead of maximising the utility, we minimise the
 cost $C_t$, which is the hourly utility with the opposite sign. The equality constraints are
-written as $h_i(x) = 0$ and the inequality constraints as $g_j(x) \leq 0$, so that every
+written as $h(x) = 0$ and the inequality constraints as $g(x) \leq 0$, so that every
 non-negativity constraint $x \geq 0$ becomes the explicit constraint $-x \leq 0$ and gets its
-own multiplier. This makes the derivation of the KKT conditions more systematic and less
+own multiplier. This makes the derivation of the KKT conditions more mechanical and less
 error-prone.
 
 \paragraph{Multipliers.}
-%Each constraint gets a multiplier, which works as a price: the Lagrangian adds to the cost
-%every constraint times its multiplier, so breaking a constraint has a price. There are two
-%kinds:
-
-Each constraint gets a multiplier that can be seen as a price in the Lagrangian. The multiplier tells us how much the optimal objective value would change if the constraint was marginally relaxed. 
-
+Each constraint gets a multiplier, which works as a price: the Lagrangian adds to the cost
+every constraint times its multiplier, so breaking a constraint has a price. There are two
+kinds:
 \begin{itemize}
-    \item $\lbal$ goes with the power balance, which is an equality. The balance can be relaxed
+    \item $\lbal$ goes with the power balance, which is an equality. The balance can be broken
     in both directions (too much or too little energy supplied), so $\lbal$ can be positive
     or negative. It is the price of the energy in the balance in hour $t$.
-    \item The six $\mu$ go with the six inequalities. For inequalities written as $g_j(x)\leq 0$, the multipliers satisfy $\mu \geq 0$. A multiplier is typically nonzero when its constraint is binding. Each one prices its own limit: $\muLlo$ and $\muLup$ the lower and upper load limits; $\muPVlo$ and $\muPVup$ the lower and upper PV limits; $\muimp$ and $\muexp$ the non-negativity limits on import and export.
-    %\item The six $\mu$ go with the inequalities. A limit only has a price when it is
-    %exceeded, so $\mu \geq 0$. Each one prices its own limit: $\muLlo$ and $\muLup$ the load
-    %going below $\Lmin$ or above $\Lmax$; $\muPVlo$ and $\muPVup$ the PV production going
-    %below zero or above $\PVmax$; $\muimp$ and $\muexp$ a negative import or export.
-
-    
+    \item The six $\mu$ go with the inequalities. A limit only has a price when it is
+    exceeded, so $\mu \geq 0$. Each one prices its own limit: $\muLlo$ and $\muLup$ the load
+    going below $\Lmin$ or above $\Lmax$; $\muPVlo$ and $\muPVup$ the PV production going
+    below zero or above $\PVmax$; $\muimp$ and $\muexp$ a negative import or export.
 \end{itemize}
 All multipliers are in DKK/kWh, since the hourly cost is in DKK and the constraints are in
-kWh/h. For the load and PV bounds, a bar below the multiplier ($\underline{\mu}$) marks the lower bound and a bar above it ($\overline{\mu}$) the upper bound.
+kWh/h. For the load and PV bounds, a bar below the multiplier ($\underline{\mu}$) marks the
+lower bound and a bar above it ($\overline{\mu}$) the upper bound.
 \begin{align}
     \min_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
     & C_t = -\uL \, \load + \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod \\
@@ -450,135 +445,30 @@ fully characterise the optimal solution: a candidate is optimal \emph{if and onl
 satisfies the KKT system.
 
 \subsection{(c) Interpretation of the dual variables}
-In optimization problems a dual variable represent the marginal value of relaxing a constraint. In this problem, the objective function is measured in DKK and the constraints in kWh. This makes it so the dual variables gets the unit DKK/kWh.
-
-
-\subsubsection{Power balance multiplier}
-The multiplier for the power balance constraint is $\lambda_t$. Since the constraint is about power, the multiplier $\lambda_t$ can be interpreted as the marginal value of 1 omre kWh power for the consumer. 
-
-\paragraph{Importing power:}
-If the consumer imports power, $q_t^{\mathrm{imp}}>0$. 
-The non-negativity constraint on imports is then non-binding, so complementary slackness gives
-\[
-\mu_t^{\mathrm{imp}}=0.
-\]
-Using the stationarity condition for imports in \eqref{eq:kkt_stat_imp},
-\[
-p_t^{\mathrm{imp}}-\lambda_t-\mu_t^{\mathrm{imp}}=0,
-\]
-we obtain
-\[
-\lambda_t=p_t^{\mathrm{imp}}.
-\]
-So when the consumer is importing, the marginal value of electricity equals the cost of buying one additional kWh from the grid.
-
-\paragraph{Exporting power:}
-This is very similar as above for importing power. If the consumer exports electricity, $q_t^{\mathrm{exp}}>0$.
-The non-negativity constraint on exports is then non-binding, so complementary slackness gives
-\[
-\mu_t^{\mathrm{exp}}=0.
-\]
-Using the stationarity condition for exports in Eq.~\eqref{eq:kkt_stat_exp},
-we obtain
-\[
-\lambda_t=p_t^{\mathrm{exp}}.
-\]
-Therefore when the consumer is exporting, the marginal value of electricity equals the revenue of one additional kWh sold.
-
-\paragraph{No grid exchange:}
-If the consumer neither imports or exports and the load is strictly within its bounds,
-\[
-q_t^{\mathrm{imp}}=q_t^{\mathrm{exp}}=0,
-\qquad
-L^{\min}<\ell_t<L^{\max},
-\]
-
-The power balance then implies
-\[
-\ell_t=q_t^{\mathrm{PV}},
-\]
-so the consumer's load is supplied entirely by its own PV production. Both load bounds are non-binding. Complementary slackness therefore gives
-\[
-\underline{\mu}_t^L=\overline{\mu}_t^L=0.
-\]
-Using the load stationarity condition in Eq.~\eqref{eq:kkt_stat_load},
-we obtain
-\[
-\lambda_t=u^L.
-\]
-So when there is no grid exchange the marginal value of electricity is determined by the marginal value of utility for the customer.
-
-\subsubsection{Load-bound multipliers}
-
-\textbf{Lower load bound.}
-The multiplier $\underline{\mu}_t^L$ is associated with the constraint
-\[
-L^{\min}-\ell_t \leq 0.
-\]
-If $\ell_t>L^{\min}$, the constraint is non-binding and complementary slackness gives
-\[
-\underline{\mu}_t^L=0.
-\]
-If instead $\ell_t=L^{\min}$, the constraint is binding and 
-$\underline{\mu}_t^L$ may be positive. It represents the marginal benefit of relaxing the minimum-load requirement, meaning allowing the consumer to use one less kWh.
-
-\paragraph{Upper load bound.}
-The multiplier $\overline{\mu}_t^L$ belongs to the upper load limit
-\[
-\ell_t-L^{\max}\leq 0.
-\]
-As long as the consumer stays below $L^{\max}$, the constraint does not affect the solution and complementary slackness gives
-\[
-\overline{\mu}_t^L=0.
-\]
-If the load reaches its maximum, $\ell_t=L^{\max}$, the constraint becomes binding. In that case $\overline{\mu}_t^L$ can be positive and shows how valuable it would be to allow the consumer to use 1 kWh more of power.
-
-\subsubsection{PV-bound multipliers}
-\paragraph{Lower PV bound.}
-The multiplier $\underline{\mu}_t^{PV}$ is linked to the constraint
-\[
--q_t^{PV}\leq 0.
-\]
-If the consumer uses some PV production, $q_t^{PV}>0$, the constraint is non-binding and complementary slackness gives
-\[
-\underline{\mu}_t^{PV}=0.
-\]
-If instead $q_t^{PV}=0$, the lower bound is active and $\underline{\mu}_t^{PV}$ can be positive. It then reflects the marginal extra cost to force 1 kWh of PV production when producing no PV is optimal.
-
-\paragraph{Upper PV bound.}
-The multiplier $\overline{\mu}_t^{PV}$ is associated with the constraint
-\[
-q_t^{PV}-PV_t^{\max}\leq 0.
-\]
-If $q_t^{PV}<PV_t^{\max}$, the constraint is non-binding and complementary slackness gives
-\[
-\overline{\mu}_t^{PV}=0.
-\]
-If instead $q_t^{PV}=PV_t^{\max}$, the constraint is binding and $\overline{\mu}_t^{PV}$ can be positive. That would mean the marginal value of relaxing the PV availability limit, meaning how much the consumer marginally benefits by having 1 more kWh PV.
-
 % HINTS (not final text) -- everything below marked "draft" was written during the 1.(b)
 % work and should be reviewed and rewritten in the author's own words.
 
-%\paragraph{Load bounds (draft).}
-%The multiplier $\muLlo$ of the lower load bound $\Lmin - \load \leq 0$ is only active when
-%the load sits at its floor ($\load = \Lmin$): by complementary slackness, $\load > \Lmin$
-%forces $\muLlo = 0$. Its value measures how much the obligation to consume at least $\Lmin$
-%costs the consumer: the marginal saving if $\Lmin$ could be lowered by one kWh. Symmetrically,
-%$\muLup$ is only positive when the load sits at its ceiling ($\load = \Lmax$), and measures the
-%marginal gain if $\Lmax$ could be increased by one kWh. If $\Lmin < \Lmax$ they cannot both be
-%positive at the same time.
+\paragraph{Load bounds (draft).}
+The multiplier $\muLlo$ of the lower load bound $\Lmin - \load \leq 0$ is only active when
+the load sits at its floor ($\load = \Lmin$): by complementary slackness, $\load > \Lmin$
+forces $\muLlo = 0$. Its value measures how much the obligation to consume at least $\Lmin$
+costs the consumer: the marginal saving if $\Lmin$ could be lowered by one kWh. Symmetrically,
+$\muLup$ is only positive when the load sits at its ceiling ($\load = \Lmax$), and measures the
+marginal gain if $\Lmax$ could be increased by one kWh. If $\Lmin < \Lmax$ they cannot both be
+positive at the same time.
 
-%\paragraph{Power balance.}
-%\todo{Interpretation of $\lbal$ as the marginal value of one more kWh in that hour (the
-%internal price of electricity for the prosumer), and the units.
-%Hint for the three cases asked in the brief (importing, exporting, neither with the load %strictly within its bounds): combine the dual-feasibility equalities
-%\eqref{eq:dual_cond_load}, \eqref{eq:dual_cond_imp} and \eqref{eq:dual_cond_exp} with
-%complementary slackness of the multipliers of the corresponding constraints, case by case.}
+\paragraph{Power balance.}
+\todo{Interpretation of $\lbal$ as the marginal value of one more kWh in that hour (the
+internal price of electricity for the prosumer), and the units.
+Hint for the three cases asked in the brief (importing, exporting, neither with the load
+strictly within its bounds): combine the dual-feasibility equalities
+\eqref{eq:dual_cond_load}, \eqref{eq:dual_cond_imp} and \eqref{eq:dual_cond_exp} with
+complementary slackness of the multipliers of the corresponding constraints, case by case.}
 
-%\paragraph{PV availability limits.}
-%\todo{Interpretation of $\muPVlo$ and $\muPVup$ in the same style as the load bounds above:
-%when is each of them active, and what does its value measure? Hint: the equality
-%\eqref{eq:dual_cond_pv} relates them to $\lbal$ and $\cpv$.}
+\paragraph{PV availability limits.}
+\todo{Interpretation of $\muPVlo$ and $\muPVup$ in the same style as the load bounds above:
+when is each of them active, and what does its value measure? Hint: the equality
+\eqref{eq:dual_cond_pv} relates them to $\lbal$ and $\cpv$.}
 
 \subsection{(d) Price ladder (case A)}
 Only case A is considered, i.e.\ $\cpv < \uL$.
@@ -965,374 +855,10 @@ what the load needs. And if the PV is more expensive than the grid ($\cpv > \pim
 switched off and the whole load is imported.
 
 \subsubsection{(v) Decision rule and ties}
-
-The results from (ii)--(iv) can be summarized by two main decisions:
-
-\begin{enumerate}
-    \item \textbf{Consumption decision:} how much electricity the consumer chooses to use, $\load$.
-    \item \textbf{PV decision:} how much of the available PV production is used, $\pvprod$.
-\end{enumerate}
-
-\paragraph{1. Consumption decision.}
-The consumer compares the value of consuming one additional kWh $\uL$, with the effective export and import prices.
-
-\[
-\load^*=
-\begin{cases}
-\Lmin,
-& \uL < \pexp, \\[1mm]
-\min\{\Lmax,\max\{\Lmin,\PVmax\}\},
-& \pexp < \uL < \pimp, \\[1mm]
-\Lmax,
-& \uL > \pimp.
-\end{cases}
-\]
-
-If $\uL < \pexp$, means that selling electricity is worth more than consuming it. The consumer therefore keeps consumption at its minimum value.
-
-If $\pexp < \uL < \pimp$, means consuming electricity is more valuable than exporting it, but not valuable enough to justify buying extra electricity from the grid. The consumer therefore tries to match its load with the available PV, while still respecting the load bounds. 
-
-If $\uL > \pimp$, the value of consuming an additional kWh is higher than the cost of importing it. The consumer therefore increases its load to $\Lmax$. 
-
-\paragraph{2. PV decision.}
-The consumer also compares the PV production cost, $\cpv$ with the two effective grid prices.
-
-\[
-\pvprod^*=
-\begin{cases}
-\PVmax,
-& \cpv < \pexp, \\[1mm]
-\min\{\PVmax,\load^*\},
-& \pexp < \cpv < \pimp, \\[1mm]
-0,
-& \cpv > \pimp.
-\end{cases}
-\]
-
-If $\cpv < \pexp$, producing PV is profitable even when the electricity is exported. All available PV is therefore used.
-
-If $\pexp < \cpv < \pimp$, PV is cheaper than importing but too expensive to produce only for export. It is therefore used for self-consumption, while any surplus is curtailed.
-
-If $\cpv > \pimp$, importing electricity is cheaper than producing it with PV. The PV is therefore fully curtailed.
-
-\paragraph{Ties and uniqueness.}
-When one of the comparisons becomes an equality, the consumer is indifferent between two actions at the margin.
-
-If
-\[
-\uL=\pexp,
-\]
-consuming an additional kWh gives the same value as exporting it. Different combinations of consumption and export can therefore be optimal.
-
-If
-\[
-\uL=\pimp,
-\]
-the value of consuming one additional kWh is exactly equal to the cost of importing it. The consumer can then be indifferent between increasing the load or not.
-
-Similar ties appear for PV. If
-\[
-\cpv=\pexp,
-\]
-producing an additional kWh for export gives no net benefit, so producing or curtailing that marginal PV can both be optimal.
-
-Another example is:
-\[
-\cpv=\pimp
-\]
-in load regime 2. Producing one kWh with PV then costs exactly the same as importing it. This shows that several combinations can be optimal:
-\[
-0\leq \pvprod^*\leq\PVmax,
-\qquad
-\qimp^*=\Lmax-\pvprod^*.
-\]
-
-At a tie, several primal solutions can give the same objective value, so the primal solution may not be unique. The dual solution can still be unique, since the marginal value $\lambda_t$ may remain fixed at the common tied price. Dual non-uniqueness only occurs if the KKT conditions allow more than one set of optimal multipliers.
-
-\subsection{(e) - Implement model in Python}
-The optimization problem was implemented implemented in Python in the starting repo that was given. Feel free to view it in the repo shared repo.
-
-\subsection{(f) Numerical validation}
-
-Both cases use the same data:
-$u^L = 1.43$ DKK/kWh,
-$L^{\min} = 0$,
-$L^{\max} = 6$ kWh/h,
-$\tau^{\mathrm{imp}} = 0.50$ and
-$\tau^{\mathrm{exp}} = 0.40$ DKK/kWh.
-Only the PV cost differs.
-In case A, $c^{PV} = 1.41$ DKK/kWh.
-In case B, $c^{PV} = 1.47$ DKK/kWh.
-All results come from running this in the repo root:
-\texttt{python main.py --question Q1\_caseA --validate}
-(and the corresponding command for case B)
-
-\subsubsection{Case A}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figures/Q1/schedule.png}
-    \caption{Optimal schedule for case A.}
-    \label{fig:q1_caseA_schedule}
-\end{figure}
-
-The consumer earns a net utility of 2.61 DKK.
-The day can be divided into four main blocks:
-
-\begin{itemize}
-    \item \textbf{Hours 3--4 (Regime 2):}
-    Electricity is cheap and $p_t^{\mathrm{imp}} < u^L$.
-    The load therefore reaches $L^{\max}=6$ kWh/h and the consumer imports.
-
-    \item \textbf{Hours 5--17 (Regime 3):}
-    The prices satisfy
-    \[
-    p_t^{\mathrm{exp}} < u^L < p_t^{\mathrm{imp}}.
-    \]
-    The consumer uses its own PV and does not trade with the grid.
-
-    \item \textbf{Hours 18--19 (Regime 1):}
-    Selling is more valuable than consuming since
-    $p_t^{\mathrm{exp}} > u^L$.
-    The load is zero and all available PV is exported.
-
-    \item \textbf{Remaining hours (Regime 3):}
-    There is no PV available and
-    $p_t^{\mathrm{exp}} < u^L < p_t^{\mathrm{imp}}$.
-    The optimal load is therefore $PV_t^{\max}=0$ and there is no grid exchange.
-\end{itemize}
-
-\paragraph{Price ladder.}
-We found that for each hour the ladder converged perfectly with the solver result for case A. This can be seen from viewing the schedule plot above, but the code also prints this result.
-
-A significant point is that no available PV is curtailed in case A. This differs in case B. If PV would have been prdouced all hours of the day, some PV would have been curtailed however. This would be in hours 3--4 where the PV availability is zero, since
-\[
-c^{PV}>p_t^{\mathrm{imp}}
-\]
-in these hours.
-If additional PV were available, importing would still be cheaper and that PV would be curtailed. However now, in each case that PV exists it is used in case A.
-
-\subsubsection{Case B}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{figures/Q1/scheduleB.png}
-    \caption{Optimal schedule for case B.}
-    \label{fig:q1_caseB_schedule}
-\end{figure}
-The main difference in case B compared to case A is that the cost for PV has now increased, such that it is larger than the utility gain. This resulted in quite a significant change in behavior. The total net utility for case B is 1.95 DKK, compared to case A which had 2.61 DKK.
-Hours 3--4 and 18--19 are unchanged from case A. The main difference appears in hours 5--17. This is because of the change in PV cost. Using PV for self consumption is therefore no longer worthwhile. PV is therefore only a export resource whenever that is worth it. In total it was found that 23.94 kWh of available PV is curtailed.
-
-Trying to fit the price ladder generated in ii-iii is less relevant here, since the regimes were generated for the case where the PV cost was below the utility gain value. This means that the price ladder is correct for regime 1 and 2, but incorrect for regime 3 where self consumption for PV is relevant. This makes quite a different result if the price ladder is compared with the solver for case A and case B. In case A we got a 24/24 hour fit, while in case B a 11/24 hour fit, because the hours where PV is not used for self consumption gives the same results for case A and B. While the hours 5-18 (13 hours) now has no load compared to the original case where the load would equal the PV amount.
-
-\subsubsection{Comparison of cases A and B}
-
-Here is a quick comparison of the main numerical results for the two cases.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{lcc}
-        \toprule
-        & Case A & Case B \\
-        \midrule
-        $c^{PV}$ (DKK/kWh) & 1.41 & 1.47 \\
-        Net utility (DKK) & 2.61 & 1.95 \\
-        Utility / cost (DKK) & 51.39 / 48.79 & 17.16 / 15.21 \\
-        Load (kWh) & 35.94 & 12.00 \\
-        PV used / curtailed (kWh) & 26.94 / 0 & 3.00 / 23.94 \\
-        Import / export (kWh) & 12.0 / 3.0 & 12.0 / 3.0 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Comparison of the numerical results for cases A and B.}
-    \label{tab:q1_case_comparison}
-\end{table}
-
-From the table it can be seen that, although the utility and load is much higher in case A, the actual net utility difference is quite small. This is because if the cost of PV or import are above the utility gain value, it is still a small difference. 
-
-\subsubsection{Dual variables}
-
-\paragraph{Case A}
-To get a better understanding of how much each constraint is impacting the result the below plot showing each constraint's dual value can be viewed over the 24 hours.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figures/Q1/duals.png}
-    \caption{All the duals}
-    \label{fig:q1_caseA_lambda_range}
-\end{figure}
-
-The table below will explain some of the trends that can be seen in the figure above: 
-
-\small
-
-\begin{xltabular}{\textwidth}{|p{3.2cm}|p{5cm}|X|}
-\hline
-\textbf{Dual (plot name)} & \textbf{Represents} & \textbf{Values in case A and what they mean} \\
-\hline
-\endfirsthead
-
-\hline
-\textbf{Dual (plot name)} & \textbf{Represents} & \textbf{Values in case A and what they mean} \\
-\hline
-\endhead
-
-$\lambda_t$ (balance)
-&
-The value of one extra kWh in hour t: the consumer's internal electricity price.
-&
-It is set by what the consumer does with the last kWh. In hours 3-4 it buys it, so $\lambda_t$ equals the import price (1.40, 1.35). In hours 5-17 it consumes its own PV, so $\lambda_t = u^L = 1.43$. In hours 18-19 it sells it, so $\lambda_t$ equals the export price (1.70, 2.10).
-\\
-\hline
-
-$\bar{\mu}^L_t$ (load\_up)
-&
-The gain if the consumer were allowed to consume 1 kWh more.
-&
-0.03 and 0.08 in hours 3-4 ($u^L - p^{imp}_t$), where import power is cheaper than the utility and the maximum load holds the consumer back. Rare situation that the import is cheaper than utility, so zero in all other hours. In the PV hours the consumer doesn't want more, since extra energy would have to be imported above 1.43.
-\\
-\hline
-
-$\underline{\mu}^L_t$ (load\_lo)
-&
-The gain if the consumer were allowed to consume 1 kWh less.
-&
-0.27 and 0.67 in hours 18-19 ($p^{exp}_t - u^L$): selling a kWh pays more than consuming it, therefore the load is down to zero. So this dual is only positive when export > utility, and is the difference between the two. Zero in hours 3-17.
-\\
-\hline
-
-$\bar{\mu}^{PV}_t$ (pv\_up)
-&
-The value of 1 kWh more available sun.
-&
-0.02 in hours 5-17 ($u^L - c^{PV}$): midday sun is used for own consumption and is worth only slightly more than it costs. 0.29 and 0.69 in hours 18-19 ($p^{exp}_t - c^{PV}$). Higher values here because export prices are higher than utility usage. 
-\\
-\hline
-
-$\underline{\mu}^{PV}_t$ (pv\_lo)
-&
-The cost of being forced to produce 1 kWh of PV.
-&
-Zero when the sun shines (hours 5-19), since PV is then produced. In hours 3-4 there is no sun, but the value is still positive (0.01, 0.06). This is saying that buying from the grid (1.40, 1.35) is cheaper than producing PV (1.41), so even if the sun were shining, the consumer would rather buy than use PV.
-\\
-\hline
-
-$\mu^{imp}_t$ (imp\_nonneg)
-&
-The cost of being forced to import 1 kWh.
-&
-It shows how far buying is from being worthwhile. Zero in hours 3-4, where the consumer imports; between 0.02 and 0.67 in hours 5-17 ($p^{imp}_t - u^L$); 0.90 in hours 18-19 ($p^{imp}_t - p^{exp}_t$). The 0.90 equals $\tau^{imp} + \tau^{exp}$, the loss on a kWh bought and sold in the same hour.
-\\
-\hline
-
-$\mu^{exp}_t$ (exp\_nonneg)
-&
-The cost of being forced to export 1 kWh.
-&
-It shows how far selling is from being worthwhile. Zero in hours 18–19, where the consumer exports; 0.90 in hours 3–4; between 0.23 and 0.88 in hours 5–17 ($u^L - p^{exp}_t$).
-\\
-\hline
-
-\end{xltabular}
-
-Duals are non-unique in the hours where the consumer does nothing. That means when there is no sun, the load is at its minimum of zero, and nothing is bought or sold. In these hours, gaining 1 kWh and losing 1 kWh do not have the same value. A gained kWh would be consumed and is therefore worth 1.43. A lost kWh would instead have to be replaced by importing from the grid at the import price. This creates a gap between the two values, and any dual value inside this gap is valid. The table below shows the un-unique intervals for the corresponding constraints. Beyond this the dual variables are unique.
-
-\begin{xltabular}{\textwidth}{|p{5cm}|X|}
-\hline
-\textbf{Dual} & \textbf{Non-unique in} \\
-\hline
-\endfirsthead
-
-\hline
-\textbf{Dual} & \textbf{Non-unique in} \\
-\hline
-\endhead
-
-balance ($\lambda$)
-&
-idle hours 0--2, 20--23
-\\
-\hline
-
-load\_lo, imp\_nonneg, exp\_nonneg
-&
-idle hours 0--2, 20--23, because they are computed from $\lambda$
-\\
-\hline
-
-pv\_lo, pv\_up
-&
-All hours without sun (0--4, 20--23). With no sun, PV is zero whatever happens. They only work as a signal: a positive pv\_up means sun would have been worth using in that hour, a positive pv\_lo (hours 3--4) means it would not. Therefore not unique.
-
-\\
-\hline
-
-load\_up
-&
-never: unique in every hour
-\\
-\hline
-
-\end{xltabular}
-
-\paragraph{Case B}
-The dual for the constraints is plotted the same way below, but now for case B:
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=\textwidth]{figures/Q1/dualsB.png}
-    \caption{All the duals}
-    \label{fig:q1_caseA_lambda_range}
-\end{figure}
-
-For case B a full table like in case A would repeat a lot. Instead, we comment on the main
-differences. They all come from the higher PV cost. Most of them are in hours 5-17, where the
-consumer in case B is now idle. It produces no PV and does not import or export.
-
-\textbf{balance ($\lambda_t$).} The value of an extra kWh is set by what the consumer would do
-with it. In hours 0-4 and 20-23 there is no sun. In hours 18-19 an extra kWh would simply be
-sold, as in case A. The PV cost plays no role in these hours, and $\lambda_t$ is the same as in case A. In
-hours 5-17 Gurobi reports 1.43, as in case A. The curve therefore looks the same, but the value is no longer unique.
-
-\textbf{load\_up.} Unchanged compared to case A. Same behavior, it is only positive in hours 3-4, where cheap imports make the
-consumer want more than its maximum load. The PV cost plays no role there.
-
-\textbf{load\_lo.} Unchanged in hours 0-4 and 18-23 compared to case A. In hours 5-17 the load now sits at its minimum. Gurobi shows zero here, but the value is not unique (see below).
-
-\textbf{pv\_up.} In hours 5-17 the value of one more kWh of sun drops from 0.02 in case A to zero in case B. As stated before this is because PV is too expensive. In hours 18-19 the PV is still sold. Each
-kWh now earns 0.06 less, so pv\_up drops by exactly the cost increase.
-
-\textbf{pv\_lo.} In hours 5-17 the PV is switched off, although the sun is available. Gurobi
-shows a positive pv\_lo here. This signals that PV is too expensive to use. In hours 3-4 it
-rises by 0.06, because PV now costs 0.06 more compared to importing.
-
-\textbf{imp\_nonneg and exp\_nonneg.} Unchanged in hours 0-4 and 18-23. In hours 5-17 Gurobi
-shows the same values as in case A, but they are no longer unique (see below).
-
-\textbf{Non-unique duals.} In hours 5-17 the consumer is idle, and this makes several duals
-non-unique. A marginal extra kWh would be consumed and is worth 1.43. A marginal missing kWh
-cannot be covered by consuming less, since the load is already zero. It would have to be
-produced with PV at 1.47 (or bought at 1.45 in for instance in hour 14). The two directions give different
-values, and both are valid. So $\lambda_t$ is not unique. 
-
-TODO write for the other duals also why they are none unique.
-%load\_lo and pv\_lo follow from
-%$\lambda_t$ and are not unique either. The same holds for imp\_nonneg and exp\_nonneg. For
-%load\_lo and pv\_lo this has a simple meaning. Running the load on PV would lose 0.04 per kWh.
-%This loss can be assigned to the load or to the PV, and Gurobi assigns it to the PV. The idle
-%hours 0-2 and 20-23 are non-unique in the same way as in case A. At night the pv\_up values in
-%the plot are also only Gurobi's choice. Unlike in case A, sun would not be worth using there
-%except in hour 20.
-
-%By strong duality the net utility is again the value of the binding capacities. This gives
-%0.66 DKK from the load in hours 3-4 and 1.29 DKK from the evening sun. Together that is 1.95
-%DKK. The sun in hours 5-17 no longer contributes, because it is no longer a binding capacity.
-%As in case A, the primal solution is unique in every hour.
-
-
-%Thus, a shortage is imported and a profitable surplus is exported, while an unprofitable PV surplus is curtailed.
-%\todo{Summarise (ii)--(iv) as a rule: each hour the consumer compares $\uL$ and $\cpv$ with
-%the two effective prices. What happens when one comparison is a tie, and what does it imply
-%for the uniqueness of the primal and dual solutions? Hint: think about which multipliers or
-%which primal variables can take several values when an inequality holds with equality
-%(degenerate case, $\geq 0$ allowing $0$). Hint from (iii): the tie $\cpv = \pimp$ in load
-%regime 2 gives partial curtailment, $0 < {\pvprod}^* < \PVmax$, and then
-%${\qimp}^* = \Lmax - {\pvprod}^*$ is not unique.}
+\todo{Summarise (ii)--(iv) as a rule: each hour the consumer compares $\uL$ and $\cpv$ with
+the two effective prices. What happens when one comparison is a tie, and what does it imply
+for the uniqueness of the primal and dual solutions? Hint: think about which multipliers or
+which primal variables can take several values when an inequality holds with equality
+(degenerate case, $\geq 0$ allowing $0$). Hint from (iii): the tie $\cpv = \pimp$ in load
+regime 2 gives partial curtailment, $0 < {\pvprod}^* < \PVmax$, and then
+${\qimp}^* = \Lmax - {\pvprod}^*$ is not unique.}

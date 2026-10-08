@@ -1,6 +1,6 @@
 \subsection{(a) Generic separable disutility}
 
-Instead of a constant marginal utility per kWh consumed, the consumer now has a preferred
+The consumer now has a preferred
 consumption profile $\lref$ (kWh/h) and experiences a disutility $D_t(\load)$ (DKK) when its
 load deviates from it. $D_t$ is convex, differentiable, non-negative, and equal to $0$ at
 $\load = \lref$. All the other parameters, variables and constraints are those of
@@ -17,14 +17,16 @@ subject to the same constraints \eqref{eq:c_balance}--\eqref{eq:c_export_nonneg}
 
 \subsubsection{Properties compared with Question 1}
 \begin{itemize}
-    \item \textbf{Problem class and convexity:} since $D_t$ is convex, $-D_t$ is concave, so
-    \eqref{eq:q2_objective} maximizes a concave function over the same polyhedron as in
-    Question~1: it is still a convex optimization problem, but in general no longer an LP. It
+    \item \textbf{Problem class and convexity:} since $D_t$ is convex, $-D_t$ is concave, so it is still a convex optimization problem, but in general no longer an LP. It
     stays an LP only if $D_t$ is piecewise linear, and becomes a QP if $D_t$ is quadratic.
     \item \textbf{Decomposability:} it still holds. $D_t$ only involves the load $\load$ of
     hour $t$, so every term of the objective and every constraint still involves a single
-    hour, and the hourly decomposition argument of Question~1 applies unchanged.
-    \item \todo{Feasibility compared with Question 1.}
+    hour, and the hourly decomposition argument of Question~1 applies.
+    \item \textbf{Feasibility:} feasibility depends only on the constraints, not on the
+    objective. Since the constraints \eqref{eq:c_balance}--\eqref{eq:c_export_nonneg} are
+    exactly those of Question~1, the feasible set is unchanged, and the problem is feasible
+    under the same conditions: $\Lmin \leq \Lmax$ and $\PVmax \geq 0$
+    for every $t \in \T$.
 \end{itemize}
 
 \subsubsection{Question 1 as a particular case}
@@ -34,6 +36,527 @@ Choosing the constant reference $\lref = \Lmax$ and the linear disutility
 \end{equation}
 gives $-D_t(\load) = \uL \, \load - \uL \, \Lmax$, that is, the objective of Question~1 up to
 the constant $-24 \, \uL \, \Lmax$, which does not change the optimal solution. On the feasible
-set $\load \leq \Lmax$, so $D_t \geq 0$, and $D_t = 0$ exactly at the reference.
-\todo{Which of the assumptions on the disutility (convex, differentiable, non-negative, zero
-at the reference) does this choice relax? Check it against the brief.}
+set $\load \leq \Lmax$, so $D_t \geq 0$, and $D_t = 0$ exactly at the reference. Since this expression for the disutility is linear, it means that the convex and differentiable assumptions hold, whilst it relaxes the other two.
+\newline
+\newline
+It is non-negative only for $\load \leq \Lmax$, and becomes negative if the load exceeds the reference. It is equal to
+zero at the reference, but the reference is not its minimum: $D_t$ keeps decreasing as the
+load grows, and $\Lmax$ only acts as the minimum because the load bound
+$\load \leq \Lmax$ stops the load there. In other words, it penalises consuming less than
+the reference but would reward consuming more, instead of penalising deviations in both
+directions. Both relaxed assumptions are therefore recovered only on the feasible set,
+thanks to the constraint \eqref{eq:c_load_bounds}.
+
+% ===== Question 2.(b) =====
+
+\subsection{(b) Linear disutility}
+
+\subsubsection{(i) Hourly disutility and LP reformulation}
+
+The disutility is now proportional to the absolute deviation of the load from the reference,
+with a coefficient $\cL > 0$ (DKK/kWh):
+\begin{equation}
+    D_t(\load) = \cL \, \big| \load - \lref \big|, \qquad \forall t \in \T.
+    \label{eq:q2b_disutility}
+\end{equation}
+It is convex, non-negative and equal to zero at the reference, but at
+$\load = \lref$ it is not differentiable, so the objective is no longer linear.
+
+\paragraph{Reformulation.}
+We introduce two non-negative auxiliary variables per hour: the deviation of the load above
+the reference, $\dup$, and below it, $\ddn$ (both in kWh/h). They are linked to the load by
+\begin{equation}
+    \load - \lref = \dup - \ddn, \qquad \dup \geq 0, \quad \ddn \geq 0, \qquad \forall t \in \T,
+    \label{eq:q2b_deviation}
+\end{equation}
+and the disutility is replaced by the linear term $\cL (\dup + \ddn)$. The hourly problem
+becomes
+\begin{align}
+    \max_{\load,\, \qimp,\, \qexp,\, \pvprod,\, \dup,\, \ddn} \quad
+    & - \cL \big( \dup + \ddn \big) - \pimp \, \qimp + \pexp \, \qexp - \cpv \, \pvprod
+    \label{eq:q2b_hourly} \\
+    \text{s.t.} \quad
+    & \load = \pvprod + \qimp - \qexp, \nonumber \\
+    & \Lmin \leq \load \leq \Lmax, \nonumber \\
+    & 0 \leq \pvprod \leq \PVmax, \nonumber \\
+    & \qimp \geq 0, \quad \qexp \geq 0, \nonumber \\
+    & \load - \lref = \dup - \ddn, \quad \dup \geq 0, \quad \ddn \geq 0. \nonumber
+\end{align}
+
+\paragraph{Equivalence.}
+For a given load, \eqref{eq:q2b_deviation} is satisfied by many pairs $(\dup, \ddn)$, and all
+of them have $\dup + \ddn \geq |\load - \lref|$, with equality if and only if one of the two is
+zero. An optimal solution never has both positive: if $\dup, \ddn > 0$, decreasing both by
+$\varepsilon = \min(\dup, \ddn)$ keeps \eqref{eq:q2b_deviation} satisfied and increases the
+objective by $2 \cL \varepsilon > 0$. Hence at the optimum $\cL(\dup + \ddn) = \cL |\load - \lref|$,
+and \eqref{eq:q2b_hourly} has the same optimal load, grid exchange and objective value as the
+problem with the disutility \eqref{eq:q2b_disutility}.
+
+\paragraph{Properties.}
+The objective and all the constraints are linear, so the problem is an LP, and therefore
+convex. The new constraint \eqref{eq:q2b_deviation} only involves hour $t$, so the problem still
+decomposes into 24 hourly problems. Each hour now has 6 variables and 10 constraints (the 7 of
+Question~1, the definition of the deviation, and the non-negativity of $\dup$ and $\ddn$).
+
+\subsubsection{(ii) Hypotheses: hourly cost-benefit argument}
+In each hour, the consumer compares the cost of deviating from the reference, $\cL$ per kWh,
+with what it saves on the energy it does not consume. How much it saves depends on where the
+last kWh of the load comes from:
+\begin{itemize}
+    \item \textbf{Above the PV available} ($\load > \PVmax$), the last kWh is imported and costs
+    $\pimp$.
+    \item \textbf{Up to the PV available} ($\load \leq \PVmax$), it comes from the consumer's own
+    PV. A kWh of PV that is not consumed is either exported, earning $\pexp$, or curtailed,
+    saving $\cpv$, whichever is better. Consuming it therefore costs
+    \begin{equation}
+        \mPV = \max\big(\cpv, \pexp\big),
+        \label{eq:q2b_mpv}
+    \end{equation}
+    assuming $\cpv < \pimp$ (otherwise the PV is never used, and every kWh costs $\pimp$). Since
+    $\pexp < \pimp$, we have $\mPV \leq \pimp$.
+\end{itemize}
+The marginal cost of supplying the load is thus a step function of the load: $\mPV$ up to
+$\PVmax$, then $\pimp$.
+
+\paragraph{Consumption above the reference.}
+We expect the load never to exceed its reference. Consuming one kWh above $\lref$ costs energy
+($\cpv$, $\pexp$ and $\pimp$ are all positive, the last two because $p_t > \tauexp$) and adds a
+disutility $\cL > 0$, with no benefit in return. Unlike Question~1, a kWh consumed has no value
+in itself; it only has value as a way of reducing the deviation from the reference.
+
+\paragraph{Gradual response or jumps.}
+Both the marginal cost of deviating ($\cL$) and the marginal saving ($\mPV$ or $\pimp$) are
+constant within each segment of the load. Within a segment, the consumer therefore either
+deviates as much as possible or not at all. We expect the load to jump between at most three
+candidate values, with thresholds on $\cL$:
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{llX}
+    \toprule
+    Condition & Optimal load ${\load}^*$ & Interpretation \\
+    \midrule
+    $\cL > \pimp$ & $\lref$ & following the reference is worth even importing \\
+    $\mPV < \cL < \pimp$ & $\max\big(\Lmin, \min(\PVmax, \lref)\big)$ & consume only what the own PV covers \\
+    $\cL < \mPV$ & $\Lmin$ & not even the own PV is worth consuming \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+If $\lref \leq \PVmax$, the first two rows coincide and there are only two candidate values,
+separated by $\mPV$. When $\cL$ is exactly equal to a threshold, the consumer is indifferent, and
+any load between the two neighbouring candidate values is optimal. The load is then not
+unique. The deviation is limited by the load bound only in the last row (${\load}^* = \Lmin$).
+
+For the day as a whole, $\cL$ is the same in every hour, but the thresholds are not, since the
+prices change from hour to hour. The daily consumption should therefore increase with $\cL$ in
+steps, one each time $\cL$ crosses the threshold of some hour. In the base case,
+$\pexp < \cpv$ in almost every hour, so $\mPV = \cpv$ in most hours, and we expect one large jump
+at $\cL = \cpv$.
+
+\subsubsection{(iii) Implementation}
+The model is implemented in the notebook \texttt{notebooks/Q2\_report.ipynb}, as the
+class \texttt{LinearDisutilityModel}. It inherits all the variables and constraints of the
+Question~1 model (\texttt{FlexibleConsumerModel} in \texttt{src/model.py}), adds the deviation
+variables and the constraint \eqref{eq:q2b_deviation}, and replaces the objective by
+\eqref{eq:q2b_hourly} summed over the 24 hours. The notebook runs the base case and the sweep of
+(iv), writes the results to \texttt{results/Q2\_linear/}, and checks the hypotheses of (ii) on
+every run.
+
+\subsubsection{(iv) Numerical results}
+
+\paragraph{Base case.}
+In the base case, $\cL = 1.43$~DKK/kWh, just above $\cpv = 1.41$~DKK/kWh and below the import
+price of every hour ($\pimp \geq 1.45$~DKK/kWh in the hours with a positive reference). According
+to (ii), the load should cover the reference with the own PV only, and never import.
+Figure~\ref{fig:q2b_schedule} shows the result:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q2/q2b_schedule.png}
+    \caption{Base case of the linear disutility model ($\cL = 1.43$~DKK/kWh). Top: optimal
+    load against the reference and the PV available. Bottom: grid exchange and PV used.}
+    \label{fig:q2b_schedule}
+\end{figure}
+
+\begin{itemize}
+    \item In the hours where the PV covers the reference (hours 5, 6, 12, 15 and 16), the load
+    follows it exactly. The PV left over is curtailed (0.84~kWh in total), since exporting it
+    pays less than it costs to produce ($\pexp < \cpv$).
+    \item In the hours where the reference exceeds the PV (hours 7--11, 13, 14 and 17), the load
+    is cut down to the PV available. Importing the rest would cost $\pimp > \cL$.
+    \item In hour 18, the load drops to zero, although the PV would cover the reference: here
+    $\pexp = 1.70 > \cL$, so exporting the PV is worth more than consuming it. This is the only
+    hour where the deviation is limited by the load bound.
+\end{itemize}
+Over the day, the consumer consumes 23.1~kWh instead of 32.3~kWh (total absolute deviation
+9.24~kWh), does not import at all, and exports 3.0~kWh in hours 18 and 19. The procurement cost is
+31.10~DKK and the disutility 13.21~DKK.
+
+\paragraph{Sweep over $\cL$.}
+The model is solved for $\cL$ from 0.005 to 3.195~DKK/kWh in steps of 0.01~DKK/kWh. The grid is
+offset by 0.005 so that no run falls exactly on a price threshold, where the solution would not
+be unique. The load changes only at a few values of $\cL$ (Figure~\ref{fig:q2b_sweep}), and
+Table~\ref{tab:q2b_sweep} reports one run in each of the resulting intervals.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{lcrrrrr}
+        \toprule
+        Interval of $\cL$ & $\cL$ & Cost & Disutility & Energy & $\sum_t |\load - \lref|$ & Hours at \\
+        (DKK/kWh) & (DKK/kWh) & (DKK) & (DKK) & (kWh) & (kWh) & bound \\
+        \midrule
+        $< 1.41$      & 1.000 & $-1.47$ & 32.34 & 0.00  & 32.34 & 14 \\
+        $1.41$--$1.45$ & 1.430 & 31.10 & 13.21 & 23.10 & 9.24  & 1 \\
+        $1.45$--$1.50$ & 1.475 & 31.54 & 13.19 & 23.40 & 8.94  & 1 \\
+        $1.50$--$1.60$ & 1.550 & 31.81 & 13.58 & 23.58 & 8.76  & 1 \\
+        $1.60$--$1.70$ & 1.650 & 36.13 & 10.00 & 26.28 & 6.06  & 1 \\
+        $1.70$--$1.90$ & 1.800 & 36.74 & 10.26 & 26.64 & 5.70  & 0 \\
+        $1.90$--$2.00$ & 1.950 & 39.02 & 8.78  & 27.84 & 4.50  & 0 \\
+        $2.00$--$2.10$ & 2.050 & 44.06 & 4.06  & 30.36 & 1.98  & 0 \\
+        $> 2.10$      & 2.500 & 48.22 & 0.00  & 32.34 & 0.00  & 0 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Sweep over $\cL$: one run in each interval between two consecutive change points.
+    Cost: daily procurement cost; energy: daily energy consumed; hours at bound: hours in which
+    the deviation is limited by the load bound ($\load = \Lmin$ while $\lref > \Lmin$).}
+    \label{tab:q2b_sweep}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/Q2/q2b_sweep.png}
+    \caption{Sweep over $\cL$. Top: daily energy consumed and total absolute deviation. Bottom:
+    procurement cost and total disutility. The dotted lines mark the thresholds predicted in
+    (ii). The plot is restricted to $1 \leq \cL \leq 2.5$~DKK/kWh; nothing changes outside it.}
+    \label{fig:q2b_sweep}
+\end{figure}
+
+\paragraph{Change points.}
+The behaviour changes at exactly the thresholds predicted in (ii):
+\begin{itemize}
+    \item \textbf{$\cL < \cpv = 1.41$:} the consumer consumes nothing, in all 14 hours with a
+    positive reference, and the deviation is limited by the load bound in all of them. The PV is
+    used only in hours 18 and 19, where exporting it pays more than it costs
+    ($\pexp > \cpv$), which gives a negative procurement cost (a net revenue of 1.47~DKK).
+    \item \textbf{$\cL = \cpv$:} the large jump. In hours 5--17, $\mPV = \cpv$, and the load jumps
+    from zero to the PV available or to the reference, whichever is smaller (from 0 to
+    23.1~kWh per day).
+    \item \textbf{$\cpv < \cL < 2.10$:} each further step happens when $\cL$ crosses the import
+    price of an hour whose reference exceeds the PV: $\pimp$ of hours 14 (1.45), 13 (1.50),
+    11 (1.60), 7 (1.70), 8 (1.90), 10 and 17 (2.00) and 9 (2.10). At that point the load of that
+    hour jumps to its reference and the difference is imported. At $\cL = 1.70$, hour 18 also
+    switches, since $\mPV = \pexp = 1.70$ there: its reference is now consumed from the PV instead
+    of exporting it.
+    \item \textbf{$\cL > 2.10$:} the load follows the reference exactly in every hour, and
+    9.12~kWh are imported.
+\end{itemize}
+The procurement cost increases with $\cL$, in steps. The disutility does not: within an
+interval the deviation is fixed and the disutility grows linearly with $\cL$, and at each change
+point the deviation drops and the disutility falls. This gives the saw-tooth shape of
+Figure~\ref{fig:q2b_sweep}.
+
+\paragraph{Hypotheses of (ii).}
+The results confirm them:
+\begin{itemize}
+    \item The load is never above the reference, in any hour of any run.
+    \item The load does not vary gradually with $\cL$. It is piecewise constant, and in every hour
+    it takes one of the three candidate values $\lref$, $\min(\PVmax, \lref)$ or $\Lmin$. The
+    hourly loads of all runs match the rule of the table in (ii) exactly.
+    \item The daily consumption increases in steps, with the largest step at $\cL = \cpv$.
+\end{itemize}
+
+% ===== Question 2.(c) =====
+
+\subsection{(c) Quadratic disutility}
+
+\subsubsection{(i) Hourly problem and its class}
+
+The disutility is now quadratic in the deviation from the reference, with a coefficient
+$\cQ > 0$ (DKK/kWh$^2$):
+\begin{equation}
+    D_t(\load) = \cQ \, \big( \load - \lref \big)^2, \qquad \forall t \in \T.
+    \label{eq:q2c_disutility}
+\end{equation}
+Unlike \eqref{eq:q2b_disutility}, $D_t$ is differentiable everywhere, including at the
+reference, so no reformulation is needed: the hourly problem is directly
+\begin{align}
+    \max_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
+    & - \cQ \big( \load - \lref \big)^2 - \pimp \, \qimp + \pexp \, \qexp - \cpv \, \pvprod
+    \label{eq:q2c_hourly} \\
+    \text{s.t.} \quad
+    & \load = \pvprod + \qimp - \qexp, \nonumber \\
+    & \Lmin \leq \load \leq \Lmax, \nonumber \\
+    & 0 \leq \pvprod \leq \PVmax, \nonumber \\
+    & \qimp \geq 0, \quad \qexp \geq 0. \nonumber
+\end{align}
+
+\paragraph{Properties.}
+\begin{itemize}
+    \item \textbf{Problem class and convexity:} $D_t$ is a quadratic function of $\load$ with
+    coefficient $\cQ > 0$, so $-D_t$ is strictly concave, and \eqref{eq:q2c_hourly} maximizes a
+    strictly concave function over the same polyhedron as in Question~2.(a): a strictly convex
+    Quadratic Program (QP).
+    \item \textbf{Decomposability:} it still holds, for the same reason as 2.(a) and 2.(b):
+    $D_t$ only involves the load of hour $t$, so the problem decomposes into 24 hourly QPs.
+    \item \textbf{Uniqueness:} because $D_t$ is strictly convex, each hour's optimal load is the unique optmial value that can be obtained. In the linear disutility case, a price landing exactly on the threshold $\cL$ made every load on the flat part of $D_t$'s slope equally optimal.
+\end{itemize}
+
+\subsubsection{(ii) Hypotheses: first-order condition}
+
+Writing the stationarity condition of \eqref{eq:q2c_hourly} with respect to $\load$, with $\lbal$ the multiplier of the balance constraint \eqref{eq:c_balance}:
+\begin{equation}
+    \frac{\partial}{\partial \load} \Big[ -\cQ (\load - \lref)^2 \Big] = \lbal 
+    \quad\Longrightarrow\quad
+    \load^\star = \lref - \frac{\lbal}{2 \cQ},
+    \label{eq:q2c_foc}
+\end{equation}
+
+with the $\load^\star$ symbol meaning it is the optimal load. As in 2.(b), $\lbal$ equals $\pimp$ if the load is above the PV available, and equals $\mPV = \max(\cpv, \pexp)$ if the load is at or below the PV available.
+
+\paragraph{Consumption above the reference.}
+The consumer never uses more than its reference in any hour. Consuming more than the reference would make no sense for two reasons: it costs money, and it brings no benefit either, because in this model any deviation from the reference, upwards or downwards, only adds disutility. So going above the reference means paying more and also being less comfortable.
+
+In mathematical terms; \eqref{eq:q2c_foc} gives $\load^\star = \lref - \lbal/(2\cQ)$, where $\lbal$ is the marginal cost of one more kWh in that hour. Going above the reference ($\load^\star > \lref$) would need $\lbal < 0$, i.e.\ a negative cost of energy, so that the consumer is paid to consume. But $\lbal$ is either $\pimp$ or $\mPV$, and both are strictly positive. Hence $\load^\star \leq \lref$ in every hour, for any $\cQ > 0$. This is the same conclusion as in 2.(b).ii, now obtained directly from \eqref{eq:q2c_foc}.
+
+\paragraph{Gradual response, not jumps.}
+Unlike 2.(b), where the load jumped between at most three fixed values as $\cL$ crossed a threshold, \eqref{eq:q2c_foc} is continuous and strictly monotonic in both $\lbal$ and $\cQ$: there is no finite jump in $\load^\star$ for any finite change in the price or in $\cQ$. 
+
+\paragraph{Closed form, combining both.} Writing out the two regimes of $\lbal$ explicitly:
+\begin{equation}
+    \load^\star = \mathrm{clip}\!\left(
+    \begin{cases}
+        \lref - \dfrac{\pimp}{2\cQ} & \text{if this exceeds } \PVmax \quad (\text{importing}) \\[6pt]
+        \lref - \dfrac{\mPV}{2\cQ} & \text{if this is below } \PVmax \quad (\text{own PV only}) \\[6pt]
+        \PVmax & \text{otherwise (neither rule is self-consistent)}
+    \end{cases}, \;\; \Lmin, \;\; \Lmax \right)
+    \label{eq:q2c_closed_form}
+\end{equation}
+Same two marginal-cost regimes as the threshold rule of 2.(b), but with a continuous interior solution within each regime instead of a single flat value.
+
+\subsubsection{(iii) Implementation}
+The model is implemented in \texttt{notebooks/Q2\_report.ipynb} as the class
+\texttt{QuadraticDisutilityModel}, following the same pattern as \texttt{LinearDisutilityModel}:
+it builds the Question~1 model with a zero utility and replaces the objective with
+\eqref{eq:q2c_hourly} summed over the 24 hours. No auxiliary variables are needed, since the
+square in \eqref{eq:q2c_disutility} is passed to Gurobi directly as a quadratic objective.
+
+\subsubsection{(iv) Numerical results}
+
+\paragraph{Base case.} With $\cQ = 1.00$~DKK/kWh$^2$ (Figure~\ref{fig:q2c_schedule}):
+\begin{itemize}
+    \item The load never exceeds the reference (hypothesis of (ii)).
+    \item Hours 5, 17 and 18 sit at $\Lmin = 0$; in every other hour with a positive reference the
+    load is an interior solution of \eqref{eq:q2c_foc}.
+    \item In hours 8--11 the model imports part of the shortfall (4.42~kWh in total) instead of
+    cutting the load down to the PV available.
+\end{itemize}
+Over the day the consumer uses 22.8~kWh (reference: 32.3~kWh), with $\sum_t|\load-\lref| =
+9.57$~kWh, 4.42~kWh imported and 3.00~kWh exported. The procurement cost is 32.54~DKK and the
+disutility 7.43~DKK.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
+    \caption{Base case of the quadratic model ($\cQ = 1.00$~DKK/kWh$^2$). Top: optimal load,
+    reference and PV available. Bottom: grid exchange and PV used.}
+    \label{fig:q2c_schedule}
+\end{figure}
+
+\paragraph{Sweep over $\cQ$.} The model is solved for $\cQ$ from 0.01 to 3.20 in steps of 0.01.
+Table~\ref{tab:q2c_sweep} shows a selection and Figure~\ref{fig:q2c_sweep} the full sweep. Unlike
+2.(b), every value of $\cQ$ gives a different load profile and all curves are smooth.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{crrrrrr}
+        \toprule
+        $\cQ$ & Cost & Disutility & Energy & $\sum_t |\load - \lref|$ & Import & Hours at \\
+        (DKK/kWh$^2$) & (DKK) & (DKK) & (kWh) & (kWh) & (kWh) & bound \\
+        \midrule
+        0.20 &  3.12 & 16.82 &  3.26 & 29.08 & 0.00 & 9 \\
+        0.50 & 20.85 & 12.33 & 15.54 & 16.80 & 1.44 & 5 \\
+        1.00 & 32.54 &  7.43 & 22.77 &  9.57 & 4.42 & 3 \\
+        1.43 & 36.83 &  5.41 & 25.39 &  6.95 & 5.56 & 3 \\
+        2.00 & 39.85 &  3.95 & 27.26 &  5.08 & 6.32 & 2 \\
+        3.00 & 42.38 &  2.77 & 28.83 &  3.51 & 7.01 & 1 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Sweep over $\cQ$ (selected runs). "Hours at bound" counts the hours where the load
+    sits at $\Lmin$ while deviating from the reference.}
+    \label{tab:q2c_sweep}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/Q2/q2c_sweep.png}
+    \caption{Sweep over $\cQ$. Top: daily energy and total absolute deviation. Bottom:
+    procurement cost and total disutility. Compare with Figure~\ref{fig:q2b_sweep}: no flat
+    segments or jumps.}
+    \label{fig:q2c_sweep}
+\end{figure}
+
+\paragraph{Comparison with 2.(b).} At $\cL = \cQ = 1.43$:
+\begin{center}
+\small
+\begin{tabular}{lrrrr}
+    \toprule
+    Model & Energy (kWh) & $\sum_t |\load - \lref|$ (kWh) & Disutility (DKK) & Cost (DKK) \\
+    \midrule
+    Linear    & 23.10 & 9.24 & 13.21 & 31.10 \\
+    Quadratic & 25.39 & 6.95 &  5.41 & 36.83 \\
+    \bottomrule
+\end{tabular}
+\end{center}
+The quadratic consumer deviates less and imports more: instead of cutting down to the PV
+available (corner solution of the linear model), it imports a little in each PV-constrained hour
+and balances the marginal disutility against the price.
+
+\paragraph{Checks.}
+\begin{itemize}
+    \item The load never exceeds the reference in any run of the sweep.
+    \item The load matches \eqref{eq:q2c_closed_form} in every hour and run to within
+    $5\times10^{-4}$~kWh.
+    \item The response is smooth: the largest change in one hour for a $\cQ$ step of 0.01 is
+    0.29~kWh, against the 2--5~kWh jumps of Table~\ref{tab:q2b_sweep}.
+    \item Re-solving the base case with a different Gurobi seed gives the same load profile,
+    consistent with the uniqueness argued in (i).
+\end{itemize}
+
+% ===== Question 2.(d) =====
+
+\subsection{(d) Multi-model comparison}
+
+\paragraph{Scenarios.} We compare the base case and two scenarios, solved with both models at
+the same coefficient value: a low value ($\cL = \cQ = 0.50$) and a high value
+($\cL = \cQ = 3.20$), both taken from the sweeps of (b).iv and (c).iv. The base case uses
+$\cL = 1.43$~DKK/kWh and $\cQ = 1.00$~DKK/kWh$^2$. The two coefficients have different units,
+so equal values are not equal discomfort; they only give two comparable points on each sweep.
+As a reference we also solve the Question~1 model (linear utility $u^L = \cL$, no reference
+profile) on the same prices and PV. Results are in Table~\ref{tab:q2d_comparison} and
+Figure~\ref{fig:q2d_profiles}.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{llrrrrrr}
+        \toprule
+        Scenario & Model & Cost & Energy & $\sum_t |\load - \lref|$ & Import & Hours & Hours \\
+                 &       & (DKK) & (kWh) & (kWh) & (kWh) & at ref. & at 0 \\
+        \midrule
+        Base & Q1 utility & 48.79 & 35.94 & 22.08 & 12.00 & 0 & 1 \\
+             & Linear     & 31.10 & 23.10 &  9.24 &  0.00 & 5 & 1 \\
+             & Quadratic  & 32.54 & 22.77 &  9.57 &  4.42 & 0 & 3 \\
+        \midrule
+        Low ($c = 0.50$)  & Q1 utility &  -1.47 &   0.00 &  32.34 &   0.00 & 0 & 14 \\
+                          & Linear     &  -1.47 &   0.00 &  32.34 &   0.00 & 0 & 14 \\
+                          & Quadratic  &  20.85 &  15.54 &  16.80 &   1.44 & 0 &  5 \\
+        \midrule
+        High ($c = 3.20$) & Q1 utility & 253.25 & 144.00 & 111.66 & 117.06 & 0 &  0 \\
+                          & Linear     &  48.22 &  32.34 &   0.00 &   9.12 & 14 & 0 \\
+                          & Quadratic  &  42.70 &  29.02 &   3.32 &   7.11 & 0 &  1 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of the three models. "Hours at ref." counts the hours with a positive
+    reference where the load equals the reference; "Hours at 0" those where it is zero despite a
+    positive reference. The Q1 model has no reference, so its deviation is only a reference
+    point.}
+    \label{tab:q2d_comparison}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/Q2/q2d_profiles.png}
+    \caption{Load profiles of the linear and quadratic models against the reference and the PV
+    available, for the base case and the two scenarios.}
+    \label{fig:q2d_profiles}
+\end{figure}
+
+\paragraph{Analysis.}
+\begin{itemize}
+    \item \textbf{Linear: three regimes.} Depending on $\cL$, the load is zero (low), equal to the
+    PV available (middle) or equal to the reference (high). At $\cL = 0.50$ it consumes nothing,
+    at 1.43 it cuts the load down to the PV available (no import, 5 hours exactly at the
+    reference), and at 3.20 it follows the reference in all 14 active hours (Table~\ref{tab:q2d_comparison}).
+    \item \textbf{Quadratic: gradual.} The same change in $\cQ$ moves the load a little in every
+    hour: 15.5~kWh at 0.50, 22.8~kWh at 1.00 and 29.0~kWh at 3.20, and the load is never exactly
+    at the reference. It always imports a bit (1.4 to 7.1~kWh) instead of choosing between
+    ``PV only'' and ``everything''.
+    \item \textbf{Q1 model.} At low $c$ it coincides with the linear model (nothing is worth
+    consuming). With no reference, at higher $c$ it consumes the maximum in every hour (144~kWh
+    at 3.20), which is why the reference-based models are needed for a realistic profile.
+    \item \textbf{Cost vs deviation.} In the base case the two models cost about the same
+    (31.10 vs 32.54~DKK) and deviate by about the same (9.24 vs 9.57~kWh), but in different
+    hours and in a different way: the linear one deviates a lot in few hours, the quadratic one
+    a little in many hours.
+\end{itemize}
+
+\paragraph{Why corner solutions vs a gradual response.} In each hour the consumer compares the
+marginal disutility of deviating with the marginal cost of energy. For the linear model the
+marginal disutility is the constant $\cL$ at every deviation, so the comparison with the price
+has the same answer for every kWh: either all of it is worth consuming or none of it, and the
+load jumps to a corner whenever $\cL$ crosses a price. For the quadratic model the marginal
+disutility $2\cQ|\load - \lref|$ grows with the deviation, so the first kWh of deviation is
+nearly free and the last is very costly; the optimum is where it equals the price
+\eqref{eq:q2c_foc}, which moves continuously with $\cQ$ and the prices.
+
+\paragraph{Recommendation.} The linear disutility fits loads that are either worth using or not
+at a given price (a deferrable process, charging that can be shifted or skipped): the consumer
+only has to state one number, a price threshold, and gets an on/off response, which is easy to
+predict but abrupt and sensitive to price changes at the thresholds. The quadratic disutility
+fits comfort-driven loads (heating, lighting) where small deviations are tolerated and large
+ones are increasingly unpleasant: it gives a smooth, stable response, but the consumer has to
+express how bad a deviation of each size is (a curvature, in DKK/kWh$^2$), which is harder to
+state in practice.
+
+% ===== Question 2.(e) (bonus) =====
+
+\subsection{(e) Non-separable disutility}
+
+\subsubsection{(i) Formulation and properties}
+
+For a thermal load, or a consumer who accepts a short interruption but not a long one, the
+discomfort depends on how long the load stays away from its reference, not only on the
+deviation of each hour. We model this with an accumulated deviation that fades over time. Let
+$\delta_t = \load - \lref$ be the deviation of hour $t$, and $e_t$ the accumulated deviation
+(kWh), with a memory factor $\rho \in [0,1]$:
+\begin{equation}
+    e_t = \rho \, e_{t-1} + \delta_t, \qquad \forall t \in \T, \qquad e_{-1} = 0.
+    \label{eq:q2e_state}
+\end{equation}
+A deviation in one hour fades by a factor $\rho$ every hour, while deviations in consecutive
+hours add up. The disutility of the whole day is
+\begin{equation}
+    D(\boldsymbol{\ell}) = \sum_{t \in \T} \Big( \cQ \, \delta_t^2 + \cS \, e_t^2 \Big),
+    \qquad \cQ \geq 0, \;\; \cS > 0.
+    \label{eq:q2e_disutility}
+\end{equation}
+The first term is the hourly discomfort of 2.(c); the second penalizes accumulated deviations.
+For example, with $\rho = 0.5$ a deviation of 1~kWh in three consecutive hours gives
+$\sum_t e_t^2 = 7.33$, while three isolated deviations of 1~kWh give $3 \times 1.33 = 4.00$:
+the same total deviation is penalized more when it is sustained. The problem is
+\begin{align}
+    \max_{\load,\, \qimp,\, \qexp,\, \pvprod,\, e_t} \quad
+    & - D(\boldsymbol{\ell}) - \sum_{t \in \T} \Big( \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod \Big)
+    \label{eq:q2e_problem} \\
+    \text{s.t.} \quad
+    & \text{the constraints of Question~1 for every } t \in \T, \nonumber \\
+    & e_t = \rho \, e_{t-1} + \load - \lref, \quad \forall t \in \T. \nonumber
+\end{align}
+
+\paragraph{Properties.}
+\begin{itemize}
+    \item \textbf{Convexity and class:} $D$ is a sum of squares of linear functions of the loads,
+    so it is convex, and \eqref{eq:q2e_problem} maximizes a concave function over a polyhedron:
+    a Quadratic Program (QP). With $\cQ > 0$ it is strictly concave in the loads.
+    \item \textbf{Decomposability:} it is lost. $\load$ appears in $e_t, e_{t+1}, \dots$ through
+    \eqref{eq:q2e_state}, so the disutility couples the hours and the problem is a single
+    24-hour QP, with 24 additional variables and constraints.
+    \item \textbf{Special cases:} for $\rho = 0$, $e_t = \delta_t$ and \eqref{eq:q2e_disutility}
+    is the disutility of 2.(c) with coefficient $\cQ + \cS$; for $\cS = 0$ too, it is exactly
+    2.(c).
+    \item \textbf{Load shifting:} since $e_t$ is signed, a shortfall can be compensated by
+    consuming above the reference later. Unlike 2.(b) and 2.(c), consumption above the
+    reference can now be optimal.
+\end{itemize}
+

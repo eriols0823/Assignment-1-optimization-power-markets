@@ -21,7 +21,7 @@ single new constraint:
     \sum_{t \in \T} \load \geq \Emin.
     \label{eq:c_min_energy}
 \end{equation}
-
+No new decision variables are needed.
 \subsubsection{Daily problem}
 The daily problem keeps the objective of Question~2 and all the constraints of Question~1, and
 adds \eqref{eq:c_min_energy}. With $D_t$ the disutility of the deviation of the load from the
@@ -41,17 +41,14 @@ reference $\lref$ (in Question~3, the quadratic disutility of 2.(c)):
 \subsubsection{Change in the properties}
 \begin{itemize}
     \item \textbf{Decomposability:} constraint \eqref{eq:c_min_energy} is the first constraint
-    of the assignment that links different hours, since it involves the loads of all 24
-    hours. The daily problem can therefore no longer be split into 24 independent hourly
+    of the assignment that links different hours, since it involves the loads of all 24 hours. The daily problem can therefore no longer be split into 24 independent hourly
     problems: it has to be solved as a single 24-hour problem.
-    \item \todo{Problem class and convexity compared with Question 2. Hint: look at what the
-    new constraint is (linear or not) and at the class of the objective of 2.(c); does adding
-    it change the class or the convexity of the problem?}
-    \item \todo{Feasibility: give a condition on $\Emin$, the reference profile and the load
-    bounds under which the problem is feasible. Hint: think about the largest total energy the
-    consumer can consume in one day given the load bounds, and whether the reference profile
-    actually restricts what is feasible. This condition is needed again in 3.(b), to justify
-    strong duality.}
+    \item \textbf{Problem class and convexity:}
+    The objective is the same as in Question~2.(c), where the quadratic disutility gives a concave quadratic objective. The hourly constraints are affine, including  the new constraint \eqref{eq:c_min_energy}. The problem therefore remains a convex Quadratic Program (QP). So the new constraint impacts decomposability but not the convexity. 
+
+    \item \textbf{Feasibility:}
+The largest total energy the consumer can consume during the day is $24\Lmax$. The problem is therefore feasible as long as $\Emin \leq 24\Lmax$, assuming $\Lmin \leq \Lmax$ and that the original hourly constraints are feasible. The reference profile $\lref$ does not restrict feasibility, since it only appears in the objective through the disutility. The load may therefore deviate from $\lref$ if this is needed to satisfy \eqref{eq:c_min_energy}.
+
 \end{itemize}
 
 \subsection{(b) Lagrangian, dual problem and KKT conditions of the daily problem}
@@ -72,5 +69,152 @@ it belongs to an inequality, which in the form $g(x) \leq 0$ reads
 $\Emin - \sum_{t \in \T} \load \leq 0$, and it is in DKK/kWh. Unlike the hourly multipliers, it
 has no hour index, since the constraint applies to the whole day.
 
-\todo{Lagrangian, dual problem and KKT conditions of the daily problem, with the multiplier
-of \eqref{eq:c_min_energy}. Does strong duality hold?}
+\subsubsection{Lagrangian}
+
+As in Question~1.(b), we write the problem in minimization form. The objective
+then becomes the negative of \eqref{eq:q3_objective}. The Lagrangian is
+
+\begin{equation}
+\begin{aligned}
+\mathcal{L}
+= \sum_{t\in\T} \Big[
+& D_t(\load)
++ \pimp\,\qimp
+- \pexp\,\qexp
++ \cpv\,\pvprod \\
+&+ \lbal(\load-\pvprod-\qimp+\qexp) \\
+&+ \muLlo(\Lmin-\load)
++ \muLup(\load-\Lmax) \\
+&- \muPVlo\pvprod
++ \muPVup(\pvprod-\PVmax) \\
+&- \muimp\qimp
+- \muexp\qexp
+\Big] \\
+&+ \muE
+\left(
+\Emin-\sum_{t\in\T}\load
+\right).
+\end{aligned}
+\label{eq:q3_lagrangian}
+\end{equation}
+\subsubsection{Dual problem}
+The dual function is given when the dual variables are fixed and the Lagrangian is minimized. For the load, the quadratic disutility from 2 c) is $D_t(\load)=c^Q(\load-\lref)^2$. Study the Lagrangian at \eqref{eq:q3_lagrangian} and it can be seen that the terms that depend on the $\load$ are
+$D_t(\load)+\lbal\load-\muLlo\load+\muLup\load-\muE\load$. To keep this notation shorter: $\beta_t=\lbal-\muLlo+\muLup-\muE$. Add both of this together and it can be seen that the load dependent part of the Lagrangian becomes $c^Q(\load-\lref)^2+\beta_t\load$.
+
+If we minimize this with respect to $\load$ gives $2c^Q(\load-\lref)+\beta_t=0$ which imples: $\load=\lref-\beta_t/(2c^Q)$. If this value is then substituted back into the Lagrangian the load contribution becomes $\beta_t\lref-\beta_t^2/(4c^Q)$.
+
+The remaining primal variables are linear in the Lagrangian. Their bounds have
+already been included through their multipliers, so they are treated as free when forming the dual function. If one of their coefficients was non-zero, the Lagrangian could be made infinitely small. The dual function would then be $-\infty$.The required conditions are therefore
+$\cpv-\lbal-\muPVlo+\muPVup=0$ for PV,
+$\pimp-\lbal-\muimp=0$ for imports, and
+$-\pexp+\lbal-\muexp=0$ for exports, for every $t\in\T$.
+
+After minimizing over all primal variables, the dual function is
+
+\begin{equation}
+\begin{aligned}
+q(\boldsymbol{\lambda},\boldsymbol{\mu},\muE)
+=
+\muE\Emin
++
+\sum_{t\in\T}
+\left[
+    \muLlo\Lmin
+    -\muLup\Lmax
+    -\muPVup\PVmax
+    +\beta_t\lref
+    -\frac{\beta_t^2}{4c^Q}
+\right].
+\end{aligned}
+\label{eq:q3_dual_function}
+\end{equation}
+
+This expression is finite only when the three coefficient conditions above hold. Otherwise
+$q(\boldsymbol{\lambda},\boldsymbol{\mu},\muE)=-\infty$.
+
+The dual problem is therefore
+
+\begin{align}
+\max_{\boldsymbol{\lambda},\boldsymbol{\mu},\muE}
+\quad
+& q(\boldsymbol{\lambda},\boldsymbol{\mu},\muE)
+\label{eq:q3_dual_problem} \\
+\text{s.t.}\quad
+& \cpv-\lbal-\muPVlo+\muPVup=0,
+&& \forall t\in\T, \nonumber\\
+& \pimp-\lbal-\muimp=0,
+&& \forall t\in\T, \nonumber\\
+& -\pexp+\lbal-\muexp=0,
+&& \forall t\in\T, \nonumber\\
+& \muLlo,\muLup,\muPVlo,\muPVup,\muimp,\muexp\geq0,
+&& \forall t\in\T. \nonumber
+\end{align}
+
+Also $\muE\geq0$, while $\lbal$ is free for every $t\in\T$.
+
+\subsubsection{KKT conditions}
+Primal feasibility, dual feasibility, stationarity and complementary slackness will be shown below:
+
+\paragraph{Primal feasibility}
+The primal variables must satisfy the constraints of Q3 a. So: 
+
+$\load=\pvprod+\qimp-\qexp$, $\Lmin\leq\load\leq\Lmax$,
+$0\leq\pvprod\leq\PVmax$, and $\qimp,\qexp\geq0$ for every $t\in\T$.
+The daily minimum-energy requirement must also hold, so
+$\sum_{t\in\T}\load\geq\Emin$.
+
+\paragraph{Dual feasibility.}
+All multipliers of inequality constraints must be non-negative. For every $t\in\T$,
+the load and PV multipliers satisfy
+$\muLlo,\muLup,\muPVlo,\muPVup\geq0$.
+The import and export multipliers satisfy $\muimp,\muexp\geq0$, and the daily
+multiplier satisfies $\muE\geq0$. The power-balance multiplier $\lbal$ is free.
+
+
+\paragraph{Stationarity.}
+The derivative of the Lagrangian with respect to each primal variable must be zero. This gives
+
+\begin{align}
+    \frac{\partial \mathcal{L}}{\partial \load}
+    &= 2c^Q(\load-\lref)+\lbal-\muLlo+\muLup-\muE = 0,
+    && \forall t\in\T,
+    \label{eq:q3_stationarity_load}\\
+    \frac{\partial \mathcal{L}}{\partial \pvprod}
+    &= \cpv-\lbal-\muPVlo+\muPVup = 0,
+    && \forall t\in\T, \nonumber\\
+    \frac{\partial \mathcal{L}}{\partial \qimp}
+    &= \pimp-\lbal-\muimp = 0,
+    && \forall t\in\T, \nonumber\\
+    \frac{\partial \mathcal{L}}{\partial \qexp}
+    &= -\pexp+\lbal-\muexp = 0,
+    && \forall t\in\T. \nonumber
+\end{align}
+
+\paragraph{Complementary slackness} Multiplier times constraint must be zero:
+\begin{align}
+    \muLlo(\Lmin-\load) &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muLup(\load-\Lmax) &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muPVlo\pvprod &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muPVup(\pvprod-\PVmax) &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muimp\qimp &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muexp\qexp &= 0,
+    && \forall t\in\T, \nonumber\\
+    \muE\left(\Emin-\sum_{t\in\T}\load\right) &= 0.
+    \label{eq:q3_complementary}
+\end{align}
+
+\subsubsection{Strong duality}
+
+The formulation in 3 a of the daily problem is a convex quadratic problem and all constraints are affine. Given that all constraints are affine, the slater argument from Q1 (b) can be recycled. So for that reason strong duality holds here also. Optimal objective value is same for both primal and dual and KKT conditions are sufficient and necessary for optimality.
+
+\subsubsection{(c) Expected behavior}
+\paragraph{Can the consumer consume above it hourly reference?}
+Yes it can. Partly because it can be forced to do so to fit its minimum daily energy demand $\Emin>\sum_{t\in\T}\lref$. This could make it such that in the cheaper hours it deviates more above the reference compared to the more expensive hours, where the reference is kept.
+
+\paragraph{Can the consumer consume above its daily minimum requirement?}
+Yes this is also possible. $\Emin$ only sets a lower bound and not an upper one. So if electricity is cheap and it increases utility more than it costs the consumer can consume above it daily requirement $\Emin$.
