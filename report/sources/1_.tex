@@ -1008,12 +1008,9 @@ the energy that is imported or exported). It also returns the objective value, s
 utility on one side and the procurement cost on the other, and the dual variable of every
 constraint in every hour.
 
-As an implementation detail, the four variables are declared free and every bound is written
-as an explicit constraint, with the same sign convention as in (b): the balance as $h(x) = 0$
-and every inequality as $g(x) \leq 0$. A bound declared on the variable itself would not get
-its own dual value from the solver. Written this way, and since the objective is a
-maximisation, the dual value returned for each constraint is directly the multiplier of (b):
-$\lbal$, free in sign, for the balance, and $\mu \geq 0$ for the inequalities.
+In the code, every bound is written as a constraint, exactly as in (b): the balance as
+$h(x) = 0$ and every inequality as $g(x) \leq 0$. In this way the solver returns one dual
+variable per constraint, and its value is directly the multiplier of (b), with the same sign.
 
 \subsection{(f) Numerical validation}
 
