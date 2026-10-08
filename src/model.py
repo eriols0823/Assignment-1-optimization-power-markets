@@ -133,9 +133,16 @@ class FlexibleConsumerModel:
         self.var["pv"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="pv")
 
         # --- Objective: daily net utility (DKK), maximised --------------------------------
+        # The consumption utility is only given in Question 1, so in the data it can be empty
+        # (None). We save it as u_L and stop with a clear message if it is missing, so that below
+        # we are sure we multiply by a number. This also avoids the VS Code warning that None
+        # cannot be multiplied.
+        u_L = d.consumption_utility
+        if u_L is None:
+            raise ValueError(f"{d.question}: the input data has no consumption utility")
         m.setObjective(
             gp.quicksum(
-                d.consumption_utility * self.var["load"][t]
+                u_L * self.var["load"][t]
                 - p_imp[t] * self.var["import"][t]
                 + p_exp[t] * self.var["export"][t]
                 - d.pv_marginal_cost * self.var["pv"][t]
