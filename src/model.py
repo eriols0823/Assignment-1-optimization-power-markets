@@ -138,16 +138,27 @@ class FlexibleConsumerModel:
         # we are sure we multiply by a number. This also avoids the VS Code warning that None
         # cannot be multiplied.
         u_L = d.consumption_utility
-        if u_L is None:
-            raise ValueError(f"{d.question}: the input data has no consumption utility")
-        m.setObjective(
-            gp.quicksum(
-                u_L * self.var["load"][t]
-                - p_imp[t] * self.var["import"][t]
-                + p_exp[t] * self.var["export"][t]
-                - d.pv_marginal_cost * self.var["pv"][t]
-                for t in T),
-            GRB.MAXIMIZE)
+        if u_L is not None:                         # Question 1: linear utility of the load
+            m.setObjective(
+                gp.quicksum(
+                    u_L * self.var["load"][t]
+                    - p_imp[t] * self.var["import"][t]
+                    + p_exp[t] * self.var["export"][t]
+                    - d.pv_marginal_cost * self.var["pv"][t]
+                    for t in T),
+                GRB.MAXIMIZE)
+        elif d.quadratic_disutility is not None:    # Questions 2.(c) and 3: quadratic disutility
+            c_Q, ref = d.quadratic_disutility, d.reference_load
+            m.setObjective(
+                gp.quicksum(
+                    - c_Q * (self.var["load"][t] - ref[t]) * (self.var["load"][t] - ref[t])
+                    - p_imp[t] * self.var["import"][t]
+                    + p_exp[t] * self.var["export"][t]
+                    - d.pv_marginal_cost * self.var["pv"][t]
+                    for t in T),
+                GRB.MAXIMIZE)
+        else:
+            raise ValueError(f"{d.question}: the input data has no consumption utility or quadratic disutility")
 
         # --- Constraints -------------------------------------------------------------
         # Sign convention (same as Question 1.(b), primal feasibility of the KKT conditions):
@@ -175,6 +186,10 @@ class FlexibleConsumerModel:
             (-self.var["import"][t] <= 0 for t in T), name="imp_nonneg")
         self.con["exp_nonneg"] = m.addConstrs(
             (-self.var["export"][t] <= 0 for t in T), name="exp_nonneg")
+        # g: minimum daily energy (Question 3 only)   E^min - sum_t l_t <= 0   -> mu^E
+        if d.min_daily_energy_kWh is not None:
+            self.con["min_energy"] = m.addConstr(
+                d.min_daily_energy_kWh - gp.quicksum(self.var["load"][t] for t in T) <= 0, name="min_energy")
 
         m.update()
         return self
