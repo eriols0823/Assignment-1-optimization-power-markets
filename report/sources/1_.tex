@@ -160,39 +160,6 @@ Since the hours are independent, the 24 hourly problems can be solved separately
 order, and even in parallel. Each of them is also much smaller than the daily problem: 4
 variables and 7 constraints instead of 96 and 168.
 
-This can be seen in the compact matrix form
-\begin{equation}
-    \min_{\mathbf{x} \in \mathbb{R}^N} \; z = \mathbf{c}^\top \mathbf{x}
-    \quad \text{s.t.} \quad A\mathbf{x} \geq \mathbf{b}, \quad \mathbf{x} \geq \mathbf{0},
-\end{equation}
-where $\mathbf{x}, \mathbf{c} \in \mathbb{R}^N$ are the vectors of decision variables and
-costs, $\mathbf{b} \in \mathbb{R}^M$ is the right-hand-side vector, and
-$A \in \mathbb{R}^{M \times N}$ is the left-hand-side constraint matrix, with one row per
-constraint and one column per decision variable. The problem of this question is brought to
-this form by inverting the signs of the objective (minimising the cost instead of maximising
-the utility), splitting the balance equality \eqref{eq:c_balance} into two opposite
-inequalities, and multiplying the upper bounds by $-1$ ($-\load \geq -\Lmax$ and
-$-\pvprod \geq -\PVmax$).
-
-Ordering the variables by hour,
-$\mathbf{x} = (\mathbf{x}_0, \dots, \mathbf{x}_{23})$, the absence of constraints between
-different hours makes $A$ block diagonal, with one block $A_t$ per hour:
-\begin{equation}
-    A = \begin{pmatrix}
-        A_0 & & \\
-        & \ddots & \\
-        & & A_{23}
-    \end{pmatrix},
-    \qquad
-    \mathbf{c} = \begin{pmatrix} \mathbf{c}_0 \\ \vdots \\ \mathbf{c}_{23} \end{pmatrix},
-    \qquad
-    \mathbf{b} = \begin{pmatrix} \mathbf{b}_0 \\ \vdots \\ \mathbf{b}_{23} \end{pmatrix}.
-\end{equation}
-The problem therefore splits into 24 independent problems
-$\min \, \mathbf{c}_t^\top \mathbf{x}_t$ s.t. $A_t \mathbf{x}_t \geq \mathbf{b}_t$,
-$\mathbf{x}_t \geq \mathbf{0}$, one per hour.
-
-
 \paragraph{Economic meaning.}
 %\todo{What does this decomposition say about the structure of the consumer's
 %decision-making across the day?}
