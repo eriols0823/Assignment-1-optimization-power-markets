@@ -87,6 +87,7 @@ experiment in `main.py`.
 ```bash
 python main.py --question Q1_caseA              # base case
 python main.py --question Q1_caseA --scenarios  # + example sensitivity scenarios
+python main.py --question Q1_caseA --validate   # Question 1.(f): price ladder and dual check
 python main.py --show                           # open the figures in a window
 ```
 

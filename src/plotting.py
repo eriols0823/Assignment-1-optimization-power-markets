@@ -63,7 +63,7 @@ def plot_schedule(results: Results, data: InputData, save_to: Path | str | None 
     if "reference_load" in hr:
         ax.step(h, hr["reference_load"], where="mid", color="C0", ls=":", label="reference load")
     ax.axhline(0, color="grey", lw=0.8)
-    ax.set(xlabel="hour", ylabel="kWh/h", title=f"Optimal schedule - {results.question} (cost {results.objective:.1f} DKK)")
+    ax.set(xlabel="hour", ylabel="kWh/h", title=f"Optimal schedule - {results.question} (net utility {results.objective:.1f} DKK)")
 
     ax2 = ax.twinx()
     ax2.step(h, hr["price"], where="mid", color="C3", lw=1.2, label="energy price")
@@ -106,4 +106,19 @@ def plot_scenario_comparison(
     ax.bar(names, values, color="C0")
     ax.set(ylabel=ylabel, title=f"Scenario comparison - {metric}")
     ax.tick_params(axis="x", rotation=20)
+    return _finish(fig, save_to)
+
+
+def plot_lambda_range(table, data: InputData, save_to: Path | str | None = None) -> plt.Figure:
+    """Dual of the power balance per hour (DKK/kWh): the value from Gurobi (line) and all valid values (shaded)."""
+    h = data.hours
+    fig, ax = plt.subplots(figsize=(11, 4))
+    ax.fill_between(h, table["lambda_low"], table["lambda_high"], step="mid", color="C0", alpha=0.3, label="all valid values")
+    ax.step(h, table["lambda"], where="mid", color="C0", lw=2, label="value from Gurobi")
+    ax.step(h, data.energy_price + data.import_tariff, where="mid", color="grey", ls="--", label="import price")
+    ax.step(h, data.energy_price - data.export_tariff, where="mid", color="grey", ls=":", label="export price")
+    ax.axhline(data.consumption_utility, color="red", lw=1, label="utility")
+    ax.axhline(data.pv_marginal_cost, color="orange", lw=1, label="PV cost")
+    ax.set(xlabel="hour", ylabel="DKK/kWh", title=f"Dual of the power balance - {data.question}")
+    ax.legend(fontsize=8, ncol=3)
     return _finish(fig, save_to)
