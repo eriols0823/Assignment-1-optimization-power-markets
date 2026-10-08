@@ -158,7 +158,7 @@ and $\PVmax$):
 %problem actually being solved, parallelisability, ...)?}
 Since the hours are independent, the 24 hourly problems can be solved separately, in any
 order, and even in parallel. Each of them is also much smaller than the daily problem: 4
-variables and 7 constraints instead of 96 and 168.
+variables and 7 constraints instead of 96 and 168. In general this reduces the computation time, since solving 24 small problems is faster than solving a single problem 24 times larger, although for a problem with only 96 variables the difference is expected to be negligible.
 
 \paragraph{Economic meaning.}
 %\todo{What does this decomposition say about the structure of the consumer's
@@ -366,8 +366,9 @@ The power-balance equality constraint does not carry a complementary slackness c
 
 \subsubsection{Strong duality}
 Strong duality holds for the hourly problem: the duality gap is zero, and the optimal value
-of the primal problem equals the optimal value of the dual problem, $C_t^* = d^*$. This
-follows from the properties established in (a):
+of the primal problem equals the optimal value of the dual problem, $C_t^* = d^*$. This is a
+theoretical result, which holds for every feasible and bounded LP, so it does not require
+solving the problem numerically. It follows from the properties established in (a):
 \begin{itemize}
     \item \textbf{Problem class:} as shown in (a), the hourly problem is a Linear Program:
     its objective is linear and all its constraints are affine. Linear programs are convex
@@ -483,7 +484,7 @@ So when there is no grid exchange the marginal value of electricity is determine
 
 \subsubsection{Load-bound multipliers}
 
-\textbf{Lower load bound.}
+\paragraph{Lower load bound.}
 The multiplier $\underline{\mu}_t^L$ is associated with the constraint
 \[
 L^{\min}-\ell_t \leq 0.
@@ -604,15 +605,10 @@ tariff below the hourly price \eqref{eq:tariff_assumption}. The result is ensure
 positivity of the grid tariffs \eqref{eq:tariff_positive}, which is the only one used in the
 proof. All that is really needed is $\tauimp + \tauexp > 0$, i.e.\ $\pexp < \pimp$.
 
-The other two assumptions are not needed for this result:
-\begin{itemize}
-    \item \textbf{Positive prices:} the market price $p_t$ cancels in
-    $\pimp - \pexp = \tauimp + \tauexp$, so its sign plays no role.
-    \item \textbf{Export tariff below the price:} $\tauexp < p_t$ only guarantees that
-    $\pexp > 0$, i.e.\ that exporting is actually paid; without it the prosumer would have no
-    incentive to export in any hour, which would rule out simultaneous import and export
-    anyway.
-\end{itemize}
+The export tariff being below the price, $\tauexp < p_t$, is not needed for this result: it
+only guarantees that $\pexp > 0$, i.e.\ that exporting is actually paid. Without it the
+prosumer would have no incentive to export in any hour, which would rule out simultaneous
+import and export anyway.
 
 \paragraph{Interpretation.}
 The power balance \eqref{eq:c_balance} only depends on the difference $\qimp - \qexp$, so
@@ -623,7 +619,7 @@ zero, and simultaneous import and export would no longer be excluded.
 
 \paragraph{Outside the model.}
 The same conclusion is physically sensible: a household usually has a single connection point
-to the grid, where in practice only the net power flows, and any additional flow in both
+to the grid, where in practice only the net power flows. Any additional flow in both
 directions would only add losses (for instance Joule losses in the cables).
 
 \subsubsection{(ii) Load consumption}
@@ -848,56 +844,35 @@ they still hold. What changes is which state of the grid goes with each regime, 
 decided with the balance. We stay in case A ($\cpv < \uL$).
 
 \paragraph{Case $\PVmax < \Lmin$.}
-Even with all the PV production, the load cannot be covered: ${\pvprod}^* \leq \PVmax < \Lmin
-\leq {\load}^*$. The balance \eqref{eq:c_balance} gives
-\begin{equation}
-    {\qimp}^* - {\qexp}^* = {\load}^* - {\pvprod}^* \geq \Lmin - \PVmax > 0,
-\end{equation}
-so in every hour the consumer imports, ${\qimp}^* > 0$ and ${\qexp}^* = 0$, and
-${\lbal}^* = \pimp$. The export price $\pexp$ plays no role.
+The PV production can never cover the load, since
+${\pvprod}^* \leq \PVmax < \Lmin \leq {\load}^*$. By the balance \eqref{eq:c_balance}, the
+consumer imports in every hour, so ${\lbal}^* = \pimp$. The export price $\pexp$ plays no
+role, and both decisions are taken against $\pimp$ only:
 \begin{itemize}
     \item \textbf{Load:} by Step 1 of (ii), ${\load}^* = \Lmax$ if $\uL \geq \pimp$ and
-    ${\load}^* = \Lmin$ if $\uL \leq \pimp$. The intermediate regime disappears: the load
-    cannot follow the PV production, since ${\load}^* = \PVmax$ would violate $\load \geq \Lmin$.
-    \item \textbf{PV:} by Step 1 of (iii), there is no curtailment if $\cpv < \pimp$, with
-    ${\qimp}^* = {\load}^* - \PVmax$, and full curtailment if $\cpv > \pimp$, with
-    ${\qimp}^* = {\load}^*$.
-\end{itemize}
-Compared with (ii) and (iii):
-\begin{itemize}
-    \item $\uL \leq \pexp$: the load is still $\Lmin$ and the PV is still fully used. Only the
-    grid changes: it imports $\Lmin - \PVmax$ instead of exporting.
-    \item $\pexp < \uL < \pimp$: the load changes from $\PVmax$ to $\Lmin$. The PV is still
-    fully used, since $\cpv < \uL < \pimp$, and the difference is imported.
-    \item $\uL \geq \pimp$: nothing changes.
+    ${\load}^* = \Lmin$ if $\uL \leq \pimp$. The intermediate regime disappears, since
+    ${\load}^* = \PVmax$ would be below $\Lmin$.
+    \item \textbf{PV:} by Step 1 of (iii), the PV is fully used if $\cpv < \pimp$ and fully
+    curtailed if $\cpv > \pimp$.
 \end{itemize}
 
 \paragraph{Case $\PVmax > \Lmax$.}
-Now the PV capacity exceeds the maximum load, $\PVmax > \Lmax \geq {\load}^*$. In case A the
-only prior restriction is $\cpv < \uL$, so $\cpv$ can fall in any of the three ranges defined
-by the two effective prices.
+The PV production can now exceed the load, so there is a surplus. What happens to it depends
+on where $\cpv$ lies with respect to the two effective prices:
 \begin{itemize}
-    \item \textbf{Range A: $\cpv < \pexp$.} Selling PV production always leaves a positive
-    margin, so there is no curtailment, ${\pvprod}^* = \PVmax$. Since
-    $\PVmax > \Lmax \geq {\load}^*$, there is a surplus that is exported,
-    ${\qexp}^* = \PVmax - {\load}^* > 0$ and ${\qimp}^* = 0$, so ${\lbal}^* = \pexp$. The load
-    compares $\uL$ with ${\lbal}^* = \pexp$: it is $\Lmin$ if $\uL \leq \pexp$ (selling a kWh
-    pays more than consuming it) and $\Lmax$ if $\uL > \pexp$ (consuming it is worth more than
-    selling it). The intermediate regime ${\load}^* = \PVmax$ cannot exist, since it would
-    exceed $\Lmax$.
-    \item \textbf{Range B: $\pexp < \cpv < \pimp$.} Producing for export would lose money, but
-    producing to supply the load is profitable, since $\cpv < \uL$ and $\cpv < \pimp$. The PV
-    production supplies exactly the load and the rest is curtailed,
-    ${\pvprod}^* = {\load}^*$ (partial curtailment, $\PVmax - {\load}^* > 0$), and there is no
-    exchange with the grid. Partial curtailment gives ${\lbal}^* = \cpv$
-    (${\muPVlo}^* = {\muPVup}^* = 0$). Then ${\muLup}^* = \uL - {\lbal}^* = \uL - \cpv > 0$,
-    which forces ${\load}^* = \Lmax$.
-    \item \textbf{Range C: $\cpv > \pimp$.} The grid is cheaper than the PV, so the PV is
-    switched off, ${\pvprod}^* = 0$ (full curtailment), and the whole load is imported,
-    ${\qimp}^* = {\load}^*$, so ${\lbal}^* = \pimp$. This range requires
-    $\pimp < \cpv < \uL$, so $\uL > {\lbal}^*$ and the load is at its limit,
-    ${\load}^* = \Lmax$ and ${\qimp}^* = \Lmax$.
+    \item \textbf{$\cpv < \pexp$:} the surplus is sold at a profit, so there is no
+    curtailment. The consumer exports, so ${\lbal}^* = \pexp$, and the load is $\Lmin$ if
+    $\uL \leq \pexp$ and $\Lmax$ if $\uL > \pexp$.
+    \item \textbf{$\pexp < \cpv < \pimp$:} selling the surplus would lose money, but supplying
+    the load is still profitable, since $\cpv < \uL$. The PV produces exactly what the load
+    needs and the rest is curtailed (partial curtailment), with no exchange with the grid.
+    Then ${\lbal}^* = \cpv < \uL$, so the load is $\Lmax$.
+    \item \textbf{$\cpv > \pimp$:} the grid is cheaper than the PV, so the PV is switched off
+    (full curtailment) and the whole load is imported. Then ${\lbal}^* = \pimp < \uL$, so the
+    load is $\Lmax$.
 \end{itemize}
+In the three ranges the intermediate regime ${\load}^* = \PVmax$ cannot exist, since it would
+exceed $\Lmax$.
 
 \paragraph{Comparison with (ii) and (iii).}
 The table shows, for each price regime of (ii), what changes in the load and in the
@@ -1022,8 +997,23 @@ in load regime 2. Producing one kWh with PV then costs exactly the same as impor
 
 At a tie, several primal solutions can give the same objective value, so the primal solution may not be unique. The dual solution can still be unique, since the marginal value $\lambda_t$ may remain fixed at the common tied price. Dual non-uniqueness only occurs if the KKT conditions allow more than one set of optimal multipliers.
 
-\subsection{(e) - Implement model in Python}
-The optimization problem was implemented implemented in Python in the starting repo that was given. Feel free to view it in the repo shared repo.
+\subsection{(e) Implementation}
+The model is implemented in \texttt{FlexibleConsumerModel.build()}, in the file
+\texttt{src/model.py}. It is set up so that each case is solved by running a single command in
+the terminal, for example \texttt{python main.py --question Q1\_caseA} (or
+\texttt{Q1\_caseB}), and the results are saved automatically in the folder \texttt{results/}.
+
+Running the code gives the detailed hour-by-hour schedule (the load, the PV production, and
+the energy that is imported or exported). It also returns the objective value, split into the
+utility on one side and the procurement cost on the other, and the dual variable of every
+constraint in every hour.
+
+As an implementation detail, the four variables are declared free and every bound is written
+as an explicit constraint, with the same sign convention as in (b): the balance as $h(x) = 0$
+and every inequality as $g(x) \leq 0$. A bound declared on the variable itself would not get
+its own dual value from the solver. Written this way, and since the objective is a
+maximisation, the dual value returned for each constraint is directly the multiplier of (b):
+$\lbal$, free in sign, for the balance, and $\mu \geq 0$ for the inequalities.
 
 \subsection{(f) Numerical validation}
 
