@@ -168,7 +168,17 @@ This can be seen in the compact matrix form
 where $\mathbf{x}, \mathbf{c} \in \mathbb{R}^N$ are the vectors of decision variables and
 costs, $\mathbf{b} \in \mathbb{R}^M$ is the right-hand-side vector, and
 $A \in \mathbb{R}^{M \times N}$ is the left-hand-side constraint matrix, with one row per
-constraint and one column per decision variable. Ordering the variables by hour,
+constraint and one column per decision variable. The problem of this question is brought to
+this form in three steps. First, the signs of the objective are inverted, so that instead of
+maximising the utility we minimise the cost, $\mathbf{c}^\top \mathbf{x} = -U$. Second, the
+balance equality \eqref{eq:c_balance} is split into two opposite inequalities,
+$\load - \pvprod - \qimp + \qexp \geq 0$ and $-\load + \pvprod + \qimp - \qexp \geq 0$. Third,
+the upper bounds are multiplied by $-1$, which gives $-\load \geq -\Lmax$ and
+$-\pvprod \geq -\PVmax$. The lower bound $\load \geq \Lmin$ already has the required form, and
+the non-negativity of $\pvprod$, $\qimp$ and $\qexp$ is the condition
+$\mathbf{x} \geq \mathbf{0}$.
+
+Ordering the variables by hour,
 $\mathbf{x} = (\mathbf{x}_0, \dots, \mathbf{x}_{23})$, the absence of constraints between
 different hours makes $A$ block diagonal, with one block $A_t$ per hour:
 \begin{equation}
