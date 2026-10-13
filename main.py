@@ -4,32 +4,55 @@
     python main.py --question Q2_linear     # another case
     python main.py --scenarios              # also run the example sensitivity scenarios
     python main.py --question Q1_caseB --validate   # Question 1.(f): price ladder and dual check
-
-Results (CSV, TXT, PNG) are written to ``results/<question>/``. Extend ``run_scenarios``
-with your own scenarios, or add a new function per question, as your analysis grows.
+    python main.py --q2                     # all of Question 2 (b)-(e) in one command
+    python main.py --question Q2_linear --sweep     # Question 2.(b): base case, sweep of c^L, tables, figures, checks
+    python main.py --question Q2_quadratic --sweep  # Question 2.(c): same for c^Q
+    python main.py --question Q2_quadratic --compare        # Question 2.(d): linear vs quadratic vs Question 1 model
+    python main.py --question Q2_quadratic --nonseparable   # Question 2.(e) bonus: accumulated-deviation model
 """
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 
 import matplotlib
+import numpy as np
 import pandas as pd
 
 from src.data_loader import load_question, list_questions
-from src.model import FlexibleConsumerModel, Results
-from src.plotting import plot_duals, plot_inputs, plot_lambda_range, plot_scenario_comparison, plot_schedule
-from src.scenarios import scale_prices, scale_pv, set_tariffs
+from src.model import (AccumulatedDeviationModel, FlexibleConsumerModel, LinearDisutilityModel,
+                       QuadraticDisutilityModel, Results)
+from src.plotting import (plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles, plot_scenario_comparison,
+                          plot_schedule, plot_sweep)
+from src.scenarios import scale_prices, scale_pv, set_disutility, set_tariffs
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
+FIGURES_DIR = Path(__file__).resolve().parent / "report" / "figures"
+
+# Question 2.(b) and 2.(c): the model of each case and the sweep of its disutility coefficient
+Q2_CASES = {
+    "Q2_linear": dict(
+        model=LinearDisutilityModel, arg="linear", name="c_L", fig="q2b", sym="$c^L$", unit="DKK/kWh",
+        values=np.round(np.arange(0.005, 3.2, 0.01), 3),     # offset by 0.005: no run lies on a price threshold
+        report=[1.0, 1.43, 1.475, 1.55, 1.65, 1.80, 1.95, 2.05, 2.50],
+        intervals=["< 1.41", "1.41-1.45", "1.45-1.50", "1.50-1.60", "1.60-1.70", "1.70-1.90", "1.90-2.00",
+                   "2.00-2.10", "> 2.10"]),
+    "Q2_quadratic": dict(
+        model=QuadraticDisutilityModel, arg="quadratic", name="c_Q", fig="q2c", sym="$c^Q$", unit="DKK/kWh$^2$",
+        values=np.round(np.arange(0.01, 3.21, 0.01), 3),
+        report=[0.2, 0.5, 1.0, 1.43, 2.0, 3.0], intervals=None),
+}
 
 
 def run_base_case(question: str, out: Path, show: bool) -> Results | None:
     data = load_question(question)
     print(data.summary(), "\n")
-    plot_inputs(data, save_to=out / "inputs.png")
+    is_q2 = question in Q2_CASES            # Question 2 has its own figures (report/figures)
+    if not is_q2:
+        plot_inputs(data, save_to=out / "inputs.png")
 
-    model = FlexibleConsumerModel(data).build()
+    model = Q2_CASES.get(question, {}).get("model", FlexibleConsumerModel)(data).build()
     try:
         results = model.solve()
     except NotImplementedError as e:
@@ -38,8 +61,9 @@ def run_base_case(question: str, out: Path, show: bool) -> Results | None:
 
     print(results, "\n")
     results.save(out)
-    plot_schedule(results, data, save_to=out / "schedule.png")
-    plot_duals(results, data, save_to=out / "duals.png")
+    if not is_q2:
+        plot_schedule(results, data, save_to=out / "schedule.png")
+        plot_duals(results, data, save_to=out / "duals.png")
     if show:
         matplotlib.pyplot.show()
     return results
@@ -134,24 +158,262 @@ def run_q1_validation(question: str, out: Path, results: Results) -> None:
     print(f"Dual of the balance is not unique in hours {list(not_unique)}")
 
 
+### Question 2 ###
+def run_metrics(res: Results, data, tol: float = 1e-6) -> dict:
+    """Daily metrics of one Question 2 run: costs in DKK, energies in kWh, counts in hours."""
+    hr = res.hourly
+    dev = hr["load"] - data.reference_load
+    at_bound = (hr["load"] <= data.load_min_kWh + tol) | (hr["load"] >= data.load_max_kWh - tol)
+    return {
+        "procurement_cost_DKK": res.meta["procurement_cost"],
+        "disutility_DKK": res.meta["disutility"],
+        "surplus_DKK": res.objective,
+        "energy_kWh": hr["load"].sum(),
+        "abs_deviation_kWh": dev.abs().sum(),
+        "hours_above_reference": int((dev > tol).sum()),
+        "hours_deviating": int((dev.abs() > tol).sum()),
+        "hours_bound_binding": int((at_bound & (dev.abs() > tol)).sum()),
+        "import_kWh": hr["import"].sum(),
+        "export_kWh": hr["export"].sum(),
+        "pv_used_kWh": hr["pv"].sum(),
+    }
+
+
+def predicted_load_linear(data, c: float) -> np.ndarray:
+    """Hourly load predicted by the cost-benefit rule of 2.(b).ii for a linear disutility c^L = c."""
+    p_imp, p_exp = data.energy_price + data.import_tariff, data.energy_price - data.export_tariff
+    m_pv = np.minimum(p_imp, np.maximum(data.pv_marginal_cost, p_exp))   # marginal cost of the load covered by PV
+    ref, pv, lmin = data.reference_load, data.pv_available, data.load_min_kWh
+    return np.array([ref[t] if ref[t] <= lmin or c > p_imp[t]
+                     else max(lmin, min(pv[t], ref[t])) if c > m_pv[t] else lmin for t in data.hours])
+
+
+def predicted_load_quadratic(data, c: float) -> np.ndarray:
+    """Hourly load predicted by the closed-form first-order conditions of 2.(c).ii for c^Q = c."""
+    p_imp, p_exp = data.energy_price + data.import_tariff, data.energy_price - data.export_tariff
+    m_pv = np.maximum(data.pv_marginal_cost, p_exp)
+    ref, pv = data.reference_load, data.pv_available
+    out = np.empty(data.n_hours)
+    for t in data.hours:
+        l_star = ref[t] - p_imp[t] / (2 * c)                              # above the PV: imported at p_imp
+        if l_star < pv[t]:
+            l_star = min(ref[t] - m_pv[t] / (2 * c), pv[t])               # up to the PV: marginal cost m_pv
+        out[t] = min(max(l_star, data.load_min_kWh), data.load_max_kWh)
+    return out
+
+
+def run_q2_sweep(question: str, out: Path) -> None:
+    """Question 2.(b) and 2.(c): base case, sweep of the disutility coefficient, report table, figures and checks.
+
+    Saves sweep_<c>.csv and sweep_<c>_report_table.csv to ``out`` and the figures to report/figures.
+    """
+    cfg = Q2_CASES[question]
+    base = load_question(question)
+
+    def solve(c: float):
+        d = set_disutility(base, **{cfg["arg"]: c})
+        return cfg["model"](d).build().solve(), d
+
+    base_res, _ = solve(getattr(base, f"{cfg['arg']}_disutility"))
+    print(pd.Series(run_metrics(base_res, base)).round(3), "\n")
+    plot_schedule(base_res, base, save_to=FIGURES_DIR / f"{cfg['fig']}_schedule.png")
+
+    # sweep: metrics and hourly loads of every run
+    rows, loads = [], {}
+    for c in cfg["values"]:
+        r, d = solve(c)
+        rows.append({cfg["name"]: c, **run_metrics(r, d)})
+        loads[c] = r.hourly["load"].to_numpy()
+    sweep = pd.DataFrame(rows)
+    loads = pd.DataFrame(loads, index=pd.Index(base.hours, name="hour"))
+    sweep.round(3).to_csv(out / f"sweep_{cfg['name'].replace('_', '')}.csv", index=False)
+    print(len(sweep), "runs")
+
+    # table of the report: representative values of the coefficient
+    report = pd.DataFrame([{cfg["name"]: c, **run_metrics(*solve(c))} for c in cfg["report"]])
+    if cfg["intervals"]:
+        report.insert(0, "interval", cfg["intervals"])
+    report.round(3).to_csv(out / f"sweep_{cfg['name'].replace('_', '')}_report_table.csv", index=False)
+
+    # figure and checks
+    L, cs = loads.to_numpy(), loads.columns.to_numpy(dtype=float)
+    changed = [j for j in range(1, L.shape[1]) if np.abs(L[:, j] - L[:, j - 1]).max() > 1e-6]
+    tol = 1e-6
+    assert sweep["hours_above_reference"].max() == 0, "the load is above the reference in some run"
+    print(f"1. max hours above the reference over the sweep: {sweep['hours_above_reference'].max()}")
+    if question == "Q2_linear":
+        # price thresholds at which the schedule is predicted to change (2.(b).ii): m_PV and, where ref > PV, p_imp
+        p_imp, p_exp = base.energy_price + base.import_tariff, base.energy_price - base.export_tariff
+        cpv, ref, pv = base.pv_marginal_cost, base.reference_load, base.pv_available
+        m_pv = np.minimum(p_imp, np.maximum(cpv, p_exp))
+        thresholds = {}
+        for t in base.hours:
+            if ref[t] <= base.load_min_kWh:
+                continue
+            lab = "$c^{PV}$" if m_pv[t] == cpv else f"$p^{{exp}}_{{{t}}}$"
+            thresholds.setdefault(round(float(m_pv[t]), 4), set()).add(lab)
+            if ref[t] > pv[t]:
+                thresholds.setdefault(round(float(p_imp[t]), 4), set()).add(f"$p^{{imp}}_{{{t}}}$")
+        pd.DataFrame([{"between": f"{cs[j-1]:.3f} - {cs[j]:.3f}",
+                       "hours": list(np.where(np.abs(L[:, j] - L[:, j - 1]) > tol)[0]),
+                       "new load": list(np.round(L[np.abs(L[:, j] - L[:, j - 1]) > tol, j], 2))}
+                      for j in changed]).to_csv(out / "sweep_cL_change_points.csv", index=False)
+        both = ((base_res.hourly["dev_up"] > tol) & (base_res.hourly["dev_down"] > tol)).sum()
+        err = max(np.abs(loads[c].to_numpy() - predicted_load_linear(base, c)).max() for c in loads.columns)
+        at_threshold = all(any(cs[j - 1] < v < cs[j] for v in thresholds) for j in changed)
+        print(f"2. hours with d+ > 0 and d- > 0 (base case): {both}")
+        print(f"3. max |load - predicted load| over all hours and runs: {err:.1e}")
+        print(f"4. every change point is at a predicted threshold: {at_threshold}")
+        assert both == 0 and err < 1e-6 and at_threshold
+        plot_sweep(sweep, "c_L", "$c^L$ (DKK/kWh)", "Sweep over $c^L$", step=True, thresholds=thresholds,
+                   xlim=(1.0, 2.5), save_to=FIGURES_DIR / "q2b_sweep.png")
+    else:
+        err = max(np.abs(loads[c].to_numpy() - predicted_load_quadratic(base, c)).max() for c in loads.columns)
+        moves = np.abs(np.diff(L[np.where(base.reference_load > 0)[0], :], axis=1))
+        frac_moving = (moves > 1e-9).mean()
+        check = QuadraticDisutilityModel(base).build()
+        check.m.Params.Seed = 42                      # strictly convex QP: the optimal load is unique
+        seed_diff = np.abs(check.solve().hourly["load"].to_numpy() - base_res.hourly["load"].to_numpy()).max()
+        print(f"2. max |load - predicted load| over all hours and runs: {err:.1e}")
+        print(f"3. fraction of (hour, step) pairs where the load moved: {frac_moving:.3f}; "
+              f"largest single-step jump: {moves.max():.4f} kWh")
+        print(f"4. max |load difference| after re-solving with another seed: {seed_diff:.1e}")
+        assert err < 1e-3 and frac_moving > 0.7 and seed_diff < 1e-6
+        plot_sweep(sweep, "c_Q", "$c^Q$ (DKK/kWh$^2$)", "Sweep over $c^Q$", save_to=FIGURES_DIR / "q2c_sweep.png")
+
+
+def run_q2_comparison() -> None:
+    """Question 2.(d): the linear and quadratic models (and the Question 1 model) with the same coefficient value.
+
+    Saves comparison.csv and comparison_loads.csv to results/Q2_comparison and q2d_profiles.png to report/figures.
+    """
+    out = RESULTS_DIR / "Q2_comparison"
+    out.mkdir(parents=True, exist_ok=True)
+    base_lin, base_quad = load_question("Q2_linear"), load_question("Q2_quadratic")
+    # The base case uses each model's own base coefficient; the scenarios use the same value in both models
+    scenarios = {
+        "Base (c^L=1.43, c^Q=1.00)": (base_lin.linear_disutility, base_quad.quadratic_disutility),
+        "Low c = 0.50": (0.50, 0.50),
+        "High c = 3.20": (3.20, 3.20),
+    }
+    runs, rows = {}, []
+    for name, (cL, cQ) in scenarios.items():
+        d_lin, d_quad = set_disutility(base_lin, linear=cL), set_disutility(base_quad, quadratic=cQ)
+        # Question 1 model on the same prices and PV, with utility u^L = c^L and no reference profile
+        d_q1 = replace(base_lin, consumption_utility=float(cL), linear_disutility=None)
+        for model, build in [("Q1 utility", FlexibleConsumerModel(d_q1)), ("Linear", LinearDisutilityModel(d_lin)),
+                             ("Quadratic", QuadraticDisutilityModel(d_quad))]:
+            res = runs[(name, model)] = build.build().solve()
+            hr, dev = res.hourly, res.hourly["load"] - base_lin.reference_load
+            rows.append({"Scenario": name, "Model": model,
+                         "Cost (DKK)": res.meta["procurement_cost"], "Energy (kWh)": hr["load"].sum(),
+                         "|dev| (kWh)": dev.abs().sum(), "Import (kWh)": hr["import"].sum(),
+                         "Export (kWh)": hr["export"].sum(),
+                         "Hours at ref": int(((dev.abs() < 1e-4) & (base_lin.reference_load > 0)).sum()),
+                         "Hours at 0": int(((hr["load"] < 1e-4) & (base_lin.reference_load > 1e-4)).sum())})
+    comparison = pd.DataFrame(rows).set_index(["Scenario", "Model"]).round(3)
+    comparison.to_csv(out / "comparison.csv")
+    pd.DataFrame({f"{n} | {m}": r.hourly["load"] for (n, m), r in runs.items()}).round(3).to_csv(out / "comparison_loads.csv")
+    print(comparison, "\n")
+    panels = {n.replace("c^L", "$c^L$").replace("c^Q", "$c^Q$"):
+              {"linear": runs[(n, "Linear")].hourly["load"], "quadratic": runs[(n, "Quadratic")].hourly["load"]}
+              for n in scenarios}
+    plot_load_profiles(panels, base_lin, save_to=FIGURES_DIR / "q2d_profiles.png")
+
+
+def run_q2_nonseparable() -> None:
+    """Question 2.(e) bonus: accumulated-deviation model, comparison with 2.(b) and 2.(c), price-order experiment.
+
+    Saves the base case and experiment.csv to results/Q2_nonseparable and q2e_´...´.png to report/figures.
+    """
+    out = RESULTS_DIR / "Q2_nonseparable"
+    out.mkdir(parents=True, exist_ok=True)
+    base_lin, base_quad = load_question("Q2_linear"), load_question("Q2_quadratic")
+    models = {"Linear": (base_lin, LinearDisutilityModel), "Quadratic": (base_quad, QuadraticDisutilityModel),
+              "Accumulated": (base_quad, AccumulatedDeviationModel)}
+
+    # check: with rho = 0 the model is 2.(c) with c^Q = cQ + cS
+    chk = AccumulatedDeviationModel(base_quad, cQ=0.5, cS=0.5, rho=0.0).build().solve()
+    diff = np.abs(chk.hourly["load"].to_numpy() - QuadraticDisutilityModel(base_quad).build().solve().hourly["load"].to_numpy()).max()
+    print(f"max |load difference| vs 2.(c) for rho = 0: {diff:.1e}")
+    assert diff < 1e-4                                  # solver tolerance of the QP
+
+    # base case: schedule, load profiles of the three models, comparison table
+    res = {mn: model(d).build().solve() for mn, (d, model) in models.items()}
+    res["Accumulated"].save(out)
+    plot_schedule(replace(res["Accumulated"], question=out.name), base_quad, save_to=FIGURES_DIR / "q2e_schedule.png")
+    plot_load_profiles({"Base case: load profiles of the three models":
+                        {"linear (b)": res["Linear"].hourly["load"], "quadratic (c)": res["Quadratic"].hourly["load"],
+                         "accumulated (e)": res["Accumulated"].hourly["load"]}},
+                       base_quad, save_to=FIGURES_DIR / "q2e_profiles.png")
+    base_table = pd.DataFrame({mn: {**run_metrics(r, models[mn][0])} for mn, r in res.items()}).T
+    print(base_table[["procurement_cost_DKK", "energy_kWh", "abs_deviation_kWh", "import_kWh", "export_kWh",
+                      "disutility_DKK", "hours_above_reference"]].round(2), "\n")
+
+    # experiment: same mean price and amplitude, only the order of the prices changes
+    t = np.arange(24)
+    pbar, a = base_quad.energy_price.mean(), 0.8                       # mean price and +-amplitude (DKK/kWh)
+    profiles = {"Flat": np.full(24, pbar),
+                "Alternating": pbar + a * (-1.0) ** t,                                # high, low, high, low, ...
+                "Blocks of 4 h": pbar + a * np.where((t // 4) % 2 == 0, 1.0, -1.0)}   # 4 h high, 4 h low, ...
+    rows, runs = [], {}
+    for pn, p in profiles.items():
+        for mn, (d0, model) in models.items():
+            d = replace(d0, energy_price=p)
+            r = runs[(pn, mn)] = model(d).build().solve()
+            dev = r.hourly["load"] - d.reference_load
+            rows.append({"Profile": pn, "Model": mn, "Surplus (DKK)": r.objective, "|dev| (kWh)": dev.abs().sum(),
+                         "Hours above ref.": int((dev > 1e-6).sum())})
+    exp = pd.DataFrame(rows).set_index(["Profile", "Model"])
+    flat = exp.loc["Flat", "Surplus (DKK)"]                              # each model against its own flat-price run
+    exp["Gain vs flat (DKK)"] = exp["Surplus (DKK)"] - exp.index.get_level_values("Model").map(flat).to_numpy()
+    exp.round(3).to_csv(out / "experiment.csv")
+    print(exp.round(2), "\n")
+    names = ["Alternating", "Blocks of 4 h"]
+    plot_load_profiles({f"{pn} prices": {mn.lower(): runs[(pn, mn)].hourly["load"] for mn in models} for pn in names},
+                       base_quad, prices={f"{pn} prices": profiles[pn] for pn in names},
+                       save_to=FIGURES_DIR / "q2e_experiment.png")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--question", default="Q1_caseA", choices=list_questions(), help="data case to use")
     parser.add_argument("--scenarios", action="store_true", help="also run the example sensitivity scenarios")
     parser.add_argument("--show", action="store_true", help="open the figures in a window")
     parser.add_argument("--validate", action="store_true", help="Question 1.(f): price ladder and dual check")
+    parser.add_argument("--q2", action="store_true", help="run all of Question 2: both sweeps, comparison and bonus")
+    parser.add_argument("--sweep", action="store_true", help="Question 2.(b)/(c): sweep of the disutility coefficient (Q2_linear or Q2_quadratic)")
+    parser.add_argument("--compare", action="store_true", help="Question 2.(d): linear vs quadratic vs Question 1 model")
+    parser.add_argument("--nonseparable", action="store_true", help="Question 2.(e) bonus: accumulated-deviation model")
     args = parser.parse_args()
+
+    if not args.show:
+        matplotlib.use("Agg")
+    if args.q2:
+        for question in Q2_CASES:
+            out = RESULTS_DIR / question
+            out.mkdir(parents=True, exist_ok=True)
+            run_base_case(question, out, False)
+            run_q2_sweep(question, out)
+        run_q2_comparison()
+        run_q2_nonseparable()
+        print(f"\nOutputs written to {RESULTS_DIR} and {FIGURES_DIR}")
+        return
 
     out = RESULTS_DIR / args.question
     out.mkdir(parents=True, exist_ok=True)
-    if not args.show:
-        matplotlib.use("Agg")
 
     base = run_base_case(args.question, out, args.show)
     if args.scenarios and base is not None:
         run_scenarios(args.question, out)
     if args.validate and base is not None:
         run_q1_validation(args.question, out, base)
+    if args.sweep and args.question in Q2_CASES:
+        run_q2_sweep(args.question, out)
+    if args.compare:
+        run_q2_comparison()
+    if args.nonseparable:
+        run_q2_nonseparable()
     print(f"\nOutputs written to {out}")
 
 

@@ -22,7 +22,7 @@ Two conventions make the dual variables easy to read out afterwards:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import gurobipy as gp
@@ -266,3 +266,90 @@ _STATUS = {
 
 def _status_name(code: int) -> str:
     return _STATUS.get(code, f"STATUS_{code}")
+
+
+# ---------------------------------------------------------------------- Question 2
+class DisutilityModel(FlexibleConsumerModel):
+    """Question 2: the Question 1 problem with the utility replaced by a disutility of the deviation
+    from the reference load.
+
+    ``build()`` creates all variables and constraints of Question 1 (with a zero utility, since the
+    Question 2 data has none) and then replaces the objective by ``-disutility - procurement cost``.
+    Subclasses only define ``_disutility()``: a gurobi expression (DKK), possibly with extra variables.
+    """
+
+    def build(self) -> "DisutilityModel":
+        d0 = self.data
+        if d0.reference_load is None:
+            raise ValueError(f"{d0.question}: a disutility model needs a reference load profile")
+        self.data = replace(d0, consumption_utility=0.0)
+        super().build()
+        self.data = d0
+        d, m, T = self.data, self.m, self.T
+        p_imp = d.energy_price + d.import_tariff
+        p_exp = d.energy_price - d.export_tariff
+        procurement = gp.quicksum(p_imp[t] * self.var["import"][t] - p_exp[t] * self.var["export"][t]
+                                  + d.pv_marginal_cost * self.var["pv"][t] for t in T)
+        m.setObjective(-self._disutility() - procurement, GRB.MAXIMIZE)
+        m.update()
+        return self
+
+    def _disutility(self) -> gp.LinExpr | gp.QuadExpr:
+        raise NotImplementedError
+
+    def _extract_results(self, status: str) -> Results:
+        res = super()._extract_results(status)
+        res.hourly["deviation"] = res.hourly["load"] - self.data.reference_load
+        res.meta["utility"] = None      # no utility term: objective = -disutility - procurement cost
+        res.meta["disutility"] = -res.objective - res.meta["procurement_cost"]
+        return res
+
+
+class LinearDisutilityModel(DisutilityModel):
+    """2.(b): D_t = c^L |l_t - l^ref_t|, written as an LP with d+_t, d-_t >= 0 and l_t - l^ref_t = d+_t - d-_t."""
+
+    def _disutility(self):
+        d, m, T = self.data, self.m, self.T
+        if d.linear_disutility is None:
+            raise ValueError(f"{d.question}: needs a linear disutility coefficient")
+        self.var["dev_up"] = m.addVars(T, lb=0.0, name="dev_up")
+        self.var["dev_down"] = m.addVars(T, lb=0.0, name="dev_down")
+        self.con["deviation"] = m.addConstrs(
+            (self.var["load"][t] - d.reference_load[t] - self.var["dev_up"][t] + self.var["dev_down"][t] == 0
+             for t in T), name="deviation")
+        return gp.quicksum(d.linear_disutility * (self.var["dev_up"][t] + self.var["dev_down"][t]) for t in T)
+
+
+class QuadraticDisutilityModel(DisutilityModel):
+    """2.(c): D_t = c^Q (l_t - l^ref_t)^2, a convex quadratic term in the objective (no extra variables)."""
+
+    def _disutility(self):
+        d, T = self.data, self.T
+        if d.quadratic_disutility is None:
+            raise ValueError(f"{d.question}: needs a quadratic disutility coefficient")
+        return gp.quicksum(d.quadratic_disutility * (self.var["load"][t] - d.reference_load[t]) ** 2 for t in T)
+
+
+class AccumulatedDeviationModel(DisutilityModel):
+    """2.(e) bonus: non-separable disutility D = sum_t c^Q dev_t^2 + c^S e_t^2 with e_t = rho e_{t-1} + dev_t.
+
+    The defaults are the base-case parameters of the report; with rho = 0 the model is 2.(c) with c^Q + c^S.
+    """
+
+    def __init__(self, data: InputData, cQ: float = 0.05, cS: float = 0.06, rho: float = 0.8, **kwargs):
+        super().__init__(data, **kwargs)
+        self.cQ, self.cS, self.rho = cQ, cS, rho
+
+    def _disutility(self):
+        d, m, T = self.data, self.m, self.T
+        e = self.var["acc"] = m.addVars(T, lb=-GRB.INFINITY, name="acc")      # accumulated deviation (kWh)
+        self.con["accumulate"] = m.addConstrs(
+            (e[t] == (self.rho * e[t - 1] if t > 0 else 0) + self.var["load"][t] - d.reference_load[t] for t in T),
+            name="accumulate")
+        return gp.quicksum(self.cQ * (self.var["load"][t] - d.reference_load[t]) ** 2 + self.cS * e[t] ** 2
+                           for t in T)
+
+    def _extract_results(self, status: str) -> Results:
+        res = super()._extract_results(status)
+        res.hourly["accumulated"] = res.hourly.pop("acc")
+        return res

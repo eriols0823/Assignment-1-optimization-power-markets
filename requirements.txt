@@ -1,5 +1,5 @@
 # Python dependencies for Assignment 1 (pip). Install with:  pip install -r requirements.txt
-# A Gurobi licence is needed on top of the gurobipy package - see README.md.
+# A Gurobi licence is needed on top of the gurobipy package.
 
 gurobipy>=11.0          # optimisation solver interface
 numpy>=1.26
