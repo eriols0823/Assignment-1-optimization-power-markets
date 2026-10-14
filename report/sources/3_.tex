@@ -319,6 +319,34 @@ problem still does not decompose by hour.
 % end-of-horizon choice changes the schedule of the last hours and the value of the battery.
 
 \subsubsection{(ii) Simultaneous charging and discharging}
-\todo{Can both be positive in the same hour at an optimum, with the data of this assignment?
-Why (efficiencies, prices)? When would it become a real risk, and how could it be fixed? No
-KKT needed.}
+\paragraph{With the data of this assignment.}
+Charging and discharging in the same hour is never optimal. Suppose that in some hour both
+$\pch > 0$ and $\pdis > 0$, and reduce them together, $\pch$ by a small $\delta > 0$ and $\pdis$ by
+$\etach \etadis \, \delta$. By \eqref{eq:g_soc} the state of charge $\soc$ does not change, so
+no other hour is affected. In the balance \eqref{eq:g_balance}, however, the battery now
+draws $(1 - \etach \etadis)\,\delta > 0$ less energy: this is the energy that was being lost
+in the round trip. That energy can be used to import less, saving $\pimp > 0$, to export
+more, earning $\pexp > 0$, or to produce less PV, saving $\cpv > 0$. Exporting more is always
+possible, since exports are unbounded, so the objective strictly improves in every hour,
+whatever the regime. With our data $\etach \etadis = 0.9025 < 1$, all effective prices are
+positive ($\pexp \geq 0.85 - 0.40 = 0.45$~DKK/kWh) and the PV can be curtailed, so wasting
+energy in the battery always costs money.
+
+\paragraph{When it becomes a real risk.}
+The argument fails when losing energy is no longer a cost: when importing is paid
+($\pimp < 0$), or when exporting costs money ($\pexp < 0$) and a surplus cannot be curtailed
+or used by the load. Burning energy through simultaneous charging and discharging then
+becomes profitable. With a lossless battery
+($\etach = \etadis = 1$) the overlap costs nothing: the optimum is not unique, and the solver
+may return a solution with overlap.
+
+\paragraph{How it could be fixed.}
+The exact fix is a binary variable $z_t \in \{0, 1\}$ that allows only one direction per hour,
+\begin{equation}
+    \pch \leq \Pch \, z_t, \qquad \pdis \leq \Pdis \, (1 - z_t), \qquad \forall t \in \T,
+\end{equation}
+which turns the QP into a mixed-integer QP (MIQP), harder to solve and without duals. A
+cheaper mitigation is a linear degradation cost $c^{\mathrm{deg}} (\pch + \pdis)$ in the
+cost, which makes every kWh through the battery more expensive. It acts like extra losses: it
+removes the overlap only as long as the gain from burning energy is smaller than the cost, so
+with very negative prices the overlap can still appear.
