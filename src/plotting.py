@@ -122,3 +122,56 @@ def plot_lambda_range(table, data: InputData, save_to: Path | str | None = None)
     ax.set(xlabel="hour", ylabel="DKK/kWh", title=f"Dual of the power balance - {data.question}")
     ax.legend(fontsize=8, ncol=3)
     return _finish(fig, save_to)
+
+
+# ---------------------------------------------------------------------- Question 2
+MODEL_COLORS = {"linear": "C3", "quadratic": "C0", "accumulated": "C2"}   # colour by the first word of a label
+
+
+def plot_sweep(sweep, x: str, xlabel: str, title: str, step: bool = False, thresholds: dict | None = None,
+               xlim: tuple | None = None, save_to: Path | str | None = None) -> plt.Figure:
+    """Sweep of a disutility coefficient: energy and deviation (top), procurement cost and disutility (bottom).
+
+    ``step`` draws piecewise-constant curves (linear disutility); ``thresholds`` maps a coefficient value to the
+    set of labels of the price it equals, drawn as dotted vertical lines.
+    """
+    draw = (lambda ax, *a, **k: ax.step(*a, where="post", **k)) if step else (lambda ax, *a, **k: ax.plot(*a, **k))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6), sharex=True)
+    draw(ax1, sweep[x], sweep["energy_kWh"], color="C0", lw=2, label="daily energy consumed")
+    draw(ax1, sweep[x], sweep["abs_deviation_kWh"], color="C1", lw=2, label="total absolute deviation")
+    ax1.set(ylabel="kWh", title=title)
+    draw(ax2, sweep[x], sweep["procurement_cost_DKK"], color="C3", lw=2, label="procurement cost")
+    draw(ax2, sweep[x], sweep["disutility_DKK"], color="C4", lw=2, label="total disutility")
+    ax2.set(xlabel=xlabel, ylabel="DKK")
+    for ax in (ax1, ax2):
+        ax.grid(alpha=0.3); ax.legend(fontsize=8)
+        if xlim:
+            ax.set_xlim(*xlim)
+        for v in thresholds or {}:
+            ax.axvline(v, color="grey", lw=0.8, ls=":")
+    for v, labs in (thresholds or {}).items():
+        ax1.annotate(" = ".join(sorted(labs)), (v, 1.0), xycoords=("data", "axes fraction"),
+                     rotation=90, fontsize=7, va="top", ha="right", color="grey")
+    return _finish(fig, save_to)
+
+
+def plot_load_profiles(panels: dict[str, dict], data: InputData, prices: dict | None = None,
+                       save_to: Path | str | None = None) -> plt.Figure:
+    """One panel per entry of ``panels`` ({title: {label: hourly load}}): the loads of several models against the
+    reference load and the available PV. ``prices`` ({title: hourly price}) adds the price on a second axis."""
+    n, h = len(panels), np.arange(data.n_hours)
+    fig, axes = plt.subplots(n, 1, figsize=(9, 3 * n + 0.5), sharex=True, sharey=True, squeeze=False)
+    for ax, (title, loads) in zip(axes[:, 0], panels.items()):
+        ax.fill_between(h, data.pv_available, step="mid", color="orange", alpha=0.2, lw=0, label="PV available")
+        ax.step(h, data.reference_load, where="mid", color="0.55", lw=4, label="reference")   # thick: stays visible under the others
+        for label, load in loads.items():
+            ax.step(h, load, where="mid", color=MODEL_COLORS[label.split()[0]], lw=2, label=label)
+        ax.set_title(title, fontsize=11); ax.set_ylabel("kWh/h"); ax.grid(alpha=0.3)
+        ax.set_xticks(range(0, data.n_hours, 2))
+        if prices:
+            ax2 = ax.twinx()
+            ax2.step(h, prices[title], where="mid", color="k", lw=0.8, ls=":")
+            ax2.set_ylabel("price (DKK/kWh)")
+    axes[-1, 0].set_xlabel("hour")
+    axes[0, 0].legend(fontsize=9, loc="upper left")
+    return _finish(fig, save_to)

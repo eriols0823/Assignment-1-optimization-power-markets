@@ -1,27 +1,18 @@
 # 46750 - Assignment 1: Demand-Side Flexibility in Active Distribution Grids
 
-Starter repository for **Group Assignment 1** of *46750 - Optimization in Modern Power Systems* (DTU).
-It contains the input data for every question (in `data/`), a small and working Python code base to
-build on, and the instructions below. The structure is a suggestion: adapt it to your needs, but keep
-it documented (update this README) so that your code stays reproducible and easy to grade.
+Code for Group Assignment 1 of *46750 - Optimization in Modern Power Systems* (DTU): a `gurobipy` model of a
+flexible consumer with PV and a grid connection, solved for each question of the assignment. Every number and
+figure of the report is produced by the commands in Section 2 and saved under `results/` and `report/figures/`.
 
-**Getting your own copy.** This is a public template: on the repository page, click
-**Use this template -> Create a new repository** to create your group's own repository under one
-member's GitHub account (recommended - the group can then work with git), or **Code -> Download ZIP**
-to work without GitHub. Using the Python starter code is recommended but not required; the input data
-in `data/` must be used as provided.
-
-**Submitting your code.** Choose one of the two, and say in your report which one you chose:
-attach your complete project code as a single `.zip` file to your submission in DTU Learn, or give
-the link to your group's GitHub repository on the front page of your report. A linked repository must
-be accessible to the graders (public, or private with the teaching team invited) and must not be
-modified after the deadline - the last commit before the deadline is what is graded.
+**Submission of the code.** The complete project code is handed in either as a single `.zip` file in DTU Learn
+or as a link to the group's GitHub repository on the front page of the report; the report says which one.
+A linked repository must be accessible to the graders (public, or private with the teaching team invited) and
+must not be modified after the deadline: the last commit before the deadline is the one graded.
+Chosen option: _to be filled in by the group before submission_.
 
 ## 1. Setup
 
-### 1.1 Python environment
-
-Use one of the two options (both install the same packages).
+Use one of the two options (both install the same packages; the code needs `gurobipy` and a Gurobi licence).
 
 **Option A - pip and venv**
 ```bash
@@ -38,107 +29,106 @@ conda env create -f environment.yaml
 conda activate 46750-a1
 ```
 
-### 1.2 Gurobi licence
+Check that it works: `python main.py` solves the base case of `Q1_caseA` and writes it to `results/Q1_caseA/`.
 
-The code uses [Gurobi](https://www.gurobi.com) through the `gurobipy` package. The package ships with a
-restricted licence that is large enough for this assignment (models up to 2000 variables/constraints), so
-`python main.py` works out of the box. For unrestricted use, request a free
-[academic licence](https://www.gurobi.com/academia/academic-program-and-licenses/) with your DTU e-mail
-and activate it with `grbgetkey <your-key>` (on the DTU network or VPN).
+## 2. Running the code
 
-### 1.3 Check that everything works
-```bash
-python main.py
-```
-This loads the `Q1_caseA` case from `data/`, prints a summary of the input data and saves the
-input figure to `results/Q1_caseA/`. Until you complete the model (see Section 3) it prints
-`[skipped] The model has no constraints ...` and stops there - that is expected.
+Run all commands from the repository root. Each question writes its tables (CSV, TXT) to `results/<case>/`
+and its report figures to `report/figures/`; `--show` opens the figures in a window instead.
 
-## 2. Repository structure
-
-```
-main.py                  Entry point: load data -> build model -> solve -> save results and figures
-src/
-  data_loader.py         load_question("Q1_caseA") -> InputData (all parameters, with units)
-  model.py               FlexibleConsumerModel: build() / solve() -> Results (primal + dual values)
-  scenarios.py           Helpers that derive sensitivity scenarios from a base InputData
-  plotting.py            Figures for inputs, optimal schedule, duals and scenario comparisons
-data/
-  appliance_params.json  SHARED catalogue: every PV system, flexible load and battery - see Section 4
-  bus_params.json        SHARED grid connection: prices (both days) and tariffs
-  params_Q1_caseA.json   One small file per case: composes a consumer from the catalogue
-  params_Q1_caseB.json
-  params_Q2_linear.json
-  params_Q2_quadratic.json
-  params_Q3.json
-  params_Q3_battery.json
-results/                 Written by main.py (git-ignored)
-requirements.txt, environment.yaml, LICENSE, .gitignore
-```
-
-The four modules mirror the workflow you are asked to implement and document: *data loading*,
-*model building*, *solving and extracting results*, *plotting*. Keep them separate as your code grows -
-for example one model class per question in `src/model.py` (or one file per question), and one function per
-experiment in `main.py`.
-
-## 3. How to use the code
-
-**Run everything for one case**
+**Question 1** (`--question Q1_caseA` or `Q1_caseB`)
 ```bash
 python main.py --question Q1_caseA              # base case
 python main.py --question Q1_caseA --scenarios  # + example sensitivity scenarios
 python main.py --question Q1_caseA --validate   # Question 1.(f): price ladder and dual check
-python main.py --show                           # open the figures in a window
+```
+_To be completed by the authors of Question 1 (final commands and outputs)._
+
+**Question 2**
+```bash
+python main.py --q2                                     # all of Question 2, (b) to (e), in one command (about 20 s)
+python main.py --question Q2_linear --sweep             # 2.(b): base case and sweep of c^L
+python main.py --question Q2_quadratic --sweep          # 2.(c): base case and sweep of c^Q
+python main.py --question Q2_quadratic --compare        # 2.(d): linear vs quadratic vs Question 1 model
+python main.py --question Q2_quadratic --nonseparable   # 2.(e) bonus: accumulated-deviation disutility
 ```
 
-**Use it from a notebook or your own script** (run from the repository root):
-```python
-from src.data_loader import load_question
-from src.model import FlexibleConsumerModel
-from src.plotting import plot_schedule, plot_duals
-from src.scenarios import scale_prices
+| Command | Tables (`results/...`) | Figures (`report/figures/`) |
+|---|---|---|
+| `--question Q2_linear --sweep` | `Q2_linear/`: `Q2_linear_hourly.csv`, `Q2_linear_summary.txt`, `sweep_cL.csv`, `sweep_cL_report_table.csv`, `sweep_cL_change_points.csv` | `q2b_schedule.png`, `q2b_sweep.png` |
+| `--question Q2_quadratic --sweep` | `Q2_quadratic/`: `Q2_quadratic_hourly.csv`, `Q2_quadratic_summary.txt`, `sweep_cQ.csv`, `sweep_cQ_report_table.csv` | `q2c_schedule.png`, `q2c_sweep.png` |
+| `--question Q2_quadratic --compare` | `Q2_comparison/`: `comparison.csv`, `comparison_loads.csv` | `q2d_profiles.png` |
+| `--question Q2_quadratic --nonseparable` | `Q2_nonseparable/`: base case, `experiment.csv` | `q2e_schedule.png`, `q2e_profiles.png`, `q2e_experiment.png` |
 
-data = load_question("Q1_caseA")
-print(data.summary())
+The sweeps also run built-in sanity checks and stop with an error if one fails: the load never exceeds the
+reference, the solver matches the closed-form (cost-benefit or first-order-condition) load in every hour of every
+run, the change points of the linear sweep lie at the predicted price thresholds, the quadratic solution is
+unique (same load with another solver seed), and the bonus model with rho = 0 reproduces 2.(c).
 
-results = FlexibleConsumerModel(data).build().solve()
-print(results)                    # objective, daily totals, scalar duals
-results.hourly                    # DataFrame: one row per hour with variables, prices and hourly duals
-plot_schedule(results, data)
+**Question 3** (`--question Q3` or `Q3_battery`)
 
-high_spread = scale_prices(data, factor=2.0, keep_mean=True)
-results_hs = FlexibleConsumerModel(high_spread).build().solve()
+_To be completed by the authors of Question 3 (commands and outputs)._
+
+**Notebooks.** `notebooks/Q<n>_report.ipynb` only load the files written by the commands above and show the
+tables and figures of the report; they contain no model code.
+
+## 3. Repository structure
+
+```
+main.py                  Entry point: load data -> build model -> solve -> save results and figures, one function per experiment
+src/
+  data_loader.py         load_question("Q1_caseA") -> InputData (all parameters, with units)
+  model.py               FlexibleConsumerModel (Question 1 problem) and its extensions: build() / solve() -> Results
+  scenarios.py           Helpers that derive scenarios from a base InputData (prices, tariffs, PV, preferences, disutility)
+  plotting.py            Figures for inputs, schedules, duals, scenario comparisons and Question 2
+data/                    Input data, see Section 6
+notebooks/               One report notebook per question (load results, show tables and figures)
+report/                  LaTeX report and its figures (report/figures/)
+results/                 Written by main.py
+requirements.txt, environment.yaml, LICENSE, .gitignore
 ```
 
-**What you need to implement.** `FlexibleConsumerModel.build()` in `src/model.py` is entirely `TODO`:
-identify and declare the decision variables of your formulation, then add the objective and the
-constraints - the gurobipy pattern for each step is shown in comments (including the `vtype=` to use
-if you ever declare binary variables). Complete it with your formulation from Question 1, then extend
-or subclass it for the following questions.
-Everything downstream (solving, extraction of primal and dual values, saving, plotting) already works.
+## 4. Code conventions
 
-**Conventions that make the primal and dual values come out for free**
+* Every variable family is stored in `self.var[<name>]` and every constraint family in `self.con[<name>]`.
+  `solve()` returns the hourly values of each variable family as a column of `results.hourly`, the dual value
+  (Gurobi attribute `Pi`) of each hourly constraint as a column `dual_<name>`, and the dual of every single
+  constraint in `results.duals`. Families named `import`, `export`, `load`, `pv` make the standard plots work.
+* Bounds that need a dual are written as explicit constraints (`addConstr`), not as variable bounds, because
+  Gurobi reports a variable bound in the reduced cost and not in `Pi`.
+* Sign convention: the objective is maximised and the constraints are written as `h = 0` and `g <= 0`, so each
+  `dual_<name>` is directly the multiplier `mu >= 0` (or the free `lambda` of the balance) of the report.
+* Quadratic terms sit in the objective; `QCPDual` is set for the rare case of a quadratic constraint.
+* Scenarios are derived in code from the base data (`src/scenarios.py`), never by editing the JSON files.
+* Every function has a docstring with inputs, outputs and units.
 
-* Store every variable family in `self.var[<name>]`. `solve()` returns the hourly values of each family
-  as a column of `results.hourly`. gurobipy indexes names automatically - `m.addVars(T, name="p_import")`
-  creates `p_import[0]` ... `p_import[23]`, and the same holds for `m.addConstrs(..., name=...)` - so
-  per-hour names come for free. Families named `import`, `export`, `load`, `pv` make the standard plots
-  of `src/plotting.py` work out of the box. With binary or integer variables (`vtype=GRB.BINARY`) the
-  model becomes a MILP and dual values are no longer defined - `solve()` then skips them.
+## 5. Code of each question
 
-* Store every constraint family in `self.con[<name>]`. `solve()` returns the dual value (Gurobi attribute
-  `Pi`) of every hourly constraint as a column `dual_<name>` of `results.hourly`, and of every single
-  constraint in `results.duals`.
-* Write the bounds you want a dual for as explicit constraints (`m.addConstr(...)`), not as variable bounds
-  (`lb=`, `ub=`). Gurobi reports the sensitivity of a variable bound in the reduced cost (`RC`), not in `Pi`.
-* No quadratic *constraint* is needed in this assignment: the quadratic disutility sits in the objective, and
-  the duals of the (linear) constraints of a QP need nothing special. If you ever add one (`m.addQConstr(...)`),
-  its dual is in the attribute `QCPi` and Gurobi only computes it when the parameter `QCPDual` is 1 -
-  `model.py` sets it and reads the right attribute for you.
-  Gurobi's sign convention is d(objective)/d(right-hand side): for a "<=" constraint in a minimization the value
-  is non-positive; state the convention you use when you report multipliers.
+**Question 1.** _To be described by the authors of Question 1 (model, functions, outputs)._
 
-## 4. Input data
+**Question 2** (separable and non-separable disutility)
+
+* `src/model.py`: `DisutilityModel` builds the Question 1 variables and constraints (with a zero utility) and
+  replaces the objective by `-disutility - procurement cost`; subclasses only define the disutility.
+  `LinearDisutilityModel` (2.(b)) writes `c^L |l_t - l^ref_t|` as an LP with deviation variables
+  `d+_t, d-_t >= 0`. `QuadraticDisutilityModel` (2.(c)) uses `c^Q (l_t - l^ref_t)^2` directly. The bonus
+  `AccumulatedDeviationModel` (2.(e)) adds the accumulated deviation `e_t = rho e_{t-1} + (l_t - l^ref_t)`, with
+  the disutility `sum_t c^Q (l_t - l^ref_t)^2 + c^S e_t^2` (defaults `c^Q = 0.05`, `c^S = 0.06`, `rho = 0.8`).
+  The results carry the extra hourly columns `deviation` (and `dev_up`, `dev_down` or `accumulated`) and
+  `meta["disutility"]`.
+* `src/scenarios.py`: `set_disutility(data, linear=, quadratic=)` overrides the disutility coefficients.
+* `src/plotting.py`: `plot_sweep` (sweep of a coefficient) and `plot_load_profiles` (loads of several models
+  against the reference, optionally with the price), used for the Question 2 figures. The schedules use the
+  common `plot_schedule`.
+* `main.py`: `run_q2_sweep` (2.(b), 2.(c): base case, sweep, report table, figures, checks),
+  `run_q2_comparison` (2.(d)) and `run_q2_nonseparable` (2.(e): base case, comparison with 2.(b) and 2.(c),
+  experiment on the order of the prices at equal mean and amplitude), plus the closed-form predictions
+  `predicted_load_linear` and `predicted_load_quadratic` used by the checks. Question 2 solves the base case with
+  its own model and writes its figures to `report/figures/` instead of the standard plots of Question 1.
+
+**Question 3.** _To be described by the authors of Question 3 (model, functions, outputs)._
+
+## 6. Input data
 
 All input data lives in `data/`: two **shared** files plus one small **case** file per
 question. The shared files form a catalogue of every appliance used anywhere in the assignment;
@@ -198,16 +188,3 @@ choice of Question 3.(g) with a look-ahead (for instance a rolling-horizon or a 
 (`src/scenarios.py`) over editing the JSON files - it keeps the base case intact and the experiment
 reproducible. If you do add appliances or case files, follow the same structure (a new entry in the
 catalogue, a new `params_<case>.json`) and document them here.
-
-## 5. What is expected of your code
-
-Your code is part of the submission (as a repository link or a `.zip`, see the top of this README).
-The graders should be able to open it, follow this README, and reproduce every number and figure in
-your report. In practice:
-
-* keep the separation between data loading, model building, solving and plotting;
-* document every function you add (a short docstring stating inputs, outputs and units is enough), and
-  describe any new module or data file in this README;
-* make each experiment of the report runnable with a single command (e.g. `python main.py --question ...`
-  or one notebook cell), and save its outputs under `results/`;
-* commit regularly and with meaningful messages - the git history is also a record of everyone's contribution.

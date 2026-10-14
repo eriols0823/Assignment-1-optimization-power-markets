@@ -1,7 +1,7 @@
 # Conda environment for Assignment 1. Create and activate with:
 #   conda env create -f environment.yaml
 #   conda activate 46750-a1
-# A Gurobi licence is needed on top of the package - see README.md.
+# A Gurobi licence is needed on top of the package.
 
 name: 46750-a1
 channels:
