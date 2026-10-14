@@ -266,9 +266,7 @@ This will now be used in comparison the the hypothesis made in 3c.
 
 \subsection{(f) Sensitivity analysis}
 
-We vary three parameters one at a time and keep the rest at the base case. These are the minimum
-daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$.
-All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
+To make the sensitivity analysis we vary three parameters one at a time and keep the rest at the base case. The parameters varied are the minimum daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$. All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
 Table~\ref{tab:q3f} shows selected runs.
 
 \begin{table}[H]
@@ -533,7 +531,7 @@ The battery is added to the model of (d), in \texttt{FlexibleConsumerModel.build
 \texttt{src/model.py}, and only becomes active when the input data contain a battery. The value
 $\piend$ is computed from the next-day data by the function \texttt{terminal\_value()}, in the
 same file, so it follows the input data when they change. The base case is solved by running
-\texttt{python main.py --question Q3\_battery}, and the results are saved automatically in the
+\texttt{python main.py -{}-question Q3\_battery}, and the results are saved automatically in the
 folder \texttt{results/}.
 
 Running the code gives the hour-by-hour schedule, now with the charging and discharging power
