@@ -239,29 +239,84 @@ The necessary changes for making the model work can be found in the repository.
 \subsection{(g) A small battery}
 
 \subsubsection{(i) Formulation with a battery}
-% Builds on 3.(a): same objective and constraints, plus the battery. Data: BAT_01 in
-% data/appliance_params.json (4 kWh, 1.5/1.5 kW, efficiencies 0.95/0.95, initial SoC 50%).
+The model of (a) is kept, with the same objective and constraints, and a battery is added. Its
+data are given in the repository; since the time step is one hour, a power in kW is
+equivalent to an energy of kWh per hour.
 
 \paragraph{New input data.}
-\todo{List the battery data with symbols and units: capacity, charging and discharging power
-limits, charging and discharging efficiencies, initial state of charge.}
+\begin{itemize}
+    \item $\Ebat$: energy capacity of the battery, 4~kWh.
+    \item $\Pch$, $\Pdis$: maximum charging and discharging power, 1.5~kW each.
+    \item $\etach$, $\etadis$: charging and discharging efficiencies, 0.95 each. $\etach$ is the
+    fraction of the charged energy that reaches the battery, and $\etadis$ the fraction of the
+    discharged energy that reaches the consumer.
+    \item $\einit$: state of charge at the start of the day, 2~kWh (50\,\% of $\Ebat$).
+\end{itemize}
 
 \paragraph{New decision variables.}
-\todo{Charging and discharging power in each hour, and the state of charge at the end of each
-hour.}
+\begin{itemize}
+    \item $\pch \geq 0$, $\pdis \geq 0$: energy charged into and discharged from the battery in
+    hour $t$ (kWh/h), measured on the consumer's side.
+    \item $\soc$: state of charge at the end of hour $t$ (kWh).
+\end{itemize}
 
 \paragraph{New and modified constraints.}
-\todo{(1) Power balance of 3.(a) with the battery added. (2) State-of-charge dynamics linking
-hour $t-1$ and hour $t$, with the efficiencies, and the starting value. (3) Capacity limit on
-the state of charge. (4) Power limits on charging and discharging. Say whether the battery
-counts towards $\Emin$.}
+The power balance of (a) now includes the battery, which acts as an extra load when charging
+and as an extra source when discharging:
+\begin{equation}
+    \load + \pch = \pvprod + \qimp - \qexp + \pdis, \qquad \forall t \in \T.
+    \label{eq:g_balance}
+\end{equation}
+The state of charge links each hour with the previous one, with the losses of both
+conversions:
+\begin{equation}
+    \soc = \soc[t-1] + \etach \, \pch - \frac{\pdis}{\etadis}, \qquad \forall t \in \T,
+    \qquad \text{with } \soc[-1] = \einit.
+    \label{eq:g_soc}
+\end{equation}
+The state of charge and the power are limited by the battery data:
+\begin{align}
+    & 0 \leq \soc \leq \Ebat, & \forall t \in \T, \label{eq:g_cap} \
+    & 0 \leq \pch \leq \Pch, \quad 0 \leq \pdis \leq \Pdis, & \forall t \in \T. \label{eq:g_power}
+\end{align}
+The minimum-energy requirement \eqref{eq:c_min_energy} is unchanged: it applies to the load
+$\load$, so the energy that the battery delivers to the load counts towards $\Emin$, while
+the energy stored in the battery or lost in it does not.
 
 \paragraph{State of charge at the end of the day.}
-\todo{Chosen representation, written mathematically, and why. Compare with at least one
-alternative: what each one makes the battery do in the last hours of the day.}
+We require the battery to end the day with at least its initial energy:
+\begin{equation}
+    \soc[23] \geq \einit.
+    \label{eq:g_end}
+\end{equation}
+With this condition the battery cannot sell or consume the energy it started with, so the
+value of the battery measured in (iv) and (v) only comes from moving energy between hours,
+and the comparison with the case without battery is fair. It also avoids choosing a price for
+the energy left at the end of the day. We expect the battery to discharge during the evening
+peak and to recharge in the cheapest hours after it, so that it reaches $\einit$ at hour 23.
+
+Two alternatives were considered. Without any condition on $\soc[23]$, the energy left after
+hour 23 has no value for the model, so the battery empties itself during the evening peak and
+does not recharge; this overestimates its value with energy it did not earn. Valuing the final
+energy in the objective, $+\pi^{\mathrm{end}} \soc[23]$, is more realistic, but the right
+value of $\pi^{\mathrm{end}}$ is what that energy saves at the next price peak of the
+following day, not the price at midnight, so it would have to be estimated. (Taking the last
+price $p_{23}$ or the falling trend of the night would make recharging unprofitable, given
+the losses $\etach \etadis < 1$.) Depending on $\pi^{\mathrm{end}}$, the battery would then end
+the day full or empty.
 
 \paragraph{Properties.}
-\todo{One or two sentences: problem class and convexity, and decomposability.}
+The objective is unchanged and all the new constraints are affine, so the problem is still a
+convex QP. It is feasible under the same condition as in (a), since leaving the battery idle
+($\pch = \pdis = 0$, $\soc = \einit$) satisfies all the battery constraints. The state of
+charge \eqref{eq:g_soc} adds a second link between consecutive hours, besides $\Emin$, so the
+problem still does not decompose by hour.
+
+% IDEA for (iv) or (v), extra analysis: compare numerically the end condition (eq:g_end) with
+% (1) a 48-hour horizon using the next-day data of the repository (energy_price_next_day,
+% pv_available_next_day, reference_load_next_day), keeping only the first 24 hours, and
+% (2) a value pi^end on the final energy taken from the next-day peak. Shows how much the
+% end-of-horizon choice changes the schedule of the last hours and the value of the battery.
 
 \subsubsection{(ii) Simultaneous charging and discharging}
 \todo{Can both be positive in the same hour at an optimum, with the data of this assignment?
