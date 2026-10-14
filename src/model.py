@@ -76,6 +76,28 @@ def _dual(c) -> float:
     return c.QCPi if isinstance(c, gp.QConstr) else c.Pi
 
 
+def terminal_value(d: InputData) -> float:
+    """Value pi^end (DKK/kWh) of the energy left in the battery at the end of the day (Question 3.(g).i).
+
+    A kWh left at midnight is worth what it would cost to replace it the following day before it
+    is needed: the cheapest effective import price of the night hours before the morning price
+    peak of day D+1, divided by the charging efficiency. It is capped by what the kWh saves when
+    discharged at the most expensive hour of day D+1:
+
+        t_peak = argmax_{t in 0..11} p_{D+1,t},   night = {0, ..., t_peak - 1}
+        pi_end = min( min_{t in night} p^imp_{D+1,t} / eta_ch ,  eta_dis * max_t p^imp_{D+1,t} )
+    """
+    if d.energy_price_next_day is None:
+        raise ValueError(f"{d.question}: the input data has no next-day prices to compute pi^end")
+    p_next = np.asarray(d.energy_price_next_day)
+    p_imp_next = p_next + d.import_tariff
+    t_peak = int(np.argmax(p_next[:12]))                 # morning price peak of the following day
+    night = p_imp_next[:max(t_peak, 1)]                  # night hours before it (at least hour 0)
+    replace_cost = night.min() / d.battery_charging_efficiency
+    use_value = d.battery_discharging_efficiency * p_imp_next.max()
+    return float(min(replace_cost, use_value))
+
+
 class FlexibleConsumerModel:
     """Consumption problem of one consumer over a 24-hour horizon (Question 1); extend it for Questions 2 and 3."""
 
@@ -102,6 +124,7 @@ class FlexibleConsumerModel:
 
         p_imp = d.energy_price + d.import_tariff
         p_exp = d.energy_price - d.export_tariff
+        has_battery = d.battery_capacity_kWh is not None    # Question 3.(g) only
 
         # --- Legend: report (LaTeX) -> code ---------------------------------------------
         # Parameters (d = self.data; arrays are indexed by hour, scalars are not)
@@ -122,6 +145,12 @@ class FlexibleConsumerModel:
         # Constraint families (used as self.con["<name>"]; their duals come out as dual_<name>)
         #   balance, load_lo, load_up, pv_lo, pv_up, imp_nonneg, exp_nonneg
         #   -> lambda_t, mu^L_lo, mu^L_up, mu^PV_lo, mu^PV_up, mu^imp, mu^exp of Question 1.(b)
+        # Battery (Question 3.(g), only when the data has one)
+        #   E^bat, P^ch, P^dis      d.battery_capacity_kWh, d.battery_max_charge_kW, d.battery_max_discharge_kW
+        #   eta^ch, eta^dis         d.battery_charging_efficiency, d.battery_discharging_efficiency
+        #   e^init, pi^end          d.battery_initial_soc_kWh, terminal_value(d)
+        #   p^ch_t, p^dis_t, e_t    self.var["charge"][t], self.var["discharge"][t], self.var["soc"][t]
+        #   constraints: soc_dyn (h = 0), ch_lo, ch_up, dis_lo, dis_up, soc_lo, soc_up
 
         # --- Decision variables --------------------------------------------------------
         # All four families are free (lb = -inf): every bound is an explicit constraint below, so
@@ -131,6 +160,10 @@ class FlexibleConsumerModel:
         self.var["export"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="export")
         self.var["load"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="load")
         self.var["pv"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="pv")
+        if has_battery:
+            self.var["charge"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="charge")
+            self.var["discharge"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="discharge")
+            self.var["soc"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="soc")
 
         # --- Objective: daily net utility (DKK), maximised --------------------------------
         # The consumption utility is only given in Question 1, so in the data it can be empty
@@ -160,6 +193,16 @@ class FlexibleConsumerModel:
         else:
             raise ValueError(f"{d.question}: the input data has no consumption utility or quadratic disutility")
 
+        # Question 3.(g): value of the net change of stored energy, + pi^end * (e_23 - e^init).
+        # The constant -pi^end * e^init does not change the decisions, but keeps the objective
+        # comparable with the case without battery (the term is zero if the battery ends as it started).
+        if has_battery:
+            pi_end = terminal_value(d)
+            m.update()                   # without it, getObjective() would still return the empty objective
+            m.setObjective(
+                m.getObjective() + pi_end * (self.var["soc"][T[-1]] - d.battery_initial_soc_kWh),
+                GRB.MAXIMIZE)
+
         # --- Constraints -------------------------------------------------------------
         # Sign convention (same as Question 1.(b), primal feasibility of the KKT conditions):
         # the balance is written as h(x) = 0 and every inequality as g(x) <= 0, term by term as in
@@ -167,9 +210,12 @@ class FlexibleConsumerModel:
         # >= 0 for every "<= 0" constraint. Hence, in results.hourly, dual_<name> is directly the
         # multiplier of the report: lambda_t (free) for the balance, mu >= 0 for the inequalities.
         # (A constraint written as ">= 0" would return the opposite sign, <= 0.)
-        # h: balance                     l - q^PV - q^imp + q^exp = 0
+        # h: balance                     l - q^PV - q^imp + q^exp (+ p^ch - p^dis with a battery) = 0
+        def battery_net(t):              # energy the battery takes from the balance in hour t
+            return self.var["charge"][t] - self.var["discharge"][t] if has_battery else 0
         self.con["balance"] = m.addConstrs(
-            (self.var["load"][t] - self.var["pv"][t] - self.var["import"][t] + self.var["export"][t] == 0 for t in T),
+            (self.var["load"][t] - self.var["pv"][t] - self.var["import"][t] + self.var["export"][t]
+             + battery_net(t) == 0 for t in T),
             name="balance")
         # g: load bounds                 L^min - l <= 0   and   l - L^max <= 0
         self.con["load_lo"] = m.addConstrs(
@@ -190,6 +236,25 @@ class FlexibleConsumerModel:
         if d.min_daily_energy_kWh is not None:
             self.con["min_energy"] = m.addConstr(
                 d.min_daily_energy_kWh - gp.quicksum(self.var["load"][t] for t in T) <= 0, name="min_energy")
+
+        # Battery (Question 3.(g).i), same sign convention
+        if has_battery:
+            ch, dis, soc = self.var["charge"], self.var["discharge"], self.var["soc"]
+            eta_ch, eta_dis = d.battery_charging_efficiency, d.battery_discharging_efficiency
+            # h: state of charge   e_t - e_{t-1} - eta^ch p^ch_t + p^dis_t / eta^dis = 0,  e_{-1} = e^init
+            # (its dual is the value of a kWh stored in hour t)
+            self.con["soc_dyn"] = m.addConstrs(
+                (soc[t] - (soc[t - 1] if t > T[0] else d.battery_initial_soc_kWh)
+                 - eta_ch * ch[t] + dis[t] / eta_dis == 0 for t in T),
+                name="soc_dyn")
+            # g: power limits      -p^ch <= 0,  p^ch - P^ch <= 0,  -p^dis <= 0,  p^dis - P^dis <= 0
+            self.con["ch_lo"] = m.addConstrs((-ch[t] <= 0 for t in T), name="ch_lo")
+            self.con["ch_up"] = m.addConstrs((ch[t] - d.battery_max_charge_kW <= 0 for t in T), name="ch_up")
+            self.con["dis_lo"] = m.addConstrs((-dis[t] <= 0 for t in T), name="dis_lo")
+            self.con["dis_up"] = m.addConstrs((dis[t] - d.battery_max_discharge_kW <= 0 for t in T), name="dis_up")
+            # g: capacity          -e_t <= 0,  e_t - E^bat <= 0
+            self.con["soc_lo"] = m.addConstrs((-soc[t] <= 0 for t in T), name="soc_lo")
+            self.con["soc_up"] = m.addConstrs((soc[t] - d.battery_capacity_kWh <= 0 for t in T), name="soc_up")
 
         m.update()
         return self
@@ -246,6 +311,12 @@ class FlexibleConsumerModel:
         p_imp = hourly["price"] + d.import_tariff
         p_exp = hourly["price"] - d.export_tariff
         cost = (p_imp * hourly["import"] - p_exp * hourly["export"] + d.pv_marginal_cost * hourly["pv"]).sum()
+        battery = {}
+        if "soc" in hourly:                                  # Question 3.(g)
+            pi_end = terminal_value(d)
+            battery = {"pi_end": pi_end,
+                       "terminal_value": pi_end * (hourly["soc"].iloc[-1] - d.battery_initial_soc_kWh),
+                       "overlap_max": float(np.minimum(hourly["charge"], hourly["discharge"]).max())}
 
         return Results(
             question=d.question,
@@ -253,7 +324,7 @@ class FlexibleConsumerModel:
             objective=self.m.ObjVal,
             hourly=hourly,
             duals=duals,
-            meta={"scalar_variables": scalars, "utility": utility, "procurement_cost": cost},
+            meta={"scalar_variables": scalars, "utility": utility, "procurement_cost": cost, **battery},
         )
 
 

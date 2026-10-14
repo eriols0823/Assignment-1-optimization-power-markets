@@ -212,16 +212,16 @@ The derivative of the Lagrangian with respect to each primal variable must be ze
 
 The formulation in 3 a of the daily problem is a convex quadratic problem and all constraints are affine. Given that all constraints are affine, the slater argument from Q1 (b) can be recycled. So for that reason strong duality holds here also. Optimal objective value is same for both primal and dual and KKT conditions are sufficient and necessary for optimality.
 
-\subsubsection{(c) Expected behavior}
+\subsection{(c) Expected behavior}
 \paragraph{Can the consumer consume above it hourly reference?}
 Yes it can. Partly because it can be forced to do so to fit its minimum daily energy demand $\Emin>\sum_{t\in\T}\lref$. This could make it such that in the cheaper hours it deviates more above the reference compared to the more expensive hours, where the reference is kept.
 
 \paragraph{Can the consumer consume above its daily minimum requirement?}
 Yes this is also possible. $\Emin$ only sets a lower bound and not an upper one. So if electricity is cheap and it increases utility more than it costs the consumer can consume above it daily requirement $\Emin$.
 
-\subsubsection{(d) model implementation}
+\subsection{(d) Implementation}
 The necessary changes for making the model work can be found in the repository.
-\subsubsection{(e) Hourly Scheduled compared to 2c}
+\subsection{(e) Base case compared with 2.(c)}
 
 \begin{figure}[H]
     \centering
@@ -306,10 +306,15 @@ so
     \label{eq:g_piend}
 \end{equation}
 This assumes that the night hours are long enough to refill the battery,
-$|\T^{\mathrm{night}}_{D+1}| \, \Pch \geq \Ebat$. With the data of the base case,
-$t^{\mathrm{peak}} = 9$, the cheapest night hour is hour 4, and
-$\piend = (0.85 + 0.50)/0.95 \approx 1.42$~DKK/kWh (the second term is
-$0.95 \times 2.90 \approx 2.76$~DKK/kWh).
+$|\T^{\mathrm{night}}_{D+1}| \, \etach \, \Pch \geq \Ebat$.
+
+This single price is a simplification. It gives every kWh left in the battery the same value,
+while the power limit means that refilling a full battery takes several night hours, at
+increasing prices, and it ignores how the battery would be used the following day. The exact
+value of the energy left at the end is a decreasing curve of $\soc[23]$, which a two-day model
+captures automatically. We do not use such a model as the base case because the task is to
+extend the daily problem of (a), with the end of the day represented in its constraints or its
+objective. We check in (v) that this simplification does not change the decisions.
 
 The objective of (a) becomes
 \begin{equation}
@@ -321,19 +326,21 @@ The term $-\piend \einit$ is a constant and does not change the optimal decision
 the objective count only the net change of the stored energy: if the battery ends the day as
 it started, the term is zero, and if it uses part of its initial energy, it pays for it at the
 replacement price. The value of the battery in (iv) and (v) is then a fair comparison with the
-case without battery. We expect the battery to discharge during the evening peak and not to
-recharge at night, since today's night prices are higher than the replacement cost $\piend$.
+case without battery. In the last hours of the day, we expect the battery to discharge when
+prices are high and to recharge only in the hours where storing a kWh costs less than its value
+at the end, $\pimp / \etach < \piend$. Otherwise it ends the day below $\einit$, and the energy
+is replaced the following night.
 
 \paragraph{Alternatives.}
-A cyclic condition $\soc[23] \geq \einit$ is the most common choice, but with our data it is
-not neutral: it forces the battery to recharge in hours 22--23, at an import price of 1.9 and
-1.7~DKK/kWh, that is about 1.8--2.0~DKK per kWh stored, while the same energy can be replaced
-the next night for 1.42~DKK/kWh. It would therefore underestimate the value of the battery.
+A cyclic condition $\soc[23] \geq \einit$ is the simplest choice, but it is not neutral: it
+forces the battery to refill before midnight whatever the price, even when the same energy
+could be replaced more cheaply the following day, and in that case it underestimates the value
+of the battery.
 Leaving $\soc[23]$ free has the opposite problem: the energy left at the end has no value, so
 the battery empties itself without paying for its initial energy, which overestimates its
 value. Using the last price of the day or its trend instead of the next-day forecasts would
-also give a poor estimate of $\piend$: prices fall during the night, but the stored energy is
-used at the next peak, not at midnight. We compare these alternatives numerically in (v).
+also give a poor estimate of $\piend$, since the stored energy is used at the next peak, not
+at midnight. We compare these alternatives numerically in (v).
 
 \paragraph{Properties.}
 The objective only gains a linear term and all the new constraints are affine, so the problem
@@ -351,12 +358,22 @@ energy is stored without being converted to AC and back, so charging from the PV
 than charging from the grid. Modelling this would require separate charging variables for PV
 and grid energy, each with its own efficiency.
 
+% NOTE for (iv): numbers moved here from (i), to report with the base-case results.
+% pi^end with the base-case data: t_peak = 9, cheapest night hour 4,
+% pi^end = (0.85 + 0.50)/0.95 = 1.42 DKK/kWh (second term 0.95 * 2.90 = 2.76).
+% Refilling 4 kWh at 1.5 kW needs hours 4, 3, 2 of D+1: 1.42, 1.47, 1.53 DKK per kWh stored.
+% Decisions unaffected: evening-peak import price 2.6-3.0; recharging tonight (h 21-23)
+% costs 2.42, 2.00, 1.79 DKK per kWh stored, all above pi^end. A cyclic condition would
+% force recharging in h 22-23 at ~1.8-2.0 vs 1.42 for replacing it the next night.
+%
 % IDEA for (v), extra analysis: validate the terminal value pi^end of eq:g_piend against
 % (1) a 48-hour benchmark (today + tomorrow, with energy_price_next_day, pv_available_next_day,
 % reference_load_next_day from the repository; keep only the first 24 hours), and
 % (2) the cyclic condition e_23 >= e_init (and the free end). Compare the schedule of the last
 % hours, the final state of charge and the value of the battery. As in the lecture notes: the
 % terminal value is "only as good as its price", and the 48-hour run is how it is calibrated.
+% Possible refinement: a decreasing (concave, piecewise-linear) value curve of e_23 built from
+% the sorted night prices of D+1 and the power limit (lecture notes: the "water value" curve).
 
 \subsubsection{(ii) Simultaneous charging and discharging}
 \paragraph{With the data of this assignment.}
