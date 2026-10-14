@@ -1,4 +1,4 @@
-This part introduces the basic optimization model for a flexible residential consumer with an adjustable electrical load. The consumer has solar PVs and is able to import and export electricity from the grid. The goal for the consumer is to maximize its' utility, which is done by expressing the optimization problem. Firstly the mathematical formulation for this will be derived. After that the dual problem and KKT conditions will be determined as well as interpreted in regards to the utility optimization problem. With the dual problem and KKT conditions determined they can be used to derive the optimal consumption, PV usage, import and export decisions for each hour. From these results, theoretical expectations and numerical results will be discussed. Question 1 mainly serves as a starting point for the later questions, where the problem becomes more complicated by adding consumer preference profiles, more constraints and flexibility options.
+This part introduces the basic optimization model for a flexible residential consumer with an adjustable electrical load. The consumer has solar PVs and is able to import and export electricity from the grid. The goal for the consumer is to maximize its utility, which is done by expressing the optimization problem. Firstly the mathematical formulation for this will be derived. After that the dual problem and KKT conditions will be determined as well as interpreted in regards to the utility optimization problem. With the dual problem and KKT conditions determined they can be used to derive the optimal consumption, PV usage, import and export decisions for each hour. From these results, theoretical expectations and numerical results will be discussed. Question 1 mainly serves as a starting point for the later questions, where the problem becomes more complicated by adding consumer preference profiles, more constraints and flexibility options.
 
 
 \subsection{(a) Formulation, properties and hourly decomposition}
@@ -428,7 +428,7 @@ In optimization problems a dual variable represent the marginal value of relaxin
 
 
 \subsubsection{Power balance multiplier}
-The multiplier for the power balance constraint is $\lambda_t$. Since the constraint is about power, the multiplier $\lambda_t$ can be interpreted as the marginal value of 1 omre kWh power for the consumer. 
+The multiplier for the power balance constraint is $\lambda_t$. Since the constraint is about power, the multiplier $\lambda_t$ can be interpreted as the marginal value of 1 more kWh power for the consumer. 
 
 \paragraph{Importing power:}
 If the consumer imports power, $q_t^{\mathrm{imp}}>0$. 
@@ -1023,12 +1023,13 @@ $\tau^{\mathrm{exp}} = 0.40$ DKK/kWh.
 Only the PV cost differs.
 In case A, $c^{PV} = 1.41$ DKK/kWh.
 In case B, $c^{PV} = 1.47$ DKK/kWh.
-All results come from running this in the repo root:
+All results come from running this in the repository root:
 \texttt{python main.py --question Q1\_caseA --validate}
 (and the corresponding command for case B)
 
-\subsubsection{Case A}
-
+\subsubsection{Case A hourly schedule}
+The model was first solved for case A. Figure~\ref{fig:q1_caseA_schedule} shows the hourly
+load, PV production, import and export, together with the electricity price.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/Q1/schedule.png}
@@ -1036,54 +1037,55 @@ All results come from running this in the repo root:
     \label{fig:q1_caseA_schedule}
 \end{figure}
 
-The consumer earns a net utility of 2.61 DKK.
-The day can be divided into four main blocks:
+The case A solution gives a net utility of 2.61 DKK over the day. The consumption utility is 51.39 DKK, while the total energy cost after accounting for export revenue is 48.79 DKK.
+
+In case A, the PV cost is $c^{PV}=1.41$ DKK/kWh, which is slightly below the consumption utility $u^L=1.43$ DKK/kWh. This makes PV worth using for own consumption in the middle of the day. In the later hours, when the export price is higher than the utility, the PV is instead sold to the grid. In total, all 26.9 kWh of available PV
+is used.
+
+The hourly behaviour in Figure~\ref{fig:q1_caseA_schedule} can be divided into four
+main blocks:
 
 \begin{itemize}
-    \item \textbf{Hours 3--4 (Regime 2):}
-    Electricity is cheap and $p_t^{\mathrm{imp}} < u^L$.
-    The load therefore reaches $L^{\max}=6$ kWh/h and the consumer imports.
+    \item \textbf{Hours 3--4 (Regime 2):} Electricity is cheap and
+    $\pimp < u^L$. The load therefore reaches $L^{\max}=6$ kWh/h and
+    the consumer imports.
 
-    \item \textbf{Hours 5--17 (Regime 3):}
-    The prices satisfy
+    \item \textbf{Hours 5--17 (Regime 3):} The prices satisfy
     \[
-    p_t^{\mathrm{exp}} < u^L < p_t^{\mathrm{imp}}.
+        \pexp < u^L < \pimp.
     \]
     The consumer uses its own PV and does not trade with the grid.
 
-    \item \textbf{Hours 18--19 (Regime 1):}
-    Selling is more valuable than consuming since
-    $p_t^{\mathrm{exp}} > u^L$.
-    The load is zero and all available PV is exported.
+    \item \textbf{Hours 18--19 (Regime 1):} Selling is more valuable than
+    consuming since $\pexp > u^L$. The load is zero and all available PV
+    is exported.
 
-    \item \textbf{Remaining hours (Regime 3):}
-    There is no PV available and
-    $p_t^{\mathrm{exp}} < u^L < p_t^{\mathrm{imp}}$.
-    The optimal load is therefore $PV_t^{\max}=0$ and there is no grid exchange.
+    \item \textbf{Hour 20 (Regime 1):} Similar as in hours 18-19, in that it is more worth to export than consuming. However in this case there is no PV, so there is nothing to export.
+
+    \item \textbf{Hours 0--2 and 21--23 (Regime 3):} There is no PV available
+    and $\pexp < u^L < \pimp$. The optimal load is therefore
+    $PV_t^{\max}=0$ and there is no grid exchange.
 \end{itemize}
 
-\paragraph{Price ladder.}
-We found that for each hour the ladder converged perfectly with the solver result for case A. This can be seen from viewing the schedule plot above, but the code also prints this result.
+A significant point is that no available PV is curtailed in case A. This differs from case B. If PV had been available during all hours of the day, some of it would however have been curtailed. This would happen in hours 3--4, where the PV availability is currently zero, since $c^{PV} > p_t^{imp}$. In these hours, importing electricity is cheaper than producing PV, so any available PV would be curtailed.
 
-A significant point is that no available PV is curtailed in case A. This differs in case B. If PV would have been prdouced all hours of the day, some PV would have been curtailed however. This would be in hours 3--4 where the PV availability is zero, since
-\[
-c^{PV}>p_t^{\mathrm{imp}}
-\]
-in these hours.
-If additional PV were available, importing would still be cheaper and that PV would be curtailed. However now, in each case that PV exists it is used in case A.
+\paragraph{Price ladder comparison for case A}
+We found that for each hour the ladder matched perfectly with the solver result for every hour in case A, meaning the predicted load and PV decisions were as expected. This can be seen in the schedule plot above and is also checked automatically in the code, which reports whether the ladder and solver results match in each hour.
 
-\subsubsection{Case B}
-
+\subsubsection{Case B hourly schedule}
+The model was re-run for case B, now with the increased cost of PV such that it is slightly higher than the utility gain of consumption. 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/Q1/scheduleB.png}
     \caption{Optimal schedule for case B.}
     \label{fig:q1_caseB_schedule}
 \end{figure}
-The main difference in case B compared to case A is that the cost for PV has now increased, such that it is larger than the utility gain. This resulted in quite a significant change in behavior. The total net utility for case B is 1.95 DKK, compared to case A which had 2.61 DKK.
-Hours 3--4 and 18--19 are unchanged from case A. The main difference appears in hours 5--17. This is because of the change in PV cost. Using PV for self consumption is therefore no longer worthwhile. PV is therefore only a export resource whenever that is worth it. In total it was found that 23.94 kWh of available PV is curtailed.
+The main difference in case B compared to case A is that the PV cost has increased, such that it is now larger than the utility gain. This results in quite a significant change in behavior. The total net utility for case B is 1.95 DKK, compared to case A which had 2.61 DKK. The difference in net utility is therefore quite small, even though the PV usage changes significantly. The reason is that the gain from using PV for self-consumption in case A was only about 0.02 DKK/kWh, since $u^L-c^{PV}=1.43-1.41=0.02$. Removing this PV
+consumption therefore changes the load a lot, but has only a small effect on the total net utility.
 
-Trying to fit the price ladder generated in ii-iii is less relevant here, since the regimes were generated for the case where the PV cost was below the utility gain value. This means that the price ladder is correct for regime 1 and 2, but incorrect for regime 3 where self consumption for PV is relevant. This makes quite a different result if the price ladder is compared with the solver for case A and case B. In case A we got a 24/24 hour fit, while in case B a 11/24 hour fit, because the hours where PV is not used for self consumption gives the same results for case A and B. While the hours 5-18 (13 hours) now has no load compared to the original case where the load would equal the PV amount.
+Hours 3--4 and 18--20 are unchanged from case A. The main difference appears in hours 5--17, where the most PV consumption happened in case A. Using PV for self consumption is therefore no longer worthwhile. PV is therefore only a export resource whenever that is worth it. These hours are instead idle.
+
+Trying to fit the price ladder generated in ii-iii is less relevant here, since the regimes were generated for the case where the PV cost was below the utility gain value. This means that the price ladder is correct for regime 1 and 2, but incorrect for regime 3 where self consumption for PV is relevant. In case A, the ladder matched the solver in all 24 hours, while in case B it only matched in 11 out of 24 hours. The 13 differences occur in hours 5--17, where the ladder predicts that the load follows the available PV. In case B, these hours instead have zero load and the available PV is curtailed.
 
 \subsubsection{Comparison of cases A and B}
 
@@ -1107,17 +1109,16 @@ Here is a quick comparison of the main numerical results for the two cases.
     \label{tab:q1_case_comparison}
 \end{table}
 
-From the table it can be seen that, although the utility and load is much higher in case A, the actual net utility difference is quite small. This is because if the cost of PV or import are above the utility gain value, it is still a small difference. 
-
 \subsubsection{Dual variables}
+The dual variables give more information about which constraints are affecting the solution in each hour, and how much they are affecting the solution. This will be looked at in detail for case A, then the main differences for case A and case B will be discussed. 
 
-\paragraph{Case A}
-To get a better understanding of how much each constraint is impacting the result the below plot showing each constraint's dual value can be viewed over the 24 hours.
+\paragraph{Case A duals}
+ The below plot shows each constraint's dual value over the 24 hours for case A:
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/Q1/duals.png}
-    \caption{All the duals}
+    \caption{Duals in case A}
     \label{fig:q1_caseA_lambda_range}
 \end{figure}
 
@@ -1156,7 +1157,7 @@ $\underline{\mu}^L_t$ (load\_lo)
 &
 The gain if the consumer were allowed to consume 1 kWh less.
 &
-0.27 and 0.67 in hours 18-19 ($p^{exp}_t - u^L$): selling a kWh pays more than consuming it, therefore the load is down to zero. So this dual is only positive when export > utility, and is the difference between the two. Zero in hours 3-17.
+0.27 and 0.67 in hours 18-19 ($p^{exp}_t - u^L$): selling a kWh pays more than consuming it, therefore the load is down to zero. So this dual is only positive when export > utility, and is the difference between the two.
 \\
 \hline
 
@@ -1172,7 +1173,9 @@ $\underline{\mu}^{PV}_t$ (pv\_lo)
 &
 The cost of being forced to produce 1 kWh of PV.
 &
-Zero when the sun shines (hours 5-19), since PV is then produced. In hours 3-4 there is no sun, but the value is still positive (0.01, 0.06). This is saying that buying from the grid (1.40, 1.35) is cheaper than producing PV (1.41), so even if the sun were shining, the consumer would rather buy than use PV.
+The lower PV bound is zero in this model. Relaxing it further would allow negative PV production, which is not physically meaningful. It can instead be interpreted by imagining that the PV had a positive minimum production requirement. In hours 3--4, importing
+electricity is cheaper than producing PV. The consumer would therefore benefit from being allowed to reduce that required PV production. The positive dual reflects the cost of being
+forced to produce PV when importing would be cheaper.
 \\
 \hline
 
@@ -1180,7 +1183,9 @@ $\mu^{imp}_t$ (imp\_nonneg)
 &
 The cost of being forced to import 1 kWh.
 &
-It shows how far buying is from being worthwhile. Zero in hours 3-4, where the consumer imports; between 0.02 and 0.67 in hours 5-17 ($p^{imp}_t - u^L$); 0.90 in hours 18-19 ($p^{imp}_t - p^{exp}_t$). The 0.90 equals $\tau^{imp} + \tau^{exp}$, the loss on a kWh bought and sold in the same hour.
+It shows the cost of being forced to import when importing is not optimal. It is zero in hours 3--4, where the consumer already imports.
+In hours 5--17 it is $\pimp-u^L$, and in hours 18--19 it is
+$\pimp-\pexp=0.90$ DKK/kWh.
 \\
 \hline
 
@@ -1188,92 +1193,50 @@ $\mu^{exp}_t$ (exp\_nonneg)
 &
 The cost of being forced to export 1 kWh.
 &
-It shows how far selling is from being worthwhile. Zero in hours 18–19, where the consumer exports; 0.90 in hours 3–4; between 0.23 and 0.88 in hours 5–17 ($u^L - p^{exp}_t$).
+It shows the cost of being forced to export when exporting is not optimal. It is zero in hours 18--19, where the consumer already exports.
+In hours 5--17 it is $u^L-\pexp$, and in hours 3--4 it is
+$\pimp-\pexp=0.90$ DKK/kWh.
+
 \\
 \hline
 
 \end{xltabular}
+\paragraph{Non-unique duals}
+A dual is non-unique when a small change upwards and a small change downwards give different marginal values. In that case, any value between those two can be a valid dual.
 
-Duals are non-unique in the hours where the consumer does nothing. That means when there is no sun, the load is at its minimum of zero, and nothing is bought or sold. In these hours, gaining 1 kWh and losing 1 kWh do not have the same value. A gained kWh would be consumed and is therefore worth 1.43. A lost kWh would instead have to be replaced by importing from the grid at the import price. This creates a gap between the two values, and any dual value inside this gap is valid. The table below shows the un-unique intervals for the corresponding constraints. Beyond this the dual variables are unique.
+For the balance dual $\lambda_t$, this happens in the idle hours. The consumer is already at zero load then and does not trade with the grid. If a little extra energy is added through the balance, it can be consumed and is worth $u^L$ to the consumer. If energy is instead taken away, the load cannot be reduced any further. So for that reason the missing energy would have to be replaced by importing at $\pimp$. The two directions therefore have different marginal values, making $\lambda_t$ non-unique in these hours.
 
-\begin{xltabular}{\textwidth}{|p{5cm}|X|}
-\hline
-\textbf{Dual} & \textbf{Non-unique in} \\
-\hline
-\endfirsthead
+The same non-uniqueness also affects $\muLlo$, $\muimp$ and $\muexp$, because these duals are linked to the balance dual $\lambda_t$. For example, $\muimp=\pimp-\lambda_t$. If several values of $\lambda_t$ are valid, then several corresponding values of $\muimp$ are also valid.
 
-\hline
-\textbf{Dual} & \textbf{Non-unique in} \\
-\hline
-\endhead
+The PV-bound duals $\muPVlo$ and $\muPVup$ can also be non-unique when no PV is available. The PV system has a 6 kW capacity, but the hourly upper bound is the PV that is actually available. When there is no sun the upper bound becomes zero. This forces $q_t^{PV}$ to be zero. Both PV bounds are then active at the same point. Because of this the model cannot determine one unique value for each dual.
 
-balance ($\lambda$)
-&
-idle hours 0--2, 20--23
-\\
-\hline
-
-load\_lo, imp\_nonneg, exp\_nonneg
-&
-idle hours 0--2, 20--23, because they are computed from $\lambda$
-\\
-\hline
-
-pv\_lo, pv\_up
-&
-All hours without sun (0--4, 20--23). With no sun, PV is zero whatever happens. They only work as a signal: a positive pv\_up means sun would have been worth using in that hour, a positive pv\_lo (hours 3--4) means it would not. Therefore not unique.
-
-\\
-\hline
-
-load\_up
-&
-never: unique in every hour
-\\
-\hline
-
-\end{xltabular}
-
-\paragraph{Case B}
+\paragraph{Case B duals}
 The dual for the constraints is plotted the same way below, but now for case B:
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/Q1/dualsB.png}
-    \caption{All the duals}
-    \label{fig:q1_caseA_lambda_range}
+    \caption{Duals for case B.}
+    \label{fig:q1_caseB_lambda_range}
 \end{figure}
 
-For case B a full table like in case A would repeat a lot. Instead, we comment on the main
-differences. They all come from the higher PV cost. Most of them are in hours 5-17, where the
-consumer in case B is now idle. It produces no PV and does not import or export.
+For case B a full table like in case A would repeat a lot. Instead, just the main differences will be commented on. They all come from the higher PV cost. Most of them are in hours 5-17, where the
+consumer in case B is now idle. 
 
-\textbf{balance ($\lambda_t$).} The value of an extra kWh is set by what the consumer would do
-with it. In hours 0-4 and 20-23 there is no sun. In hours 18-19 an extra kWh would simply be
-sold, as in case A. The PV cost plays no role in these hours, and $\lambda_t$ is the same as in case A. In
-hours 5-17 Gurobi reports 1.43, as in case A. The curve therefore looks the same, but the value is no longer unique.
+\textbf{Balance ($\lambda_t$).} The value is unchanged in hours 0--4 and 18--23. In hours 5--17 Gurobi still reports 1.43 DKK/kWh, but the value is now non-unique. An extra kWh could be consumed and is therefore worth $u^L=1.43$ DKK/kWh. If energy is instead taken away, it must be replaced by PV or importing. These two directions therefore give different marginal values, showing that the dual is non-unique. 
 
-\textbf{load\_up.} Unchanged compared to case A. Same behavior, it is only positive in hours 3-4, where cheap imports make the
-consumer want more than its maximum load. The PV cost plays no role there.
+\textbf{Load upper bound ($\muLup$).} This is unchanged compared to case A. The reason is that the PV cost does not affect the hours where the load upper bound is active.
 
-\textbf{load\_lo.} Unchanged in hours 0-4 and 18-23 compared to case A. In hours 5-17 the load now sits at its minimum. Gurobi shows zero here, but the value is not unique (see below).
+\textbf{Load lower bound ($\muLlo$).} The only change is in hours 5--17, where the load is now at its minimum of zero. The dual depends on $\lambda_t$. Since several values of $\lambda_t$ are valid, several values of $\muLlo$ are also valid. Therefore non-unique here.
 
-\textbf{pv\_up.} In hours 5-17 the value of one more kWh of sun drops from 0.02 in case A to zero in case B. As stated before this is because PV is too expensive. In hours 18-19 the PV is still sold. Each
-kWh now earns 0.06 less, so pv\_up drops by exactly the cost increase.
+\textbf{PV upper bound ($\muPVup$).} In hours 5--17 it drops from 0.02 DKK/kWh to zero since PV is no longer worth using. In hours 18--19 it drops by 0.06 DKK/kWh. This is from the increase in PV cost.
 
-\textbf{pv\_lo.} In hours 5-17 the PV is switched off, although the sun is available. Gurobi
-shows a positive pv\_lo here. This signals that PV is too expensive to use. In hours 3-4 it
-rises by 0.06, because PV now costs 0.06 more compared to importing.
+\textbf{PV lower bound ($\muPVlo$).} In hours 5--17 it becomes positive since PV is now too expensive to use. Its value also depends on $\lambda_t$, so it is non-unique in these hours. In hours 3--4 it increases by 0.06 DKK/kWh because the PV cost has increased by the same amount.
 
-\textbf{imp\_nonneg and exp\_nonneg.} Unchanged in hours 0-4 and 18-23. In hours 5-17 Gurobi
-shows the same values as in case A, but they are no longer unique (see below).
+\textbf{Import and export non-negativity ($\muimp$ and $\muexp$).} The main change is in hours 5--17. Both duals depend on $\lambda_t$, so they are also non-unique in these hours. Gurobi reports the same values as in case A because it chooses the same value $\lambda_t=1.43$ DKK/kWh.
 
-\textbf{Non-unique duals.} In hours 5-17 the consumer is idle, and this makes several duals
-non-unique. A marginal extra kWh would be consumed and is worth 1.43. A marginal missing kWh
-cannot be covered by consuming less, since the load is already zero. It would have to be
-produced with PV at 1.47 (or bought at 1.45 in for instance in hour 14). The two directions give different
-values, and both are valid. So $\lambda_t$ is not unique. 
 
-TODO write for the other duals also why they are none unique.
+%\todo{write for the other duals also why they are none unique.}
+
 %load\_lo and pv\_lo follow from
 %$\lambda_t$ and are not unique either. The same holds for imp\_nonneg and exp\_nonneg. For
 %load\_lo and pv\_lo this has a simple meaning. Running the load on PV would lose 0.04 per kWh.

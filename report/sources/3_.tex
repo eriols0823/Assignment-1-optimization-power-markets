@@ -212,9 +212,58 @@ The derivative of the Lagrangian with respect to each primal variable must be ze
 
 The formulation in 3 a of the daily problem is a convex quadratic problem and all constraints are affine. Given that all constraints are affine, the slater argument from Q1 (b) can be recycled. So for that reason strong duality holds here also. Optimal objective value is same for both primal and dual and KKT conditions are sufficient and necessary for optimality.
 
-\subsection{(c) Expected behavior}
+\subsubsection{(c) Expected behavior}
 \paragraph{Can the consumer consume above it hourly reference?}
 Yes it can. Partly because it can be forced to do so to fit its minimum daily energy demand $\Emin>\sum_{t\in\T}\lref$. This could make it such that in the cheaper hours it deviates more above the reference compared to the more expensive hours, where the reference is kept.
 
 \paragraph{Can the consumer consume above its daily minimum requirement?}
 Yes this is also possible. $\Emin$ only sets a lower bound and not an upper one. So if electricity is cheap and it increases utility more than it costs the consumer can consume above it daily requirement $\Emin$.
+
+\subsubsection{(d) model implementation}
+The necessary changes for making the model work can be found in the repository.
+\subsubsection{(e) Hourly Scheduled compared to 2c}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q3/schedule.png}
+    \caption{Caption for the first plot.}
+    \label{fig:q3_plot1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
+    \caption{Caption for the second plot.}
+    \label{fig:q3_plot2}
+\end{figure}
+\subsection{(g) A small battery}
+
+\subsubsection{(i) Formulation with a battery}
+% Builds on 3.(a): same objective and constraints, plus the battery. Data: BAT_01 in
+% data/appliance_params.json (4 kWh, 1.5/1.5 kW, efficiencies 0.95/0.95, initial SoC 50%).
+
+\paragraph{New input data.}
+\todo{List the battery data with symbols and units: capacity, charging and discharging power
+limits, charging and discharging efficiencies, initial state of charge.}
+
+\paragraph{New decision variables.}
+\todo{Charging and discharging power in each hour, and the state of charge at the end of each
+hour.}
+
+\paragraph{New and modified constraints.}
+\todo{(1) Power balance of 3.(a) with the battery added. (2) State-of-charge dynamics linking
+hour $t-1$ and hour $t$, with the efficiencies, and the starting value. (3) Capacity limit on
+the state of charge. (4) Power limits on charging and discharging. Say whether the battery
+counts towards $\Emin$.}
+
+\paragraph{State of charge at the end of the day.}
+\todo{Chosen representation, written mathematically, and why. Compare with at least one
+alternative: what each one makes the battery do in the last hours of the day.}
+
+\paragraph{Properties.}
+\todo{One or two sentences: problem class and convexity, and decomposability.}
+
+\subsubsection{(ii) Simultaneous charging and discharging}
+\todo{Can both be positive in the same hour at an optimum, with the data of this assignment?
+Why (efficiencies, prices)? When would it become a real risk, and how could it be fixed? No
+KKT needed.}
