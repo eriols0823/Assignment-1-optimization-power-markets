@@ -223,36 +223,128 @@ Yes this is also possible. $\Emin$ only sets a lower bound and not an upper one.
 The necessary changes for making the model work can be found in the repository.
 \subsection{(e) Base case compared with 2.(c)}
 
+Figures 13 and 14 show the optimal schedule with and without $E^{\min} = 40$ kWh on the same data.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/Q3/schedule.png}
-    \caption{Caption for the first plot.}
-    \label{fig:q3_plot1}
+    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
+    \caption{hourly schedule 2c, quadratic}
+    \label{fig:q3_plot2}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
-    \caption{Caption for the second plot.}
-    \label{fig:q3_plot2}
+    \includegraphics[width=\textwidth]{figures/Q3/schedule.png}
+    \caption{hourly schedule 3d, quadratic with Emin}
+    \label{fig:q3_plot1}
 \end{figure}
-% SUGGESTION for (e) and (f) (from Alejandro, 3.(g) work):
-% - Interpretation of E^min vs the reference: the reference is when/how much the consumer would
-%   like to consume (comfort), E^min is the energy the daily duty needs (EV, water heater...). In
-%   the base case E^min = 40 kWh > sum of the reference = 32.3 kWh, so the consumer must consume
-%   above its reference in almost every hour (l_t = ref_t + (mu^E - lambda_t)/(2 c^Q), with
-%   mu^E = 2.37 above lambda_t in most hours). Critical comment: in reality the reference of a
-%   consumer with an EV would already include its charging; E^min > sum(ref) looks like a design
-%   choice of the exercise so that the constraint is active.
-% - Without E^min (= Question 2.(c) on the Q3 data) the consumer uses only 22.8 kWh, below its
-%   reference. So E^min is active as soon as E^min > 22.8 kWh, not 32.3. A sweep of E^min in (f)
-%   shows it (load total / mu^E / objective):
-%     E^min 20: 22.8 / 0.00 / -39.97   (inactive, same as 2.(c))
-%     E^min 25: 25.0 / 0.41 / -40.43
-%     E^min 30: 30.0 / 1.27 / -44.58
-%     E^min 32.3: 32.3 / 1.60 / -47.90
-%     E^min 40: 40.0 / 2.37 / -63.31   (base case)
-%   mu^E grows with E^min: each extra kWh of duty is more expensive than the previous one.
+
+The table below shows how the most interesting values change between the cases:
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+ & Without $E^{\min}$ (2.(c)) & With $E^{\min}$ (Q3) \\
+\midrule
+Energy consumed (kWh)   & 22.77     & 40.00     \\
+Import (kWh)            & 4.42      & 15.47     \\
+Procurement cost (DKK)  & 32.54     & 60.40     \\
+Disutility (DKK)        & 7.43      & 2.92      \\
+Objective (DKK)         & $-39.97$  & $-63.31$  \\
+$\mu^E$ (DKK/kWh)       & --        & 2.37      \\
+\bottomrule
+\end{tabular}
+\caption{Question 3 compared with the unconstrained consumer of 2.(c).}
+\label{tab:q3e}
+\end{table}
+
+
+This will now be used in comparison the the hypothesis made in 3c.
+
+\textbf{Above the hourly reference.} What can generally be seen from the table above is that the total load is higher, which also pushes up the cost. Without the requirement, the consumer stays below the reference in the 2(c) case. In the Q3 case however, the requirement forces it to exceed the reference in some hours. This is in line with the hypothesis from 3(c). Another behavior that can be seen from the Q3 schedule is that the load is more spread out. This is because of the quadratic disutility function. If there were a minimum energy requirement but no quadratic penalty, the model would instead place larger chunks of load in the cheaper hours. With the quadratic penalty combined with the minimum energy requirement, the load becomes more spread out. This can for example be seen in hours 0--5 and around hour 23.
+
+\textbf{Above the daily minimum.} This does not happen. The total load is exactly 40 kWh and $\mu^E = 2.37$ DKK/kWh is positive. So without the requirement, the consumer would only use 22.8 kWh as can be seen in 2c. That does not however make it impossible to provide more than 40 kWh, it is just quite far from being worth it here. If the parameters were changed it could be worth it.
+
+\subsection{(f) Sensitivity analysis}
+
+We vary three parameters one at a time and keep the rest at the base case. These are the minimum
+daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$.
+All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
+Table~\ref{tab:q3f} shows selected runs.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Parameter & Value & Cost (DKK) & Disutility (DKK) & $\mu^E$ (DKK/kWh) & Hours above ref. \\
+\midrule
+$E^{\min}$ (kWh)          & 20  & 32.54  & 7.43  & 0.00 & 0  \\
+                          & 30  & 44.01  & 0.57  & 1.27 & 0  \\
+                          & 40  & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 80  & 130.63 & 96.91 & 5.98 & 24 \\
+\midrule
+$c^Q$ (DKK/kWh$^2$)       & 0.1 & 56.97  & 2.07  & 1.71 & 16 \\
+                          & 1   & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 5   & 61.20  & 12.34 & 4.94 & 24 \\
+\midrule
+$L^{\max}$ (kWh/h)        & 6   & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 3   & 62.21  & 18.56 & 3.26 & 19 \\
+                          & 1.7 & 64.23  & 67.38 & 5.45 & 16 \\
+\bottomrule
+\end{tabular}
+\caption{Selected runs of the sensitivity analysis. Only the varied parameter differs from the
+base case.}
+\label{tab:q3f}
+\end{table}
+
+\textbf{Minimum daily energy.}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3f_emin_profiles.png}
+    \caption{Hourly load for different $E^{\min}$.}
+    \label{fig:q3f_emin}
+\end{figure}
+We vary $E^{\min}$ from 0 to 140 kWh. Below 22.8 kWh the requirement has no effect. The consumer
+already uses that much without it and $\mu^E = 0$. Between 22.8 kWh and the reference total of
+32.3 kWh the requirement pulls the load up towards the reference. The disutility then drops from
+7.43 DKK to 0.57 DKK. Above 32.3 kWh the load must go above the reference. The extra energy is
+spread thinly over the day with more in the cheap hours. At very high values the load hits
+$L^{\max}$ at midday and the shape of the reference is lost. Both the disutility and $\mu^E$ then
+grow quickly.
+
+\textbf{Disutility coefficient.}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3f_cq_profiles.png}
+    \caption{Hourly load for $c^Q = 0.1$ and $c^Q = 1$ with $E^{\min} = 40$ kWh.}
+    \label{fig:q3f_cq}
+\end{figure}
+We vary $c^Q$ from 0.1 to 5 DKK/kWh$^2$ with $E^{\min} = 40$ kWh. A low $c^Q$ makes deviations
+cheap. The consumer then moves energy to the cheap night and midday hours. It even consumes below
+its reference in the expensive morning hours 8-10. A high $c^Q$ makes deviations costly. The
+consumer then adds a small amount in almost every hour and stays close to its reference. Being
+flexible makes the requirement cheaper to meet. $\mu^E$ rises from 1.71 to 4.94 DKK/kWh over the
+range. Above $c^Q \approx 0.5$ the shape of the load barely changes.
+
+\textbf{Hourly maximum load.}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3f_lmax_profiles.png}
+    \caption{Hourly load for different $L^{\max}$ with $E^{\min} = 40$ kWh.}
+    \label{fig:q3f_lmax}
+\end{figure}
+We vary $L^{\max}$ from 1.7 to 8 kWh/h with $E^{\min} = 40$ kWh. Above about 5.5 kWh/h the limit
+never binds and nothing changes. With $L^{\max} = 3$ kWh/h the midday peak is cut flat. The energy
+that no longer fits there moves to the night and the evening. With $L^{\max} = 1.7$ kWh/h the load
+sits at the limit in 20 hours. The consumer must run almost evenly over the whole day to reach
+40 kWh. Below $40/24 \approx 1.67$ kWh/h the problem is infeasible. This matches the feasibility
+condition $E^{\min} \leq 24 L^{\max}$ from (a).
+
+\textbf{Conclusion.} The requirement only changes the behaviour when $E^{\min}$ is above what the
+consumer would use anyway. How it changes the behaviour depends on the consumer. A flexible
+consumer with a low $c^Q$ shifts energy to cheap hours. An inflexible one adds a little in every
+hour. A tight hourly limit forces the extra energy into the hours where there is still room. In
+all cases $\mu^E$ shows how costly the requirement is.
+
 
 \subsection{(g) A small battery}
 
