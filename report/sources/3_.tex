@@ -276,7 +276,7 @@ conversions:
 \end{equation}
 The state of charge and the power are limited by the battery data:
 \begin{align}
-    & 0 \leq \soc \leq \Ebat, & \forall t \in \T, \label{eq:g_cap} \
+    & 0 \leq \soc \leq \Ebat, & \forall t \in \T, \label{eq:g_cap} \\
     & 0 \leq \pch \leq \Pch, \quad 0 \leq \pdis \leq \Pdis, & \forall t \in \T. \label{eq:g_power}
 \end{align}
 The minimum-energy requirement \eqref{eq:c_min_energy} is unchanged: it applies to the load
@@ -284,39 +284,79 @@ $\load$, so the energy that the battery delivers to the load counts towards $\Em
 the energy stored in the battery or lost in it does not.
 
 \paragraph{State of charge at the end of the day.}
-We require the battery to end the day with at least its initial energy:
+The energy left in the battery at the end of hour 23 is not lost: it can be used the following
+day. We value it in the objective at the price $\piend$ it would cost to replace it the
+following day, before it is needed. Let $p_{D+1,t}$ be the forecast market price of the
+following day, given in the repository, and $p^{\mathrm{imp}}_{D+1,t} = p_{D+1,t} + \tauimp$
+its effective import price. The stored energy is first worth using at the morning price peak
+of the following day, in hour
 \begin{equation}
-    \soc[23] \geq \einit.
+    t^{\mathrm{peak}} = \arg\max_{t \in \{0, \dots, 11\}} p_{D+1,t},
+\end{equation}
+and it can be replaced in the night hours before it,
+$\T^{\mathrm{night}}_{D+1} = \{0, \dots, t^{\mathrm{peak}} - 1\}$. Storing one kWh then costs
+the cheapest import price of those hours, divided by $\etach$. A stored kWh is never worth
+more than what it saves when it is discharged at the most expensive hour of the following day,
+so
+\begin{equation}
+    \piend = \min \left\{
+        \frac{\min_{t \in \T^{\mathrm{night}}_{D+1}} p^{\mathrm{imp}}_{D+1,t}}{\etach},
+        \;\; \etadis \max_{t \in \T} p^{\mathrm{imp}}_{D+1,t}
+    \right\}.
+    \label{eq:g_piend}
+\end{equation}
+This assumes that the night hours are long enough to refill the battery,
+$|\T^{\mathrm{night}}_{D+1}| \, \Pch \geq \Ebat$. With the data of the base case,
+$t^{\mathrm{peak}} = 9$, the cheapest night hour is hour 4, and
+$\piend = (0.85 + 0.50)/0.95 \approx 1.42$~DKK/kWh (the second term is
+$0.95 \times 2.90 \approx 2.76$~DKK/kWh).
+
+The objective of (a) becomes
+\begin{equation}
+    \max \quad \sum_{t \in \T} \Big( - D_t(\load) - \pimp \, \qimp + \pexp \, \qexp
+    - \cpv \, \pvprod \Big) + \piend \big( \soc[23] - \einit \big).
     \label{eq:g_end}
 \end{equation}
-With this condition the battery cannot sell or consume the energy it started with, so the
-value of the battery measured in (iv) and (v) only comes from moving energy between hours,
-and the comparison with the case without battery is fair. It also avoids choosing a price for
-the energy left at the end of the day. We expect the battery to discharge during the evening
-peak and to recharge in the cheapest hours after it, so that it reaches $\einit$ at hour 23.
+The term $-\piend \einit$ is a constant and does not change the optimal decisions, but it makes
+the objective count only the net change of the stored energy: if the battery ends the day as
+it started, the term is zero, and if it uses part of its initial energy, it pays for it at the
+replacement price. The value of the battery in (iv) and (v) is then a fair comparison with the
+case without battery. We expect the battery to discharge during the evening peak and not to
+recharge at night, since today's night prices are higher than the replacement cost $\piend$.
 
-Two alternatives were considered. Without any condition on $\soc[23]$, the energy left after
-hour 23 has no value for the model, so the battery empties itself during the evening peak and
-does not recharge; this overestimates its value with energy it did not earn. Valuing the final
-energy in the objective, $+\pi^{\mathrm{end}} \soc[23]$, is more realistic, but the right
-value of $\pi^{\mathrm{end}}$ is what that energy saves at the next price peak of the
-following day, not the price at midnight, so it would have to be estimated. (Taking the last
-price $p_{23}$ or the falling trend of the night would make recharging unprofitable, given
-the losses $\etach \etadis < 1$.) Depending on $\pi^{\mathrm{end}}$, the battery would then end
-the day full or empty.
+\paragraph{Alternatives.}
+A cyclic condition $\soc[23] \geq \einit$ is the most common choice, but with our data it is
+not neutral: it forces the battery to recharge in hours 22--23, at an import price of 1.9 and
+1.7~DKK/kWh, that is about 1.8--2.0~DKK per kWh stored, while the same energy can be replaced
+the next night for 1.42~DKK/kWh. It would therefore underestimate the value of the battery.
+Leaving $\soc[23]$ free has the opposite problem: the energy left at the end has no value, so
+the battery empties itself without paying for its initial energy, which overestimates its
+value. Using the last price of the day or its trend instead of the next-day forecasts would
+also give a poor estimate of $\piend$: prices fall during the night, but the stored energy is
+used at the next peak, not at midnight. We compare these alternatives numerically in (v).
 
 \paragraph{Properties.}
-The objective is unchanged and all the new constraints are affine, so the problem is still a
-convex QP. It is feasible under the same condition as in (a), since leaving the battery idle
-($\pch = \pdis = 0$, $\soc = \einit$) satisfies all the battery constraints. The state of
-charge \eqref{eq:g_soc} adds a second link between consecutive hours, besides $\Emin$, so the
-problem still does not decompose by hour.
+The objective only gains a linear term and all the new constraints are affine, so the problem
+is still a convex QP. It is feasible under the same condition as in (a), since leaving the
+battery idle ($\pch = \pdis = 0$, $\soc = \einit$) satisfies all the battery constraints. The
+state of charge \eqref{eq:g_soc} adds a second link between consecutive hours, besides $\Emin$,
+so the problem still does not decompose by hour.
 
-% IDEA for (iv) or (v), extra analysis: compare numerically the end condition (eq:g_end) with
-% (1) a 48-hour horizon using the next-day data of the repository (energy_price_next_day,
-% pv_available_next_day, reference_load_next_day), keeping only the first 24 hours, and
-% (2) a value pi^end on the final energy taken from the next-day peak. Shows how much the
-% end-of-horizon choice changes the schedule of the last hours and the value of the battery.
+\paragraph{Outside the model.}
+In the model, the battery does not know where its energy comes from: the balance
+\eqref{eq:g_balance} mixes PV and imports, and the same $\etach$ applies to both. The only
+difference between them is their price ($\cpv$ against $\pimp$). In a real installation the
+losses can differ too: when the PV and the battery share a hybrid inverter (DC coupling), PV
+energy is stored without being converted to AC and back, so charging from the PV loses less
+than charging from the grid. Modelling this would require separate charging variables for PV
+and grid energy, each with its own efficiency.
+
+% IDEA for (v), extra analysis: validate the terminal value pi^end of eq:g_piend against
+% (1) a 48-hour benchmark (today + tomorrow, with energy_price_next_day, pv_available_next_day,
+% reference_load_next_day from the repository; keep only the first 24 hours), and
+% (2) the cyclic condition e_23 >= e_init (and the free end). Compare the schedule of the last
+% hours, the final state of charge and the value of the battery. As in the lecture notes: the
+% terminal value is "only as good as its price", and the 48-hour run is how it is calibrated.
 
 \subsubsection{(ii) Simultaneous charging and discharging}
 \paragraph{With the data of this assignment.}
