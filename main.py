@@ -9,6 +9,7 @@
     python main.py --question Q2_quadratic --sweep  # Question 2.(c): same for c^Q
     python main.py --question Q2_quadratic --compare        # Question 2.(d): linear vs quadratic vs Question 1 model
     python main.py --question Q2_quadratic --nonseparable   # Question 2.(e) bonus: accumulated-deviation model
+    python main.py --question Q3_battery    # Question 3.(g): battery, value of the battery and its figure
 """
 from __future__ import annotations
 
@@ -23,12 +24,12 @@ import pandas as pd
 from src.data_loader import load_question, list_questions
 from src.model import (AccumulatedDeviationModel, FlexibleConsumerModel, LinearDisutilityModel,
                        QuadraticDisutilityModel, Results)
-from src.plotting import (plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles, plot_scenario_comparison,
-                          plot_schedule, plot_sweep)
+from src.plotting import (plot_battery_schedule, plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles,
+                          plot_scenario_comparison, plot_schedule, plot_sweep)
 from src.scenarios import scale_prices, scale_pv, set_disutility, set_tariffs
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
-FIGURES_DIR = Path(__file__).resolve().parent / "report" / "figures"
+FIGURES_DIR = RESULTS_DIR / "figures"     # every figure used in the report
 
 # Question 2.(b) and 2.(c): the model of each case and the sweep of its disutility coefficient
 Q2_CASES = {
@@ -48,7 +49,7 @@ Q2_CASES = {
 def run_base_case(question: str, out: Path, show: bool) -> Results | None:
     data = load_question(question)
     print(data.summary(), "\n")
-    is_q2 = question in Q2_CASES            # Question 2 has its own figures (report/figures)
+    is_q2 = question in Q2_CASES            # Question 2 has its own figures (results/figures)
     if not is_q2:
         plot_inputs(data, save_to=out / "inputs.png")
 
@@ -67,6 +68,17 @@ def run_base_case(question: str, out: Path, show: bool) -> Results | None:
     if show:
         matplotlib.pyplot.show()
     return results
+
+
+def run_q3_battery(out: Path, results: Results) -> None:
+    """Question 3.(g): value of the battery against the same case without battery (3.(d)), and its figure."""
+    data = load_question(results.question)
+    without = FlexibleConsumerModel(load_question("Q3")).build().solve()
+    print(f"Value of the battery: {results.objective - without.objective:.4f} DKK/day "
+          f"(objective {results.objective:.4f} with, {without.objective:.4f} without); "
+          f"pi_end = {results.meta['pi_end']:.4f} DKK/kWh, final state of charge {results.hourly['soc'].iloc[-1]:.3f} kWh, "
+          f"max overlap of charge and discharge {results.meta['overlap_max']:.1e} kWh/h")
+    plot_battery_schedule(results, data, without, save_to=FIGURES_DIR / "q3g_battery_schedule.png")
 
 
 def run_scenarios(question: str, out: Path) -> dict[str, Results]:
@@ -205,7 +217,7 @@ def predicted_load_quadratic(data, c: float) -> np.ndarray:
 def run_q2_sweep(question: str, out: Path) -> None:
     """Question 2.(b) and 2.(c): base case, sweep of the disutility coefficient, report table, figures and checks.
 
-    Saves sweep_<c>.csv and sweep_<c>_report_table.csv to ``out`` and the figures to report/figures.
+    Saves sweep_<c>.csv and sweep_<c>_report_table.csv to ``out`` and the figures to results/figures.
     """
     cfg = Q2_CASES[question]
     base = load_question(question)
@@ -285,7 +297,7 @@ def run_q2_sweep(question: str, out: Path) -> None:
 def run_q2_comparison() -> None:
     """Question 2.(d): the linear and quadratic models (and the Question 1 model) with the same coefficient value.
 
-    Saves comparison.csv and comparison_loads.csv to results/Q2_comparison and q2d_profiles.png to report/figures.
+    Saves comparison.csv and comparison_loads.csv to results/Q2_comparison and q2d_profiles.png to results/figures.
     """
     out = RESULTS_DIR / "Q2_comparison"
     out.mkdir(parents=True, exist_ok=True)
@@ -324,7 +336,7 @@ def run_q2_comparison() -> None:
 def run_q2_nonseparable() -> None:
     """Question 2.(e) bonus: accumulated-deviation model, comparison with 2.(b) and 2.(c), price-order experiment.
 
-    Saves the base case and experiment.csv to results/Q2_nonseparable and q2e_´...´.png to report/figures.
+    Saves the base case and experiment.csv to results/Q2_nonseparable and q2e_*.png to results/figures.
     """
     out = RESULTS_DIR / "Q2_nonseparable"
     out.mkdir(parents=True, exist_ok=True)
@@ -404,6 +416,8 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     base = run_base_case(args.question, out, args.show)
+    if base is not None and "soc" in base.hourly:      # Question 3.(g): a case with a battery
+        run_q3_battery(out, base)
     if args.scenarios and base is not None:
         run_scenarios(args.question, out)
     if args.validate and base is not None:

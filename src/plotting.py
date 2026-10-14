@@ -175,3 +175,39 @@ def plot_load_profiles(panels: dict[str, dict], data: InputData, prices: dict | 
     axes[-1, 0].set_xlabel("hour")
     axes[0, 0].legend(fontsize=9, loc="upper left")
     return _finish(fig, save_to)
+
+
+def plot_battery_schedule(results: Results, data: InputData, results_without: Results | None = None,
+                          save_to: Path | str | None = None) -> plt.Figure:
+    """Question 3.(g): load, charging and discharging (top) and state of charge with the import price (bottom).
+
+    ``results_without`` (optional) is the same case without battery (Question 3.(d)), drawn as a dashed load.
+    The state of charge e_t is the energy at the END of hour t, so it is drawn at t + 0.5, starting from
+    the initial state of charge at -0.5.
+    """
+    hr = results.hourly
+    h = hr.index.to_numpy()
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+
+    if results_without is not None:
+        ax1.step(h, results_without.hourly["load"], where="mid", color="grey", ls="--", label="load without battery")
+    ax1.step(h, hr["load"], where="mid", color="C0", label="load with battery")
+    if "reference_load" in hr:
+        ax1.step(h, hr["reference_load"], where="mid", color="black", lw=0.8, label="reference load")
+    ax1.bar(h, hr["charge"], color="C2", alpha=0.6, label="charge")
+    ax1.bar(h, -hr["discharge"], color="C3", alpha=0.6, label="discharge (negative)")
+    ax1.axhline(0, color="grey", lw=0.8)
+    ax1.set(ylabel="kWh/h", title=f"Schedule with battery - {results.question} (objective {results.objective:.2f} DKK)")
+    ax1.legend(loc="upper left", fontsize=8, ncol=2)
+
+    ax2.plot(np.r_[-0.5, h + 0.5], np.r_[data.battery_initial_soc_kWh, hr["soc"]], color="C4", marker="o", ms=3,
+             label="state of charge at the end of the hour")
+    ax2.axhline(data.battery_capacity_kWh, color="C4", ls=":", lw=0.8, label="capacity")
+    ax2.set(xlabel="hour", ylabel="kWh")
+    ax2b = ax2.twinx()
+    ax2b.step(h, hr["price"] + data.import_tariff, where="mid", color="grey", ls=":", label="import price")
+    ax2b.set_ylabel("DKK/kWh")
+    lines, labels = ax2.get_legend_handles_labels()
+    l2, lb2 = ax2b.get_legend_handles_labels()
+    ax2.legend(lines + l2, labels + lb2, loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=8)
+    return _finish(fig, save_to)

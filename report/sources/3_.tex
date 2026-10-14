@@ -236,6 +236,24 @@ The necessary changes for making the model work can be found in the repository.
     \caption{Caption for the second plot.}
     \label{fig:q3_plot2}
 \end{figure}
+% SUGGESTION for (e) and (f) (from Alejandro, 3.(g) work):
+% - Interpretation of E^min vs the reference: the reference is when/how much the consumer would
+%   like to consume (comfort), E^min is the energy the daily duty needs (EV, water heater...). In
+%   the base case E^min = 40 kWh > sum of the reference = 32.3 kWh, so the consumer must consume
+%   above its reference in almost every hour (l_t = ref_t + (mu^E - lambda_t)/(2 c^Q), with
+%   mu^E = 2.37 above lambda_t in most hours). Critical comment: in reality the reference of a
+%   consumer with an EV would already include its charging; E^min > sum(ref) looks like a design
+%   choice of the exercise so that the constraint is active.
+% - Without E^min (= Question 2.(c) on the Q3 data) the consumer uses only 22.8 kWh, below its
+%   reference. So E^min is active as soon as E^min > 22.8 kWh, not 32.3. A sweep of E^min in (f)
+%   shows it (load total / mu^E / objective):
+%     E^min 20: 22.8 / 0.00 / -39.97   (inactive, same as 2.(c))
+%     E^min 25: 25.0 / 0.41 / -40.43
+%     E^min 30: 30.0 / 1.27 / -44.58
+%     E^min 32.3: 32.3 / 1.60 / -47.90
+%     E^min 40: 40.0 / 2.37 / -63.31   (base case)
+%   mu^E grows with E^min: each extra kWh of duty is more expensive than the previous one.
+
 \subsection{(g) A small battery}
 
 \subsubsection{(i) Formulation with a battery}
@@ -365,6 +383,16 @@ and grid energy, each with its own efficiency.
 % Decisions unaffected: evening-peak import price 2.6-3.0; recharging tonight (h 21-23)
 % costs 2.42, 2.00, 1.79 DKK per kWh stored, all above pi^end. A cyclic condition would
 % force recharging in h 22-23 at ~1.8-2.0 vs 1.42 for replacing it the next night.
+% Base-case results (notebooks/Q3g_battery_checks.ipynb): value of the battery 3.27 DKK/day
+% (-60.04 vs -63.31), two cycles (charge h 3-4 and 13-15, discharge h 8-10 and 17-22), ends empty,
+% no overlap. The load barely changes (sum |dload| = 1.13 kWh): by the load stationarity of 3.(b),
+% l_t = ref_t + (mu^E - lambda_t)/(2 c^Q) when interior, so the load only reacts to lambda_t.
+% lambda_t = p^imp_t in almost every hour with and without battery (the consumer imports anyway);
+% the battery only lowers it in h 17 and 20-22 (2.0-2.7 -> 1.8), where the load rises
+% (+0.26, +0.22 kWh). Elsewhere a uniform -0.03 kWh from mu^E (2.369 -> 2.310). The battery and the
+% load flexibility are substitutes: the battery shifts energy in time so the load does not have to.
+% Idea for (v): sweep c^Q. Cheaper load flexibility -> lower value of the battery
+% (c^Q = 1: 3.27, 0.1: 2.60, 0.02: 1.51 DKK/day).
 %
 % IDEA for (v), extra analysis: validate the terminal value pi^end of eq:g_piend against
 % (1) a 48-hour benchmark (today + tomorrow, with energy_price_next_day, pv_available_next_day,
@@ -407,3 +435,18 @@ cheaper mitigation is a linear degradation cost $c^{\mathrm{deg}} (\pch + \pdis)
 cost, which makes every kWh through the battery more expensive. It acts like extra losses: it
 removes the overlap only as long as the gain from burning energy is smaller than the cost, so
 with very negative prices the overlap can still appear.
+
+\subsubsection{(iii) Implementation}
+The battery is added to the model of (d), in \texttt{FlexibleConsumerModel.build()} in the file
+\texttt{src/model.py}, and only becomes active when the input data contain a battery. The value
+$\piend$ is computed from the next-day data by the function \texttt{terminal\_value()}, in the
+same file, so it follows the input data when they change. The base case is solved by running
+\texttt{python main.py --question Q3\_battery}, and the results are saved automatically in the
+folder \texttt{results/}.
+
+Running the code gives the hour-by-hour schedule, now with the charging and discharging power
+and the state of charge, the objective value, $\piend$ and the value of the stored-energy change
+$\piend(\soc[23] - \einit)$, and the dual variable of every constraint, including the state of
+charge, whose dual is the value of a kWh stored in each hour. As for the other constraints,
+the battery limits are written as constraints in the form $g(x) \leq 0$, and the state of
+charge as $h(x) = 0$.
