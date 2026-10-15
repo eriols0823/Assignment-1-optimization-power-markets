@@ -212,30 +212,138 @@ The derivative of the Lagrangian with respect to each primal variable must be ze
 
 The formulation in 3 a of the daily problem is a convex quadratic problem and all constraints are affine. Given that all constraints are affine, the slater argument from Q1 (b) can be recycled. So for that reason strong duality holds here also. Optimal objective value is same for both primal and dual and KKT conditions are sufficient and necessary for optimality.
 
-\subsubsection{(c) Expected behavior}
+\subsection{(c) Expected behavior}
 \paragraph{Can the consumer consume above it hourly reference?}
 Yes it can. Partly because it can be forced to do so to fit its minimum daily energy demand $\Emin>\sum_{t\in\T}\lref$. This could make it such that in the cheaper hours it deviates more above the reference compared to the more expensive hours, where the reference is kept.
 
 \paragraph{Can the consumer consume above its daily minimum requirement?}
 Yes this is also possible. $\Emin$ only sets a lower bound and not an upper one. So if electricity is cheap and it increases utility more than it costs the consumer can consume above it daily requirement $\Emin$.
 
-\subsubsection{(d) model implementation}
+\subsection{(d) Implementation}
 The necessary changes for making the model work can be found in the repository.
-\subsubsection{(e) Hourly Scheduled compared to 2c}
+\subsection{(e) Base case compared with 2.(c)}
+
+Figures 13 and 14 show the optimal schedule with and without $E^{\min} = 40$ kWh on the same data.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
+    \caption{hourly schedule 2c, quadratic}
+    \label{fig:q3_plot2}
+\end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/Q3/schedule.png}
-    \caption{Caption for the first plot.}
+    \caption{hourly schedule 3d, quadratic with Emin}
     \label{fig:q3_plot1}
 \end{figure}
 
+The table below shows how the most interesting values change between the cases:
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+ & Without $E^{\min}$ (2.(c)) & With $E^{\min}$ (Q3) \\
+\midrule
+Energy consumed (kWh)   & 22.77     & 40.00     \\
+Import (kWh)            & 4.42      & 15.47     \\
+Procurement cost (DKK)  & 32.54     & 60.40     \\
+Disutility (DKK)        & 7.43      & 2.92      \\
+Objective (DKK)         & $-39.97$  & $-63.31$  \\
+$\mu^E$ (DKK/kWh)       & --        & 2.37      \\
+\bottomrule
+\end{tabular}
+\caption{Question 3 compared with the unconstrained consumer of 2.(c).}
+\label{tab:q3e}
+\end{table}
+
+
+This will now be used in comparison the the hypothesis made in 3c.
+
+\textbf{Above the hourly reference.} What can generally be seen from the table above is that the total load is higher, which also pushes up the cost. Without the requirement, the consumer stays below the reference in the 2(c) case. In the Q3 case however, the requirement forces it to exceed the reference in some hours. This is in line with the hypothesis from 3(c). Another behavior that can be seen from the Q3 schedule is that the load is more spread out. This is because of the quadratic disutility function. If there were a minimum energy requirement but no quadratic penalty, the model would instead place larger chunks of load in the cheaper hours. With the quadratic penalty combined with the minimum energy requirement, the load becomes more spread out. This can for example be seen in hours 0--5 and around hour 23.
+
+\textbf{Above the daily minimum.} This does not happen. The total load is exactly 40 kWh and $\mu^E = 2.37$ DKK/kWh is positive. So without the requirement, the consumer would only use 22.8 kWh as can be seen in 2c. That does not however make it impossible to provide more than 40 kWh, it is just quite far from being worth it here. If the parameters were changed it could be worth it.
+
+\subsection{(f) Sensitivity analysis}
+
+To make the sensitivity analysis we vary three parameters one at a time and keep the rest at the base case. The parameters varied are the minimum daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$. All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
+Table~\ref{tab:q3f} shows selected runs.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Parameter & Value & Cost (DKK) & Disutility (DKK) & $\mu^E$ (DKK/kWh) & Hours above ref. \\
+\midrule
+$E^{\min}$ (kWh)          & 20  & 32.54  & 7.43  & 0.00 & 0  \\
+                          & 30  & 44.01  & 0.57  & 1.27 & 0  \\
+                          & 40  & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 80  & 130.63 & 96.91 & 5.98 & 24 \\
+\midrule
+$c^Q$ (DKK/kWh$^2$)       & 0.1 & 56.97  & 2.07  & 1.71 & 16 \\
+                          & 1   & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 5   & 61.20  & 12.34 & 4.94 & 24 \\
+\midrule
+$L^{\max}$ (kWh/h)        & 6   & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 3   & 62.21  & 18.56 & 3.26 & 19 \\
+                          & 1.7 & 64.23  & 67.38 & 5.45 & 16 \\
+\bottomrule
+\end{tabular}
+\caption{Selected runs of the sensitivity analysis. Only the varied parameter differs from the
+base case.}
+\label{tab:q3f}
+\end{table}
+
+\textbf{Minimum daily energy.}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/Q2/q2c_schedule.png}
-    \caption{Caption for the second plot.}
-    \label{fig:q3_plot2}
+    \includegraphics[width=\textwidth]{figures/q3f_emin_profiles.png}
+    \caption{Hourly load for different $E^{\min}$.}
+    \label{fig:q3f_emin}
 \end{figure}
+We vary $E^{\min}$ from 0 to 140 kWh. Below 22.8 kWh the requirement has no effect. The consumer
+already uses that much without it and $\mu^E = 0$. Between 22.8 kWh and the reference total of
+32.3 kWh the requirement pulls the load up towards the reference. The disutility then drops from
+7.43 DKK to 0.57 DKK. Above 32.3 kWh the load must go above the reference. The extra energy is
+spread thinly over the day with more in the cheap hours. At very high values the load hits
+$L^{\max}$ at midday and the shape of the reference is lost. Both the disutility and $\mu^E$ then
+grow quickly.
+
+\textbf{Disutility coefficient.}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3f_cq_profiles.png}
+    \caption{Hourly load for $c^Q = 0.1$ and $c^Q = 1$ with $E^{\min} = 40$ kWh.}
+    \label{fig:q3f_cq}
+\end{figure}
+We vary $c^Q$ from 0.1 to 5 DKK/kWh$^2$ with $E^{\min} = 40$ kWh. A low $c^Q$ makes deviations
+cheap. The consumer then moves energy to the cheap night and midday hours. It even consumes below
+its reference in the expensive morning hours 8-10. A high $c^Q$ makes deviations costly. The
+consumer then adds a small amount in almost every hour and stays close to its reference. Being
+flexible makes the requirement cheaper to meet. $\mu^E$ rises from 1.71 to 4.94 DKK/kWh over the
+range. Above $c^Q \approx 0.5$ the shape of the load barely changes.
+
+\textbf{Hourly maximum load.}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3f_lmax_profiles.png}
+    \caption{Hourly load for different $L^{\max}$ with $E^{\min} = 40$ kWh.}
+    \label{fig:q3f_lmax}
+\end{figure}
+We vary $L^{\max}$ from 1.7 to 8 kWh/h with $E^{\min} = 40$ kWh. Above about 5.5 kWh/h the limit
+never binds and nothing changes. With $L^{\max} = 3$ kWh/h the midday peak is cut flat. The energy
+that no longer fits there moves to the night and the evening. With $L^{\max} = 1.7$ kWh/h the load
+sits at the limit in 20 hours. The consumer must run almost evenly over the whole day to reach
+40 kWh. Below $40/24 \approx 1.67$ kWh/h the problem is infeasible. This matches the feasibility
+condition $E^{\min} \leq 24 L^{\max}$ from (a).
+
+\textbf{Conclusion.} The requirement only changes the behaviour when $E^{\min}$ is above what the
+consumer would use anyway. How it changes the behaviour depends on the consumer. A flexible
+consumer with a low $c^Q$ shifts energy to cheap hours. An inflexible one adds a little in every
+hour. A tight hourly limit forces the extra energy into the hours where there is still room. In
+all cases $\mu^E$ shows how costly the requirement is.
+
+
 \subsection{(g) A small battery}
 
 \subsubsection{(i) Formulation with a battery}
@@ -306,10 +414,15 @@ so
     \label{eq:g_piend}
 \end{equation}
 This assumes that the night hours are long enough to refill the battery,
-$|\T^{\mathrm{night}}_{D+1}| \, \Pch \geq \Ebat$. With the data of the base case,
-$t^{\mathrm{peak}} = 9$, the cheapest night hour is hour 4, and
-$\piend = (0.85 + 0.50)/0.95 \approx 1.42$~DKK/kWh (the second term is
-$0.95 \times 2.90 \approx 2.76$~DKK/kWh).
+$|\T^{\mathrm{night}}_{D+1}| \, \etach \, \Pch \geq \Ebat$.
+
+This single price is a simplification. It gives every kWh left in the battery the same value,
+while the power limit means that refilling a full battery takes several night hours, at
+increasing prices, and it ignores how the battery would be used the following day. The exact
+value of the energy left at the end is a decreasing curve of $\soc[23]$, which a two-day model
+captures automatically. We do not use such a model as the base case because the task is to
+extend the daily problem of (a), with the end of the day represented in its constraints or its
+objective. We check in (v) that this simplification does not change the decisions.
 
 The objective of (a) becomes
 \begin{equation}
@@ -321,19 +434,21 @@ The term $-\piend \einit$ is a constant and does not change the optimal decision
 the objective count only the net change of the stored energy: if the battery ends the day as
 it started, the term is zero, and if it uses part of its initial energy, it pays for it at the
 replacement price. The value of the battery in (iv) and (v) is then a fair comparison with the
-case without battery. We expect the battery to discharge during the evening peak and not to
-recharge at night, since today's night prices are higher than the replacement cost $\piend$.
+case without battery. In the last hours of the day, we expect the battery to discharge when
+prices are high and to recharge only in the hours where storing a kWh costs less than its value
+at the end, $\pimp / \etach < \piend$. Otherwise it ends the day below $\einit$, and the energy
+is replaced the following night.
 
 \paragraph{Alternatives.}
-A cyclic condition $\soc[23] \geq \einit$ is the most common choice, but with our data it is
-not neutral: it forces the battery to recharge in hours 22--23, at an import price of 1.9 and
-1.7~DKK/kWh, that is about 1.8--2.0~DKK per kWh stored, while the same energy can be replaced
-the next night for 1.42~DKK/kWh. It would therefore underestimate the value of the battery.
+A cyclic condition $\soc[23] \geq \einit$ is the simplest choice, but it is not neutral: it
+forces the battery to refill before midnight whatever the price, even when the same energy
+could be replaced more cheaply the following day, and in that case it underestimates the value
+of the battery.
 Leaving $\soc[23]$ free has the opposite problem: the energy left at the end has no value, so
 the battery empties itself without paying for its initial energy, which overestimates its
-value. Using the last price of the day or its trend instead of the next-day forecasts would
-also give a poor estimate of $\piend$: prices fall during the night, but the stored energy is
-used at the next peak, not at midnight. We compare these alternatives numerically in (v).
+value. The last price of the day or its trend need no forecasts, but they only look at the end
+of the day, while the stored energy is used the following morning. We compare these
+alternatives numerically in (v).
 
 \paragraph{Properties.}
 The objective only gains a linear term and all the new constraints are affine, so the problem
@@ -350,13 +465,6 @@ losses can differ too: when the PV and the battery share a hybrid inverter (DC c
 energy is stored without being converted to AC and back, so charging from the PV loses less
 than charging from the grid. Modelling this would require separate charging variables for PV
 and grid energy, each with its own efficiency.
-
-% IDEA for (v), extra analysis: validate the terminal value pi^end of eq:g_piend against
-% (1) a 48-hour benchmark (today + tomorrow, with energy_price_next_day, pv_available_next_day,
-% reference_load_next_day from the repository; keep only the first 24 hours), and
-% (2) the cyclic condition e_23 >= e_init (and the free end). Compare the schedule of the last
-% hours, the final state of charge and the value of the battery. As in the lecture notes: the
-% terminal value is "only as good as its price", and the 48-hour run is how it is calibrated.
 
 \subsubsection{(ii) Simultaneous charging and discharging}
 \paragraph{With the data of this assignment.}
@@ -390,3 +498,158 @@ cheaper mitigation is a linear degradation cost $c^{\mathrm{deg}} (\pch + \pdis)
 cost, which makes every kWh through the battery more expensive. It acts like extra losses: it
 removes the overlap only as long as the gain from burning energy is smaller than the cost, so
 with very negative prices the overlap can still appear.
+
+\subsubsection{(iii) Implementation}
+The battery is added to the model of (d), in \texttt{FlexibleConsumerModel.build()} in the file
+\texttt{src/model.py}, and only becomes active when the input data contain a battery. The value
+$\piend$ is computed from the next-day data by the function \texttt{terminal\_value()}, in the
+same file, so it follows the input data when they change. The base case is solved by running
+\texttt{python main.py -{}-question Q3\_battery}, and the results are saved automatically in the
+folder \texttt{results/}.
+
+Running the code gives the hour-by-hour schedule, now with the charging and discharging power
+and the state of charge, the objective value, $\piend$ and the value of the stored-energy change
+$\piend(\soc[23] - \einit)$, and the dual variable of every constraint, including the state of
+charge, whose dual is the value of a kWh stored in each hour. As for the other constraints,
+the battery limits are written as constraints in the form $g(x) \leq 0$, and the state of
+charge as $h(x) = 0$.
+
+\subsubsection{(iv) Base case with the battery}
+Figure~\ref{fig:q3g_schedule} shows the optimal schedule with the battery against the schedule
+of (e), and Table~\ref{tab:q3g_base} the main results.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/q3g_battery_schedule.png}
+    \caption{Base case with the battery. Top: load with and without battery, reference load,
+    charging (positive) and discharging (negative). Bottom: state of charge at the end of each
+    hour and import price.}
+    \label{fig:q3g_schedule}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+ & Without battery (e) & With battery \\
+\midrule
+Import / export (kWh)                 & 15.47 / 2.41 & 16.89 / 5.07 \\
+Procurement cost (DKK)                & 60.40        & 54.50        \\
+Disutility (DKK)                      & 2.92         & 2.70         \\
+Initial battery energy used, $\piend(\soc[23] - \einit)$ (DKK) & --  & $-2.84$      \\
+Net utility (objective, DKK; higher is better) & $-63.31$ & $-60.04$ \\
+Cost of one more kWh of $\Emin$, $\mu^E$ (DKK/kWh) & 2.37 & 2.31     \\
+\bottomrule
+\end{tabular}
+\caption{Base case of (e) without and with the battery. The total load is 40~kWh in both cases.}
+\label{tab:q3g_base}
+\end{table}
+
+\paragraph{No overlap.} The largest value of $\min\{\pch, \pdis\}$ over the day is
+$1.5 \cdot 10^{-10}$~kWh/h, which is zero up to the solver tolerance: the battery never charges
+and discharges in the same hour, as argued in (ii).
+
+\paragraph{Schedule.} The battery makes two cycles a day. It charges in the cheapest hours of the
+night (3--4) and of the middle of the day (13--15), and discharges at the morning peak (8--10) and
+over the evening peak (17--22). At the evening peak it even discharges more than the load needs
+and sells the surplus, which is why both imports and exports increase. The battery ends the day
+empty: recharging it before midnight would cost more than refilling it the following night, at
+$\piend = 1.42$~DKK/kWh, as expected in (i).
+
+\paragraph{Deviations from the reference.} The load barely changes, and the disutility drops only
+slightly. In most hours the consumer imports anyway, so the value of one more kWh is simply the
+import price, with or without battery, and by the stationarity condition of 3.(b) the load has
+no reason to move. Only in the evening, where the battery now supplies cheaper energy, does the
+load rise a little. The battery takes over the role that the flexibility of the load had in (e):
+it shifts energy in time, so the load does not have to.
+
+\paragraph{Role of the minimum-energy requirement.} $\Emin$ is still binding, with a total load
+of exactly 40~kWh, but its multiplier $\mu^E$, the cost of requiring one more kWh per day,
+drops from 2.37 to 2.31~DKK/kWh: the extra energy can now be supplied in part by energy bought
+or produced in cheaper hours. The energy stored or lost in the
+battery does not count towards $\Emin$, so the battery cannot be used to meet it on its own.
+
+\paragraph{Value of the battery.} The net utility is minus the procurement cost, minus the
+disutility, plus the value of the change of stored energy. It is negative because the consumer
+always pays more than it earns, so a value closer to zero is better: it improves from $-63.31$
+to $-60.04$~DKK, so the battery is worth 3.27~DKK/day. The procurement cost drops by 5.89~DKK
+and the disutility by 0.22~DKK, but part of these savings comes from the 2~kWh that the battery
+had at the start and uses during the day. This energy is not free, since it has to be bought
+again the following night, so it is charged at $\piend$ (2.84~DKK). Without this charge the value
+of the battery would be overestimated.
+
+\subsubsection{(v) Sensitivity analysis of the value of the battery}
+The value of the battery is the difference between the objective with and without the battery,
+with the same data. We vary one parameter at a time and keep the rest at the base case: three
+parameters of the environment (the spread of the prices around their mean and the price level,
+both on the two days so that $\piend$ follows, and the disutility coefficient $c^Q$) and three
+of the battery (its capacity, with $\einit$ kept at half of it, its power and its efficiencies).
+All runs come from \texttt{python main.py -{}-question Q3\_battery}, and
+Figure~\ref{fig:q3g_sens} shows the value of the battery in each of them.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Q3/q3g_sensitivity.png}
+    \caption{Value of the battery when one parameter changes. The dotted line is the base case
+    (3.27~DKK/day).}
+    \label{fig:q3g_sens}
+\end{figure}
+
+\paragraph{Price spread.} This has by far the largest effect. The battery earns money by buying
+energy when it is cheap and using it when it is expensive, so the larger the gap between cheap
+and expensive hours, the more each cycle earns: doubling the spread more than triples the value.
+Even with flat prices the battery is still worth something, because the tariffs make buying a
+kWh much more expensive than selling one: the battery stores evening PV that would otherwise be
+curtailed and uses it at night instead of importing.
+
+\paragraph{Price level.} Raising all prices by the same amount barely matters. The gaps between
+the hours stay the same; only the energy lost in each cycle becomes a little more expensive, so
+the value drops slightly.
+
+\paragraph{Flexibility of the consumer.} A consumer that can easily move its own load (low
+$c^Q$) already shifts its consumption to the cheap hours, so the battery has little left to do.
+A rigid consumer (high $c^Q$) cannot, and the battery does the shifting for it. The value of the
+battery more than doubles from the most flexible to the most rigid consumer of the sweep, and
+then levels off: the battery and the flexibility of the load are substitutes, as seen in (iv).
+
+\paragraph{Capacity and power.} Both add value, but less and less: a battery twice as large or
+twice as fast as the base case is worth only about 20\,\% more. A plausible explanation is that
+the prices have two peaks a day; once the battery can cover both, a larger or faster battery
+only reaches hours where the price differences are small. For the largest capacities the value
+is also somewhat overstated, because the battery starts with half of its capacity, which our
+$\piend$ values at the cheapest night price although refilling that much energy would take more
+night hours at higher prices (see the end of the day below).
+
+\paragraph{Efficiency.} The value depends strongly on the losses. Every kWh that goes through the
+battery loses part of itself, so the price gap between charging and discharging has to pay for
+the losses. At 90\,\% efficiency each way the value already drops by about 40\,\%, and at
+80\,\% the battery is almost never used: the only hours expensive enough are late in the
+evening, when the consumer barely consumes and the energy could only be exported at a lower
+price. A lossless battery charges and discharges at the same time in some hours, the non-unique
+case described in (ii).
+
+\paragraph{End of the day.} We also checked the choice of (i) against a model that sees the
+following morning: day $D$ and the first eleven hours of $D+1$, which fits the size limit of our
+solver licence once the state of charge is written as an expression ($\Emin$ only applies to
+day $D$). It takes the same decisions as our daily model, and it shows that the energy left at
+midnight is worth slightly more per kWh than our $\piend$, because refilling a whole battery
+takes several night hours at increasing prices. Our $\piend$ therefore gives the right schedule
+but overstates the value of the battery a little, by about 5\,\%. The decisions would only
+change if the stored energy were valued well above any reasonable estimate (above
+1.71~DKK/kWh, against 1.42 in our model), when keeping energy becomes better than exporting it at
+the evening peak. The alternatives of (i) behave as expected: the free end reports almost
+twice the value, because the battery uses its initial energy for free, and the cyclic condition
+forces an expensive refill before midnight. Without forecasts of the following day,
+extrapolating the trend of the last two prices works well here, since it follows the fall of
+the prices towards the night, although it only sees two hours; the last price alone lies right
+at the limit where the decisions change.
+
+\paragraph{Conclusion.} A battery at the consumer level is worth the most where the prices change
+a lot within the day, where buying from the grid costs much more than selling to it, and where
+the consumer cannot easily shift its own load. Of its technical characteristics, the efficiency
+matters most, since it decides whether the price differences pay for the losses at all; extra
+capacity and power only help up to what the daily price profile can use. In our base case the
+battery is worth 3.27~DKK/day in our model, or about 3.12 when the energy left at midnight is
+valued exactly. In practice the value would be somewhat lower, since the model has no
+degradation cost: every cycle wears the battery, so each one would need an even larger price
+spread to pay off.

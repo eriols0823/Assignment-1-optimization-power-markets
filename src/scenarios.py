@@ -24,15 +24,22 @@ from .data_loader import InputData
 
 def scale_prices(data: InputData, factor: float, keep_mean: bool = False) -> InputData:
     """Multiply hourly prices by ``factor``. With ``keep_mean=True`` only the spread around the
-    mean is scaled, which isolates the effect of price variability from the effect of price level."""
-    p = data.energy_price
-    new_p = p.mean() + factor * (p - p.mean()) if keep_mean else factor * p
-    return replace(data, energy_price=np.clip(new_p, 0.0, None))   # prices stay non-negative
+    mean is scaled, which isolates the effect of price variability from the effect of price level.
+    The next-day prices, when given, are scaled in the same way (they set pi^end in Question 3.(g))."""
+    def scale(p):
+        new_p = p.mean() + factor * (p - p.mean()) if keep_mean else factor * p
+        return np.clip(new_p, 0.0, None)                             # prices stay non-negative
+    next_day = data.energy_price_next_day
+    return replace(data, energy_price=scale(data.energy_price),
+                   energy_price_next_day=None if next_day is None else scale(next_day))
 
 
 def shift_prices(data: InputData, delta: float) -> InputData:
-    """Add ``delta`` DKK/kWh to every hourly price (changes the mean, keeps the spread)."""
-    return replace(data, energy_price=np.clip(data.energy_price + delta, 0.0, None))
+    """Add ``delta`` DKK/kWh to every hourly price (changes the mean, keeps the spread). The next-day
+    prices, when given, are shifted in the same way (they set pi^end in Question 3.(g))."""
+    next_day = data.energy_price_next_day
+    return replace(data, energy_price=np.clip(data.energy_price + delta, 0.0, None),
+                   energy_price_next_day=None if next_day is None else np.clip(next_day + delta, 0.0, None))
 
 
 def roll_prices(data: InputData, hours: int) -> InputData:
@@ -77,4 +84,22 @@ def set_disutility(data: InputData, linear: float | None = None, quadratic: floa
         data,
         linear_disutility=data.linear_disutility if linear is None else float(linear),
         quadratic_disutility=data.quadratic_disutility if quadratic is None else float(quadratic),
+    )
+
+
+def set_battery(data: InputData, capacity_kWh: float | None = None, power_kW: float | None = None,
+                efficiency: float | None = None) -> InputData:
+    """Override the battery of Question 3.(g): energy capacity (the initial state of charge keeps its
+    share of the capacity), charging and discharging power (both), and charging and discharging
+    efficiency (both, so the round trip is efficiency^2)."""
+    cap = data.battery_capacity_kWh
+    new_cap = cap if capacity_kWh is None else float(capacity_kWh)
+    return replace(
+        data,
+        battery_capacity_kWh=new_cap,
+        battery_initial_soc_kWh=data.battery_initial_soc_kWh * new_cap / cap,
+        battery_max_charge_kW=data.battery_max_charge_kW if power_kW is None else float(power_kW),
+        battery_max_discharge_kW=data.battery_max_discharge_kW if power_kW is None else float(power_kW),
+        battery_charging_efficiency=data.battery_charging_efficiency if efficiency is None else float(efficiency),
+        battery_discharging_efficiency=data.battery_discharging_efficiency if efficiency is None else float(efficiency),
     )

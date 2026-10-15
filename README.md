@@ -2,7 +2,8 @@
 
 Code for Group Assignment 1 of *46750 - Optimization in Modern Power Systems* (DTU): a `gurobipy` model of a
 flexible consumer with PV and a grid connection, solved for each question of the assignment. Every number and
-figure of the report is produced by the commands in Section 2 and saved under `results/` and `report/figures/`.
+figure of the report is produced by the commands in Section 2 and saved under `results/` (figures in
+`results/figures/`).
 
 **Submission of the code.** The complete project code is handed in either as a single `.zip` file in DTU Learn
 or as a link to the group's GitHub repository on the front page of the report; the report says which one.
@@ -34,7 +35,7 @@ Check that it works: `python main.py` solves the base case of `Q1_caseA` and wri
 ## 2. Running the code
 
 Run all commands from the repository root. Each question writes its tables (CSV, TXT) to `results/<case>/`
-and its report figures to `report/figures/`; `--show` opens the figures in a window instead.
+and its report figures to `results/figures/`; `--show` opens the figures in a window instead.
 
 **Question 1** (`--question Q1_caseA` or `Q1_caseB`)
 ```bash
@@ -53,7 +54,7 @@ python main.py --question Q2_quadratic --compare        # 2.(d): linear vs quadr
 python main.py --question Q2_quadratic --nonseparable   # 2.(e) bonus: accumulated-deviation disutility
 ```
 
-| Command | Tables (`results/...`) | Figures (`report/figures/`) |
+| Command | Tables (`results/...`) | Figures (`results/figures/`) |
 |---|---|---|
 | `--question Q2_linear --sweep` | `Q2_linear/`: `Q2_linear_hourly.csv`, `Q2_linear_summary.txt`, `sweep_cL.csv`, `sweep_cL_report_table.csv`, `sweep_cL_change_points.csv` | `q2b_schedule.png`, `q2b_sweep.png` |
 | `--question Q2_quadratic --sweep` | `Q2_quadratic/`: `Q2_quadratic_hourly.csv`, `Q2_quadratic_summary.txt`, `sweep_cQ.csv`, `sweep_cQ_report_table.csv` | `q2c_schedule.png`, `q2c_sweep.png` |
@@ -66,11 +67,29 @@ run, the change points of the linear sweep lie at the predicted price thresholds
 unique (same load with another solver seed), and the bonus model with rho = 0 reproduces 2.(c).
 
 **Question 3** (`--question Q3` or `Q3_battery`)
+```bash
+python main.py --question Q3            # 3.(d)-(e): minimum daily energy, quadratic disutility
+python main.py --question Q3_battery    # 3.(g): the same consumer with a battery, the value of the battery and its sensitivity
+```
 
-_To be completed by the authors of Question 3 (commands and outputs)._
+| Command | Tables (`results/...`) | Figures |
+|---|---|---|
+| `--question Q3` | `Q3/`: `Q3_hourly.csv`, `Q3_summary.txt` | `results/Q3/`: `schedule.png`, `duals.png`, `inputs.png` |
+| `--question Q3_battery` | `Q3_battery/`: `Q3_battery_hourly.csv` (incl. `charge`, `discharge`, `soc` and their duals), `Q3_battery_summary.txt`, `q3g_sensitivity.csv`, `q3g_end_of_day.csv`, `q3g_water_value.csv`, `q3g_pi_end_sweep.csv` | `results/figures/`: `q3g_battery_schedule.png`, `q3g_sensitivity.png` |
 
-**Notebooks.** `notebooks/Q<n>_report.ipynb` only load the files written by the commands above and show the
-tables and figures of the report; they contain no model code.
+With a battery, `main.py` also solves the case without battery and prints the value of the battery, the value
+pi^end of the energy left at the end of the day (computed from the next-day data by `terminal_value()` in
+`src/model.py`), the final state of charge and the largest overlap of charging and discharging (3.(g).iv).
+It then runs the sensitivity analysis of 3.(g).v: the value of the battery when one parameter changes at a time
+(price spread and level, `c^Q`, capacity, power, efficiency; `q3g_sensitivity.csv`). The parameters and their
+values are in `Q3_BATTERY_SWEEPS` in `main.py`, and the scenarios come from `src/scenarios.py`. Finally it compares
+our pi^end with the end-of-day alternatives of 3.(g).i (trend of the last two prices, last price, free end, cyclic)
+and with a benchmark over day D and hours 0-10 of D+1 (`solve_extended_horizon()` in `src/model.py`, written in a
+compact form so that it fits the 200-variable limit of the size-limited Gurobi licence): `q3g_end_of_day.csv` (with
+the value of the battery reported by each alternative and its exact value, with the energy left at the end valued
+with the benchmark), the
+value of the energy stored at the end of the day `q3g_water_value.csv`, and the values of pi^end that change the
+decisions `q3g_pi_end_sweep.csv`.
 
 ## 3. Repository structure
 
@@ -82,9 +101,7 @@ src/
   scenarios.py           Helpers that derive scenarios from a base InputData (prices, tariffs, PV, preferences, disutility)
   plotting.py            Figures for inputs, schedules, duals, scenario comparisons and Question 2
 data/                    Input data, see Section 6
-notebooks/               One report notebook per question (load results, show tables and figures)
-report/                  LaTeX report and its figures (report/figures/)
-results/                 Written by main.py
+results/                 Written by main.py (tables per case, figures in results/figures/)
 requirements.txt, environment.yaml, LICENSE, .gitignore
 ```
 
@@ -124,7 +141,7 @@ requirements.txt, environment.yaml, LICENSE, .gitignore
   `run_q2_comparison` (2.(d)) and `run_q2_nonseparable` (2.(e): base case, comparison with 2.(b) and 2.(c),
   experiment on the order of the prices at equal mean and amplitude), plus the closed-form predictions
   `predicted_load_linear` and `predicted_load_quadratic` used by the checks. Question 2 solves the base case with
-  its own model and writes its figures to `report/figures/` instead of the standard plots of Question 1.
+  its own model and writes its figures to `results/figures/` instead of the standard plots of Question 1.
 
 **Question 3.** _To be described by the authors of Question 3 (model, functions, outputs)._
 
