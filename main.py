@@ -9,6 +9,7 @@
     python main.py --question Q2_quadratic --sweep  # Question 2.(c): same for c^Q
     python main.py --question Q2_quadratic --compare        # Question 2.(d): linear vs quadratic vs Question 1 model
     python main.py --question Q2_quadratic --nonseparable   # Question 2.(e) bonus: accumulated-deviation model
+    python main.py --question Q3 --sensitivity      # Question 3.(f): vary E_min, c^Q and L_max
 """
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ from src.model import (AccumulatedDeviationModel, FlexibleConsumerModel, LinearD
                        QuadraticDisutilityModel, Results)
 from src.plotting import (plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles, plot_scenario_comparison,
                           plot_schedule, plot_sweep)
-from src.scenarios import scale_prices, scale_pv, set_disutility, set_tariffs
+from src.scenarios import scale_prices, scale_pv, set_disutility, set_load_preferences, set_tariffs
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 FIGURES_DIR = Path(__file__).resolve().parent / "report" / "figures"
@@ -375,6 +376,51 @@ def run_q2_nonseparable() -> None:
                        save_to=FIGURES_DIR / "q2e_experiment.png")
 
 
+### Question 3 ###
+def run_q3_sensitivity(question: str, out: Path) -> None:
+    """Question 3.(f): vary the minimum daily energy, the disutility coefficient c^Q and the hourly maximum load,
+    one at a time.
+
+    Saves sensitivity_<parameter>.csv and the figures q3f_*.png to ``out``.
+    """
+    base = load_question(question)
+    sweeps = {
+        # E_min from 0 to 140 kWh (the load can take at most 24 x 6 = 144 kWh)
+        "E_min": {E: set_load_preferences(base, min_daily_energy_kWh=E) for E in range(0, 145, 5)},
+        # c^Q from 0.1 to 5 DKK/kWh^2, with the base case E_min = 40 kWh (base case c^Q = 1)
+        "c_Q": {c: set_disutility(base, quadratic=c) for c in np.round(np.arange(0.1, 5.01, 0.1), 1)},
+        # L_max from 1.7 to 8 kWh/h with E_min = 40 kWh (below 40/24 = 1.67 kWh/h the problem is infeasible)
+        "L_max": {L: set_load_preferences(base, load_max_kWh=L) for L in np.round(np.arange(1.7, 8.01, 0.1), 1)},
+    }
+    tables, loads = {}, {}
+    for name, cases in sweeps.items():
+        rows, loads[name] = [], {}
+        for value, d in cases.items():
+            res = QuadraticDisutilityModel(d).build().solve()
+            rows.append({name: value, **run_metrics(res, d), "mu_E": res.duals.get("min_energy", 0.0)})
+            loads[name][value] = res.hourly["load"]
+        tables[name] = pd.DataFrame(rows)
+        tables[name].round(3).to_csv(out / f"sensitivity_{name}.csv", index=False)
+        cols = [name, "energy_kWh", "procurement_cost_DKK", "disutility_DKK", "mu_E", "hours_above_reference",
+                "hours_bound_binding", "import_kWh"]
+        print(tables[name][cols].round(2).to_string(index=False), "\n")
+
+    # E_min: mark the energy used without the requirement and the total of the reference profile
+    marks = {round(tables["E_min"]["energy_kWh"][0], 2): {"use without $E^{min}$"},
+             round(base.reference_load.sum(), 2): {"reference total"}}
+    plot_sweep(tables["E_min"], "E_min", "$E^{min}$ (kWh)", "Sweep over $E^{min}$", thresholds=marks,
+               save_to=out / "q3f_emin_sweep.png")
+    plot_load_profiles({"Load for different $E^{min}$":
+                        {f"$E^{{min}}$ = {E} kWh": loads["E_min"][E] for E in [20, 30, 40, 80]}},
+                       base, save_to=out / "q3f_emin_profiles.png")
+    plot_load_profiles({"Load for different $c^Q$ ($E^{min}$ = 40 kWh)":
+                        {f"$c^Q$ = {c:g}": loads["c_Q"][c] for c in [0.1, 1.0]}},
+                       base, save_to=out / "q3f_cq_profiles.png")
+    plot_load_profiles({"Load for different $L^{max}$ ($E^{min}$ = 40 kWh)":
+                        {f"$L^{{max}}$ = {L:g} kWh/h": loads["L_max"][L] for L in [7.0, 3.5, 1.7]}},
+                       base, save_to=out / "q3f_lmax_profiles.png")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--question", default="Q1_caseA", choices=list_questions(), help="data case to use")
@@ -385,6 +431,7 @@ def main() -> None:
     parser.add_argument("--sweep", action="store_true", help="Question 2.(b)/(c): sweep of the disutility coefficient (Q2_linear or Q2_quadratic)")
     parser.add_argument("--compare", action="store_true", help="Question 2.(d): linear vs quadratic vs Question 1 model")
     parser.add_argument("--nonseparable", action="store_true", help="Question 2.(e) bonus: accumulated-deviation model")
+    parser.add_argument("--sensitivity", action="store_true", help="Question 3.(f): vary E_min, c^Q and L_max")
     args = parser.parse_args()
 
     if not args.show:
@@ -414,6 +461,8 @@ def main() -> None:
         run_q2_comparison()
     if args.nonseparable:
         run_q2_nonseparable()
+    if args.sensitivity:
+        run_q3_sensitivity(args.question, out)
     print(f"\nOutputs written to {out}")
 
 
