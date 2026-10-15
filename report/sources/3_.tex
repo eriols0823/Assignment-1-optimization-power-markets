@@ -537,14 +537,11 @@ Import / export (kWh)                 & 15.47 / 2.41 & 16.89 / 5.07 \\
 Procurement cost (DKK)                & 60.40        & 54.50        \\
 Disutility (DKK)                      & 2.92         & 2.70         \\
 Initial battery energy used, $\piend(\soc[23] - \einit)$ (DKK) & --  & $-2.84$      \\
-Net utility (objective, DKK)          & $-63.31$     & $-60.04$     \\
+Net utility (objective, DKK; higher is better) & $-63.31$ & $-60.04$ \\
 Cost of one more kWh of $\Emin$, $\mu^E$ (DKK/kWh) & 2.37 & 2.31     \\
 \bottomrule
 \end{tabular}
-\caption{Base case of (e) without and with the battery. The net utility is minus the procurement
-cost, minus the disutility, plus the value of the change of stored energy; the battery starts
-with 2~kWh and ends empty, and the energy it used is charged at $\piend$. The total load is
-40~kWh in both cases.}
+\caption{Base case of (e) without and with the battery. The total load is 40~kWh in both cases.}
 \label{tab:q3g_base}
 \end{table}
 
@@ -572,11 +569,14 @@ drops from 2.37 to 2.31~DKK/kWh: the extra energy can now be supplied in part by
 or produced in cheaper hours. The energy stored or lost in the
 battery does not count towards $\Emin$, so the battery cannot be used to meet it on its own.
 
-\paragraph{Value of the battery.} The objective improves from $-63.31$ to $-60.04$~DKK, so the
-battery is worth 3.27~DKK/day. The procurement cost drops by 5.89~DKK and the disutility by
-0.22~DKK, but 2.84~DKK of this comes from the 2~kWh that the battery had at the start and uses
-during the day, which are charged at $\piend$. Without this term the value would be overestimated
-by the energy that the battery started with.
+\paragraph{Value of the battery.} The net utility is minus the procurement cost, minus the
+disutility, plus the value of the change of stored energy. It is negative because the consumer
+always pays more than it earns, so a value closer to zero is better: it improves from $-63.31$
+to $-60.04$~DKK, so the battery is worth 3.27~DKK/day. The procurement cost drops by 5.89~DKK
+and the disutility by 0.22~DKK, but part of these savings comes from the 2~kWh that the battery
+had at the start and uses during the day. This energy is not free, since it has to be bought
+again the following night, so it is charged at $\piend$ (2.84~DKK). Without this charge the value
+of the battery would be overestimated.
 
 \subsubsection{(v) Sensitivity analysis of the value of the battery}
 The value of the battery is the difference between the objective with and without the battery,
