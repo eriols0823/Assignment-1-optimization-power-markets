@@ -101,8 +101,15 @@ def terminal_value(d: InputData) -> float:
 class FlexibleConsumerModel:
     """Consumption problem of one consumer over a 24-hour horizon (Question 1); extend it for Questions 2 and 3."""
 
-    def __init__(self, data: InputData, name: str = "flexible_consumer", verbose: bool = False):
+    def __init__(self, data: InputData, name: str = "flexible_consumer", verbose: bool = False,
+                 end_of_day: str = "value", pi_end: float | None = None):
+        """``end_of_day`` and ``pi_end`` only matter with a battery (Question 3.(g)). ``end_of_day`` is
+        "value" (our choice: + pi^end (e_23 - e^init) in the objective, pi^end from terminal_value() unless
+        ``pi_end`` is given), "cyclic" (e_23 >= e^init) or "free" (no condition); the last two are the
+        alternatives of 3.(g).i, compared in 3.(g).v."""
         self.data = data
+        self.end_of_day = end_of_day
+        self.pi_end = pi_end if end_of_day == "value" else 0.0     # the alternatives give no value to e_23
         self.T = range(data.n_hours)
         self.m = gp.Model(name)
         self.m.Params.OutputFlag = 1 if verbose else 0
@@ -197,10 +204,11 @@ class FlexibleConsumerModel:
         # The constant -pi^end * e^init does not change the decisions, but keeps the objective
         # comparable with the case without battery (the term is zero if the battery ends as it started).
         if has_battery:
-            pi_end = terminal_value(d)
+            if self.pi_end is None:
+                self.pi_end = terminal_value(d)
             m.update()                   # without it, getObjective() would still return the empty objective
             m.setObjective(
-                m.getObjective() + pi_end * (self.var["soc"][T[-1]] - d.battery_initial_soc_kWh),
+                m.getObjective() + self.pi_end * (self.var["soc"][T[-1]] - d.battery_initial_soc_kWh),
                 GRB.MAXIMIZE)
 
         # --- Constraints -------------------------------------------------------------
@@ -255,6 +263,9 @@ class FlexibleConsumerModel:
             # g: capacity          -e_t <= 0,  e_t - E^bat <= 0
             self.con["soc_lo"] = m.addConstrs((-soc[t] <= 0 for t in T), name="soc_lo")
             self.con["soc_up"] = m.addConstrs((soc[t] - d.battery_capacity_kWh <= 0 for t in T), name="soc_up")
+            # g: cyclic end, only for the alternative of 3.(g).v     e^init - e_23 <= 0
+            if self.end_of_day == "cyclic":
+                self.con["soc_end"] = m.addConstr(d.battery_initial_soc_kWh - soc[T[-1]] <= 0, name="soc_end")
 
         m.update()
         return self
@@ -313,9 +324,8 @@ class FlexibleConsumerModel:
         cost = (p_imp * hourly["import"] - p_exp * hourly["export"] + d.pv_marginal_cost * hourly["pv"]).sum()
         battery = {}
         if "soc" in hourly:                                  # Question 3.(g)
-            pi_end = terminal_value(d)
-            battery = {"pi_end": pi_end,
-                       "terminal_value": pi_end * (hourly["soc"].iloc[-1] - d.battery_initial_soc_kWh),
+            battery = {"pi_end": self.pi_end,
+                       "terminal_value": self.pi_end * (hourly["soc"].iloc[-1] - d.battery_initial_soc_kWh),
                        "overlap_max": float(np.minimum(hourly["charge"], hourly["discharge"]).max())}
 
         return Results(
@@ -337,6 +347,63 @@ _STATUS = {
 
 def _status_name(code: int) -> str:
     return _STATUS.get(code, f"STATUS_{code}")
+
+
+# ------------------------------------------------------------- Question 3.(g).v
+def solve_extended_horizon(d: InputData, hours_next: int = 11, today: bool = True,
+                           start_soc: float | None = None) -> dict:
+    """Benchmark of 3.(g).v: the battery problem of 3.(g) over day D and the first ``hours_next`` hours of D+1.
+
+    Same objective and constraints as ``FlexibleConsumerModel`` with a battery, in a compact form so that the
+    longer horizon fits the size-limited Gurobi licence (200 variables in a QP): the state of charge is an
+    expression of the charging and discharging variables instead of a variable, PV variables exist only in
+    hours with PV, and the bounds are variable bounds (no duals are needed here). With the base data,
+    hours_next = 11 (hours 0-10 of D+1, including the morning price peak) gives 196 variables.
+
+    E^min is imposed on day D only, since day D+1 is incomplete. The energy left at the end of the horizon has
+    no value; the battery has used it at the morning peak by then. With ``today=False`` only the hours of D+1
+    are solved, starting from ``start_soc``: the objective as a function of start_soc is the value of the energy
+    stored at the end of day D (the "water value" curve of 3.(g).i).
+
+    Returns the objective (DKK), the number of variables and the hourly charge, discharge and state of charge.
+    """
+    nxt = slice(0, hours_next)
+    if today:
+        price = np.r_[d.energy_price, d.energy_price_next_day[nxt]]
+        pv_max = np.r_[d.pv_available, d.pv_available_next_day[nxt]]
+        ref = np.r_[d.reference_load, d.reference_load_next_day[nxt]]
+    else:
+        price, pv_max, ref = d.energy_price_next_day[nxt], d.pv_available_next_day[nxt], d.reference_load_next_day[nxt]
+    H = range(len(price))
+    p_imp, p_exp = price + d.import_tariff, price - d.export_tariff
+
+    m = gp.Model("extended_horizon")
+    m.Params.OutputFlag = 0
+    load = m.addVars(H, lb=d.load_min_kWh, ub=d.load_max_kWh, name="load")
+    imp = m.addVars(H, name="import")
+    exp = m.addVars(H, name="export")
+    pv = {t: m.addVar(ub=pv_max[t], name=f"pv[{t}]") for t in H if pv_max[t] > 0}
+    ch = m.addVars(H, ub=d.battery_max_charge_kW, name="charge")
+    dis = m.addVars(H, ub=d.battery_max_discharge_kW, name="discharge")
+
+    soc, e = [], d.battery_initial_soc_kWh if start_soc is None else start_soc
+    for t in H:
+        e = e + d.battery_charging_efficiency * ch[t] - dis[t] / d.battery_discharging_efficiency
+        soc.append(e)
+        m.addConstr(e >= 0)
+        m.addConstr(e <= d.battery_capacity_kWh)
+        m.addConstr(load[t] + ch[t] - dis[t] == pv.get(t, 0) + imp[t] - exp[t])
+    if today:
+        m.addConstr(gp.quicksum(load[t] for t in range(24)) >= d.min_daily_energy_kWh)
+    m.setObjective(gp.quicksum(-d.quadratic_disutility * (load[t] - ref[t]) * (load[t] - ref[t])
+                               - p_imp[t] * imp[t] + p_exp[t] * exp[t] - d.pv_marginal_cost * pv.get(t, 0)
+                               for t in H), GRB.MAXIMIZE)
+    m.optimize()
+    if m.Status != GRB.OPTIMAL:
+        raise RuntimeError(f"Extended horizon ended with status {_status_name(m.Status)}")
+    return dict(objective=m.ObjVal, n_variables=m.NumVars,
+                charge=np.array([ch[t].X for t in H]), discharge=np.array([dis[t].X for t in H]),
+                soc=np.array([s.getValue() for s in soc]))
 
 
 # ---------------------------------------------------------------------- Question 2

@@ -69,17 +69,25 @@ unique (same load with another solver seed), and the bonus model with rho = 0 re
 **Question 3** (`--question Q3` or `Q3_battery`)
 ```bash
 python main.py --question Q3            # 3.(d)-(e): minimum daily energy, quadratic disutility
-python main.py --question Q3_battery    # 3.(g): the same consumer with a battery, and the value of the battery
+python main.py --question Q3_battery    # 3.(g): the same consumer with a battery, the value of the battery and its sensitivity
 ```
 
 | Command | Tables (`results/...`) | Figures |
 |---|---|---|
 | `--question Q3` | `Q3/`: `Q3_hourly.csv`, `Q3_summary.txt` | `results/Q3/`: `schedule.png`, `duals.png`, `inputs.png` |
-| `--question Q3_battery` | `Q3_battery/`: `Q3_battery_hourly.csv` (incl. `charge`, `discharge`, `soc` and their duals), `Q3_battery_summary.txt` | `results/figures/q3g_battery_schedule.png` |
+| `--question Q3_battery` | `Q3_battery/`: `Q3_battery_hourly.csv` (incl. `charge`, `discharge`, `soc` and their duals), `Q3_battery_summary.txt`, `q3g_sensitivity.csv`, `q3g_end_of_day.csv`, `q3g_water_value.csv`, `q3g_pi_end_sweep.csv` | `results/figures/`: `q3g_battery_schedule.png`, `q3g_sensitivity.png` |
 
 With a battery, `main.py` also solves the case without battery and prints the value of the battery, the value
 pi^end of the energy left at the end of the day (computed from the next-day data by `terminal_value()` in
-`src/model.py`), the final state of charge and the largest overlap of charging and discharging.
+`src/model.py`), the final state of charge and the largest overlap of charging and discharging (3.(g).iv).
+It then runs the sensitivity analysis of 3.(g).v: the value of the battery when one parameter changes at a time
+(price spread and level, `c^Q`, capacity, power, efficiency; `q3g_sensitivity.csv`). The parameters and their
+values are in `Q3_BATTERY_SWEEPS` in `main.py`, and the scenarios come from `src/scenarios.py`. Finally it compares
+our pi^end with the end-of-day alternatives of 3.(g).i (trend of the last two prices, last price, free end, cyclic)
+and with a benchmark over day D and hours 0-10 of D+1 (`solve_extended_horizon()` in `src/model.py`, written in a
+compact form so that it fits the 200-variable limit of the size-limited Gurobi licence): `q3g_end_of_day.csv`, the
+value of the energy stored at the end of the day `q3g_water_value.csv`, and the values of pi^end that change the
+decisions `q3g_pi_end_sweep.csv`.
 
 ## 3. Repository structure
 

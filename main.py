@@ -9,7 +9,7 @@
     python main.py --question Q2_quadratic --sweep  # Question 2.(c): same for c^Q
     python main.py --question Q2_quadratic --compare        # Question 2.(d): linear vs quadratic vs Question 1 model
     python main.py --question Q2_quadratic --nonseparable   # Question 2.(e) bonus: accumulated-deviation model
-    python main.py --question Q3_battery    # Question 3.(g): battery, value of the battery and its figure
+    python main.py --question Q3_battery    # Question 3.(g): battery, value of the battery, its sensitivity and figures
 """
 from __future__ import annotations
 
@@ -23,10 +23,10 @@ import pandas as pd
 
 from src.data_loader import load_question, list_questions
 from src.model import (AccumulatedDeviationModel, FlexibleConsumerModel, LinearDisutilityModel,
-                       QuadraticDisutilityModel, Results)
-from src.plotting import (plot_battery_schedule, plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles,
+                       QuadraticDisutilityModel, Results, solve_extended_horizon)
+from src.plotting import (plot_battery_schedule, plot_battery_sensitivity, plot_duals, plot_inputs, plot_lambda_range, plot_load_profiles,
                           plot_scenario_comparison, plot_schedule, plot_sweep)
-from src.scenarios import scale_prices, scale_pv, set_disutility, set_tariffs
+from src.scenarios import scale_prices, scale_pv, set_battery, set_disutility, set_tariffs, shift_prices
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 FIGURES_DIR = RESULTS_DIR / "figures"     # every figure used in the report
@@ -79,6 +79,114 @@ def run_q3_battery(out: Path, results: Results) -> None:
           f"pi_end = {results.meta['pi_end']:.4f} DKK/kWh, final state of charge {results.hourly['soc'].iloc[-1]:.3f} kWh, "
           f"max overlap of charge and discharge {results.meta['overlap_max']:.1e} kWh/h")
     plot_battery_schedule(results, data, without, save_to=FIGURES_DIR / "q3g_battery_schedule.png")
+
+
+# Question 3.(g).v: parameters varied one at a time (base case marked in the figure), with the
+# function that applies each value to the data
+Q3_BATTERY_SWEEPS = {
+    "price_spread": dict(values=[0.0, 0.5, 1.0, 1.5, 2.0], label="price spread (x base, same mean)",
+                         apply=lambda d, v: scale_prices(d, v, keep_mean=True)),
+    "price_level": dict(values=[-0.5, 0.0, 0.5, 1.0], label="price level (DKK/kWh added, same spread)",
+                        apply=shift_prices),
+    "c_Q": dict(values=[0.02, 0.1, 0.3, 1.0, 3.0, 10.0], label="$c^Q$ (DKK/kWh$^2$)",
+                apply=lambda d, v: set_disutility(d, quadratic=v)),
+    "capacity": dict(values=[1.0, 2.0, 4.0, 8.0, 16.0], label="capacity $E^{bat}$ (kWh)",
+                     apply=lambda d, v: set_battery(d, capacity_kWh=v)),
+    "power": dict(values=[0.5, 1.0, 1.5, 3.0, 6.0], label="power $P^{ch} = P^{dis}$ (kW)",
+                  apply=lambda d, v: set_battery(d, power_kW=v)),
+    "efficiency": dict(values=[0.8, 0.85, 0.9, 0.95, 1.0], label=r"efficiency $\eta^{ch} = \eta^{dis}$",
+                       apply=lambda d, v: set_battery(d, efficiency=v)),
+}
+
+
+def battery_run(data, **model_args) -> dict:
+    """Solve ``data`` with and without its battery; value of the battery = difference of the objectives."""
+    with_bat = FlexibleConsumerModel(data, **model_args).build().solve()
+    without = FlexibleConsumerModel(replace(data, battery_capacity_kWh=None)).build().solve()
+    hr = with_bat.hourly
+    return dict(value_DKK=with_bat.objective - without.objective, pi_end=with_bat.meta["pi_end"],
+                final_soc_kWh=hr["soc"].iloc[-1], discharged_kWh=hr["discharge"].sum(),
+                overlap_max=with_bat.meta["overlap_max"], hourly=hr)
+
+
+def run_q3_battery_sensitivity(out: Path) -> None:
+    """Question 3.(g).v: value of the battery when one parameter changes. Saves q3g_sensitivity.csv and its figure."""
+    base = load_question("Q3_battery")
+    rows = []
+    for name, sw in Q3_BATTERY_SWEEPS.items():
+        for v in sw["values"]:
+            r = battery_run(sw["apply"](base, v))
+            rows.append(dict(parameter=name, value=v, **{k: x for k, x in r.items() if k != "hourly"}))
+    table = pd.DataFrame(rows)
+    table.to_csv(out / "q3g_sensitivity.csv", index=False)
+    print("\nValue of the battery, one parameter at a time:\n", table.round(3).to_string(index=False))
+    plot_battery_sensitivity(table, {n: sw["label"] for n, sw in Q3_BATTERY_SWEEPS.items()},
+                             save_to=FIGURES_DIR / "q3g_sensitivity.png")
+
+
+def end_of_day_alternatives(d) -> dict[str, dict]:
+    """The end-of-day representations compared in 3.(g).v, as arguments of FlexibleConsumerModel.
+
+    "trend" extrapolates the last two import prices of the day by one hour, a heuristic that needs no forecast."""
+    p_imp = d.energy_price + d.import_tariff
+    trend = p_imp[-1] + (p_imp[-1] - p_imp[-2])
+    return {"ours": {},
+            "trend": dict(pi_end=trend),
+            "last price": dict(pi_end=p_imp[-1]),
+            "last price / eta_ch": dict(pi_end=p_imp[-1] / d.battery_charging_efficiency),
+            "free end": dict(end_of_day="free"),
+            "cyclic": dict(end_of_day="cyclic")}
+
+
+def schedule_change(hourly, ref_hourly) -> float:
+    """Largest change of charging or discharging in any hour (kWh/h) between two schedules."""
+    return max(np.abs(np.asarray(hourly[c])[:24] - np.asarray(ref_hourly[c])).max() for c in ("charge", "discharge"))
+
+
+def run_q3_end_of_day(out: Path) -> None:
+    """Question 3.(g).v: our pi^end against the alternatives of 3.(g).i and against the extended-horizon benchmark.
+
+    Saves q3g_end_of_day.csv (one row per alternative and the benchmark), q3g_water_value.csv (value of the energy
+    stored at the end of the day) and q3g_pi_end_sweep.csv (the decisions for other values of pi^end).
+    """
+    base = load_question("Q3_battery")
+    ref = battery_run(base)
+    rows = []
+    for name, args in end_of_day_alternatives(base).items():
+        r = battery_run(base, **args)
+        rows.append(dict(end=name, pi_end=r["pi_end"], final_soc_kWh=r["final_soc_kWh"], value_DKK=r["value_DKK"],
+                         schedule_change=schedule_change(r["hourly"], ref["hourly"])))
+
+    # Benchmark: day D + hours 0-10 of D+1, and the value W(x) of starting D+1 with x kWh in the battery
+    ext = solve_extended_horizon(base)
+    xs = np.arange(0.0, base.battery_capacity_kWh + 1e-9, 1.0)
+    W = np.array([solve_extended_horizon(base, today=False, start_soc=float(x))["objective"] for x in xs])
+    water = pd.DataFrame({"soc_kWh": xs, "value_DKK": W - W[0], "marginal_value_DKK_per_kWh": np.r_[np.nan, np.diff(W)]})
+    water.to_csv(out / "q3g_water_value.csv", index=False)
+    # Exact value of the battery: our schedule with the stored-energy term pi^end (e_23 - e^init) replaced
+    # by the exact value W(e_23) - W(e^init)
+    e23, e0 = ref["final_soc_kWh"], base.battery_initial_soc_kWh
+    exact = ref["value_DKK"] - ref["pi_end"] * (e23 - e0) + np.interp(e23, xs, W) - np.interp(e0, xs, W)
+    rows.insert(1, dict(end="benchmark (exact value)", pi_end=np.nan, final_soc_kWh=ext["soc"][23], value_DKK=exact,
+                        schedule_change=schedule_change(ext, ref["hourly"])))
+    table = pd.DataFrame(rows)
+    table.to_csv(out / "q3g_end_of_day.csv", index=False)
+    print(f"\nEnd of the day (benchmark: {ext['n_variables']} variables):\n", table.round(3).to_string(index=False))
+    print("Value of the energy stored at the end of the day (benchmark):\n", water.round(3).to_string(index=False))
+
+    # Thresholds: the smallest pi^end that changes the decisions, and the smallest that makes the battery
+    # recharge in the last hour
+    sweep = []
+    for p in np.round(np.arange(1.40, 2.001, 0.01), 2):
+        r = battery_run(base, pi_end=float(p))
+        sweep.append(dict(pi_end=p, final_soc_kWh=r["final_soc_kWh"], value_DKK=r["value_DKK"],
+                          schedule_change=schedule_change(r["hourly"], ref["hourly"]),
+                          charge_last_hour=r["hourly"]["charge"].iloc[-1]))
+    sweep = pd.DataFrame(sweep)
+    sweep.to_csv(out / "q3g_pi_end_sweep.csv", index=False)
+    print(f"Decisions change for pi_end >= {sweep.loc[sweep['schedule_change'] > 0.05, 'pi_end'].min():.2f} DKK/kWh; "
+          f"the battery recharges in the last hour for pi_end >= "
+          f"{sweep.loc[sweep['charge_last_hour'] > 0.05, 'pi_end'].min():.2f} DKK/kWh")
 
 
 def run_scenarios(question: str, out: Path) -> dict[str, Results]:
@@ -418,6 +526,8 @@ def main() -> None:
     base = run_base_case(args.question, out, args.show)
     if base is not None and "soc" in base.hourly:      # Question 3.(g): a case with a battery
         run_q3_battery(out, base)
+        run_q3_battery_sensitivity(out)
+        run_q3_end_of_day(out)
     if args.scenarios and base is not None:
         run_scenarios(args.question, out)
     if args.validate and base is not None:
