@@ -85,7 +85,9 @@ It then runs the sensitivity analysis of 3.(g).v: the value of the battery when 
 values are in `Q3_BATTERY_SWEEPS` in `main.py`, and the scenarios come from `src/scenarios.py`. Finally it compares
 our pi^end with the end-of-day alternatives of 3.(g).i (trend of the last two prices, last price, free end, cyclic)
 and with a benchmark over day D and hours 0-10 of D+1 (`solve_extended_horizon()` in `src/model.py`, written in a
-compact form so that it fits the 200-variable limit of the size-limited Gurobi licence): `q3g_end_of_day.csv`, the
+compact form so that it fits the 200-variable limit of the size-limited Gurobi licence): `q3g_end_of_day.csv` (with
+the value of the battery reported by each alternative and its exact value, with the energy left at the end valued
+with the benchmark), the
 value of the energy stored at the end of the day `q3g_water_value.csv`, and the values of pi^end that change the
 decisions `q3g_pi_end_sweep.csv`.
 

@@ -107,6 +107,10 @@ class FlexibleConsumerModel:
         "value" (our choice: + pi^end (e_23 - e^init) in the objective, pi^end from terminal_value() unless
         ``pi_end`` is given), "cyclic" (e_23 >= e^init) or "free" (no condition); the last two are the
         alternatives of 3.(g).i, compared in 3.(g).v."""
+        if end_of_day not in ("value", "cyclic", "free"):
+            raise ValueError(f"end_of_day must be 'value', 'cyclic' or 'free', got {end_of_day!r}")
+        if pi_end is not None and end_of_day != "value":
+            raise ValueError(f"pi_end is only used with end_of_day='value' (got end_of_day={end_of_day!r})")
         self.data = data
         self.end_of_day = end_of_day
         self.pi_end = pi_end if end_of_day == "value" else 0.0     # the alternatives give no value to e_23
@@ -200,16 +204,10 @@ class FlexibleConsumerModel:
         else:
             raise ValueError(f"{d.question}: the input data has no consumption utility or quadratic disutility")
 
-        # Question 3.(g): value of the net change of stored energy, + pi^end * (e_23 - e^init).
-        # The constant -pi^end * e^init does not change the decisions, but keeps the objective
-        # comparable with the case without battery (the term is zero if the battery ends as it started).
+        # Question 3.(g): value of the net change of stored energy (see _stored_energy_term)
         if has_battery:
-            if self.pi_end is None:
-                self.pi_end = terminal_value(d)
             m.update()                   # without it, getObjective() would still return the empty objective
-            m.setObjective(
-                m.getObjective() + self.pi_end * (self.var["soc"][T[-1]] - d.battery_initial_soc_kWh),
-                GRB.MAXIMIZE)
+            m.setObjective(m.getObjective() + self._stored_energy_term(), GRB.MAXIMIZE)
 
         # --- Constraints -------------------------------------------------------------
         # Sign convention (same as Question 1.(b), primal feasibility of the KKT conditions):
@@ -269,6 +267,19 @@ class FlexibleConsumerModel:
 
         m.update()
         return self
+
+    def _stored_energy_term(self):
+        """Question 3.(g): + pi^end * (e_23 - e^init), or 0 without a battery.
+
+        The constant -pi^end * e^init does not change the decisions, but keeps the objective comparable with the
+        case without battery (the term is zero if the battery ends as it started). Every model that sets its own
+        objective (e.g. DisutilityModel) must add this term too."""
+        d = self.data
+        if d.battery_capacity_kWh is None:
+            return 0.0
+        if self.pi_end is None:
+            self.pi_end = terminal_value(d)
+        return self.pi_end * (self.var["soc"][self.T[-1]] - d.battery_initial_soc_kWh)
 
     # ------------------------------------------------------------------ 3. solve
     def solve(self) -> Results:
@@ -367,6 +378,12 @@ def solve_extended_horizon(d: InputData, hours_next: int = 11, today: bool = Tru
 
     Returns the objective (DKK), the number of variables and the hourly charge, discharge and state of charge.
     """
+    required = {"battery": d.battery_capacity_kWh, "quadratic disutility": d.quadratic_disutility,
+                "next-day prices": d.energy_price_next_day, "next-day PV": d.pv_available_next_day,
+                "next-day reference load": d.reference_load_next_day}
+    missing = [name for name, value in required.items() if value is None]
+    if missing:
+        raise ValueError(f"{d.question}: the extended horizon needs {', '.join(missing)} in the input data")
     nxt = slice(0, hours_next)
     if today:
         price = np.r_[d.energy_price, d.energy_price_next_day[nxt]]
@@ -393,8 +410,8 @@ def solve_extended_horizon(d: InputData, hours_next: int = 11, today: bool = Tru
         m.addConstr(e >= 0)
         m.addConstr(e <= d.battery_capacity_kWh)
         m.addConstr(load[t] + ch[t] - dis[t] == pv.get(t, 0) + imp[t] - exp[t])
-    if today:
-        m.addConstr(gp.quicksum(load[t] for t in range(24)) >= d.min_daily_energy_kWh)
+    if today and d.min_daily_energy_kWh is not None:             # E^min on the hours of day D only
+        m.addConstr(gp.quicksum(load[t] for t in range(d.n_hours)) >= d.min_daily_energy_kWh)
     m.setObjective(gp.quicksum(-d.quadratic_disutility * (load[t] - ref[t]) * (load[t] - ref[t])
                                - p_imp[t] * imp[t] + p_exp[t] * exp[t] - d.pv_marginal_cost * pv.get(t, 0)
                                for t in H), GRB.MAXIMIZE)
@@ -428,7 +445,7 @@ class DisutilityModel(FlexibleConsumerModel):
         p_exp = d.energy_price - d.export_tariff
         procurement = gp.quicksum(p_imp[t] * self.var["import"][t] - p_exp[t] * self.var["export"][t]
                                   + d.pv_marginal_cost * self.var["pv"][t] for t in T)
-        m.setObjective(-self._disutility() - procurement, GRB.MAXIMIZE)
+        m.setObjective(-self._disutility() - procurement + self._stored_energy_term(), GRB.MAXIMIZE)
         m.update()
         return self
 
@@ -438,8 +455,8 @@ class DisutilityModel(FlexibleConsumerModel):
     def _extract_results(self, status: str) -> Results:
         res = super()._extract_results(status)
         res.hourly["deviation"] = res.hourly["load"] - self.data.reference_load
-        res.meta["utility"] = None      # no utility term: objective = -disutility - procurement cost
-        res.meta["disutility"] = -res.objective - res.meta["procurement_cost"]
+        res.meta["utility"] = None      # no utility term: objective = -disutility - procurement cost (+ stored energy)
+        res.meta["disutility"] = -res.objective - res.meta["procurement_cost"] + res.meta.get("terminal_value", 0.0)
         return res
 
 

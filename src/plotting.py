@@ -213,18 +213,19 @@ def plot_battery_schedule(results: Results, data: InputData, results_without: Re
     return _finish(fig, save_to)
 
 
-def plot_battery_sensitivity(table, labels: dict[str, str], save_to: Path | str | None = None) -> plt.Figure:
+def plot_battery_sensitivity(table, labels: dict[str, str], base_value: float,
+                             save_to: Path | str | None = None) -> plt.Figure:
     """Question 3.(g).v: value of the battery against each varied parameter, one panel per parameter.
 
     ``table`` has the columns parameter, value and value_DKK; ``labels`` maps each parameter to its axis label.
-    The base case (value of the battery 3.27 DKK) is the dotted line in every panel.
+    ``base_value`` (the value of the battery in the base case, DKK/day) is the dotted line in every panel.
     """
-    fig, axes = plt.subplots(2, 3, figsize=(11, 6), sharey=True)
-    base = table.loc[(table["parameter"] == "capacity") & (table["value"] == 4.0), "value_DKK"].iloc[0]
+    rows = -(-len(labels) // 3)                                    # three panels per row
+    fig, axes = plt.subplots(rows, 3, figsize=(11, 3 * rows), sharey=True, squeeze=False)
     for ax, (name, label) in zip(axes.flat, labels.items()):
         sub = table[table["parameter"] == name]
         ax.plot(sub["value"], sub["value_DKK"], color="C0", lw=2, marker="o", ms=6)
-        ax.axhline(base, color="grey", lw=0.8, ls=":")
+        ax.axhline(base_value, color="grey", lw=0.8, ls=":")
         if name == "c_Q":
             ax.set_xscale("log")
         ax.set_xlabel(label)

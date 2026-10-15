@@ -516,7 +516,7 @@ charge as $h(x) = 0$.
 
 \subsubsection{(iv) Base case with the battery}
 Figure~\ref{fig:q3g_schedule} shows the optimal schedule with the battery against the schedule
-of (d), and Table~\ref{tab:q3g_base} the main results.
+of (e), and Table~\ref{tab:q3g_base} the main results.
 
 \begin{figure}[H]
     \centering
@@ -531,7 +531,7 @@ of (d), and Table~\ref{tab:q3g_base} the main results.
 \centering
 \begin{tabular}{lcc}
 \toprule
- & Without battery (d) & With battery \\
+ & Without battery (e) & With battery \\
 \midrule
 Import / export (kWh)                 & 15.47 / 2.41 & 16.89 / 5.07 \\
 Procurement cost (DKK)                & 60.40        & 54.50        \\
@@ -541,7 +541,7 @@ Objective (DKK)                       & $-63.31$     & $-60.04$     \\
 $\mu^E$ (DKK/kWh)                     & 2.37         & 2.31         \\
 \bottomrule
 \end{tabular}
-\caption{Base case of (d) without and with the battery. The total load is 40~kWh in both.}
+\caption{Base case of (e) without and with the battery. The total load is 40~kWh in both.}
 \label{tab:q3g_base}
 \end{table}
 
@@ -565,7 +565,7 @@ $\pimp$ in most hours because the consumer imports anyway. The battery only lowe
 the evening hours 17 and 20--22 (from up to 2.70 to 1.80~DKK/kWh), and there the load moves
 slightly up, since energy for $\Emin$ is now cheaper there. In the other hours the load drops
 by about 0.03~kWh, following the lower $\mu^E$. The battery takes over the role that the load flexibility had
-in (d): it shifts energy in time, so the load does not have to.
+in (e): it shifts energy in time, so the load does not have to.
 
 \paragraph{Role of the minimum-energy requirement.} $\Emin$ is still binding, with a total load
 of exactly 40~kWh, but $\mu^E$ drops from 2.37 to 2.31~DKK/kWh: the extra energy can now be
@@ -638,36 +638,41 @@ without it. The benchmark gives the same decisions, and solving only the morning
 given state of charge gives the exact value of the stored energy: a decreasing curve, from
 1.52~DKK/kWh for the first kWh to 1.42 for the fourth, since refilling takes several night hours
 at increasing prices. Our $\piend$ prices the 2~kWh used from the initial charge at the cheapest
-of them, so it overestimates the value of the battery by 0.15~DKK/day (5\,\%).
+of them, so the value it reports overestimates the exact value by 0.15~DKK/day (5\,\%).
 
-The decisions only change when $\piend$ exceeds 1.71~DKK/kWh, where keeping a kWh is worth more
-than exporting it in hour 20 ($\etadis \pexp[20]$), and 1.79, where recharging in hour 23 pays
-($\pimp[23]/\etach$). Without forecasts, the trend of the last two hours is a good heuristic: it
-captures the fall of the prices towards the night valley and gives both the right decisions and
-the exact value, although it only sees two hours and would fail with flat or rising prices late
-in the evening. The last price itself is only 0.01 below the threshold, and divided by $\etach$
-it already recharges at night. The free end overestimates the value, since it uses $\einit$ for
-free, and the cyclic condition underestimates it, since it forces a refill before midnight.
+The table gives each alternative two values of the battery: the one its own objective reports,
+and the exact one, which keeps its operation of day $D$ but values $\soc[23]$ with the exact
+curve. This separates errors in the decisions from errors in the valuation: every alternative
+with $\piend$ below 1.71~DKK/kWh takes the same decisions and has the same exact value. The
+decisions only change above 1.71, where keeping a kWh is worth more than exporting it in hour 20
+($\etadis \pexp[20]$), and above 1.79, where recharging in hour 23 pays ($\pimp[23]/\etach$).
+Without forecasts, the trend of the last two hours is a good heuristic: it captures the fall of
+the prices towards the night valley and reports almost exactly the right value, although it only
+sees two hours and would fail with flat or rising prices late in the evening. The last price is
+only 0.01 below the threshold, and divided by $\etach$ it keeps energy and recharges at night,
+which loses 0.59~DKK/day. The free end reports almost twice the value because it uses $\einit$
+for free, and the cyclic condition loses 0.48~DKK/day by forcing a refill before midnight.
 
 \begin{table}[H]
 \centering
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-End of the day & $\piend$ & $\soc[23]$ & Value & Change \\
+End of the day & $\piend$ & $\soc[23]$ & Reported & Exact & Change \\
 \midrule
-Ours, \eqref{eq:g_piend}                        & 1.42         & 0.00       & 3.27 & --   \\
-Benchmark, 35~h                                 & 1.52 to 1.42 & 0.00       & 3.12 & 0.01 \\
-Trend, $\pimp[23] + (\pimp[23] - \pimp[22])$    & 1.50         & 0.00       & 3.12 & 0.00 \\
-Last price, $\pimp[23]$                         & 1.70         & 0.00       & 2.72 & 0.01 \\
-Last price over $\etach$                        & 1.79         & 2.34$^*$   & 2.63 & 1.14 \\
-Free end                                        & 0            & 0.00       & 6.12 & 0.00 \\
-Cyclic, $\soc[23] \geq \einit$                  & --           & 2.00       & 2.63 & 1.14 \\
+Ours, \eqref{eq:g_piend}                        & 1.42         & 0.00     & 3.27 & 3.12 & --   \\
+Benchmark, 35~h                                 & 1.52 to 1.42 & 0.00     & --   & 3.12 & 0.01 \\
+Trend, $\pimp[23] + (\pimp[23] - \pimp[22])$    & 1.50         & 0.00     & 3.12 & 3.12 & 0.00 \\
+Last price, $\pimp[23]$                         & 1.70         & 0.00     & 2.72 & 3.12 & 0.01 \\
+Last price over $\etach$                        & 1.79         & 2.34$^*$ & 2.63 & 2.53 & 1.14 \\
+Free end                                        & 0            & 0.00     & 6.12 & 3.12 & 0.00 \\
+Cyclic, $\soc[23] \geq \einit$                  & --           & 2.00     & 2.63 & 2.63 & 1.14 \\
 \bottomrule
 \end{tabular}
 \caption{End-of-day representations: $\piend$ (DKK/kWh), final state of charge (kWh), value of
-the battery (DKK/day) and largest change of charging or discharging in any hour of day $D$
-compared with ours (kWh/h). $^*$Recharging in hour 23 costs exactly $\piend$, so $\soc[23]$ is
-not unique.}
+the battery reported by each objective and exact value, with $\soc[23]$ valued with the exact
+curve (DKK/day), and largest change of charging or discharging in any hour of day $D$ compared
+with ours (kWh/h). $^*$Recharging in hour 23 costs exactly $\piend$, so $\soc[23]$, and with it
+the exact value, is not unique.}
 \label{tab:q3g_end}
 \end{table}
 
@@ -676,4 +681,5 @@ lot within the day, where the import and export prices are far apart, and where 
 cannot shift its own load. Its technical characteristics matter mostly through the efficiency,
 which decides whether the price differences are large enough to pay for the losses at all.
 Capacity and power add value only up to what the price profile can use, here about two cycles a
-day.
+day. In practice the value would be somewhat lower, since the model has no degradation cost:
+every cycle wears the battery, so each one would need an even larger price spread to pay off.
