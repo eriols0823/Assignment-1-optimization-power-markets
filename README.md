@@ -44,8 +44,17 @@ and its report figures to `results/figures/`; `--show` opens the figures in a wi
 python main.py --question Q1_caseA              # base case
 python main.py --question Q1_caseA --scenarios  # + example sensitivity scenarios
 python main.py --question Q1_caseA --validate   # Question 1.(f): price ladder and dual check
+python main.py --question Q1_caseB --validate   # the same for case B
 ```
-_To be completed by the authors of Question 1 (final commands and outputs)._
+
+| Command | Tables (`results/<case>/`) | Figures (`results/<case>/`) |
+|---|---|---|
+| `--question Q1_caseA` (or `Q1_caseB`) | `<case>_hourly.csv` (schedule and duals of every constraint), `<case>_summary.txt` | `schedule.png`, `duals.png`, `inputs.png` |
+| `... --validate` | `<case>_validation.csv` (price-ladder prediction against the solver, hour by hour) | `lambda_range.png` (range of valid values of the balance dual) |
+| `... --scenarios` | `<case>_<scenario>_hourly.csv`, `<case>_<scenario>_summary.txt` | `scenarios_cost.png` |
+
+`--validate` (1.(f)) compares the solved load and PV with the price ladder of 1.(d), hour by hour, and checks
+whether the dual of the power balance is unique by solving again with a little energy added and removed.
 
 **Question 2**
 ```bash
@@ -70,13 +79,15 @@ unique (same load with another solver seed), and the bonus model with rho = 0 re
 
 **Question 3** (`--question Q3` or `Q3_battery`)
 ```bash
-python main.py --question Q3            # 3.(d)-(e): minimum daily energy, quadratic disutility
-python main.py --question Q3_battery    # 3.(g): the same consumer with a battery, the value of the battery and its sensitivity
+python main.py --question Q3                  # 3.(d)-(e): minimum daily energy, quadratic disutility
+python main.py --question Q3 --sensitivity    # 3.(f): sweeps of E^min, c^Q and L^max
+python main.py --question Q3_battery          # 3.(g): the same consumer with a battery, the value of the battery and its sensitivity
 ```
 
 | Command | Tables (`results/...`) | Figures |
 |---|---|---|
-| `--question Q3` | `Q3/`: `Q3_hourly.csv`, `Q3_summary.txt` | `results/Q3/`: `schedule.png`, `duals.png`, `inputs.png` |
+| `--question Q3` | `Q3/`: `Q3_hourly.csv`, `Q3_summary.txt` (incl. mu^E as `dual[min_energy]`) | `results/Q3/`: `schedule.png`, `duals.png`, `inputs.png` |
+| `--question Q3 --sensitivity` | `Q3/`: `sensitivity_E_min.csv`, `sensitivity_c_Q.csv`, `sensitivity_L_max.csv` | `results/Q3/`: `q3f_emin_sweep.png`, `q3f_emin_profiles.png`, `q3f_cq_profiles.png`, `q3f_lmax_profiles.png` |
 | `--question Q3_battery` | `Q3_battery/`: `Q3_battery_hourly.csv` (incl. `charge`, `discharge`, `soc` and their duals), `Q3_battery_summary.txt`, `q3g_sensitivity.csv`, `q3g_end_of_day.csv`, `q3g_water_value.csv`, `q3g_pi_end_sweep.csv` | `results/figures/`: `q3g_battery_schedule.png`, `q3g_sensitivity.png` |
 
 With a battery, `main.py` also solves the case without battery and prints the value of the battery, the value
@@ -99,9 +110,11 @@ decisions `q3g_pi_end_sweep.csv`.
 main.py                  Entry point: load data -> build model -> solve -> save results and figures, one function per experiment
 src/
   data_loader.py         load_question("Q1_caseA") -> InputData (all parameters, with units)
-  model.py               FlexibleConsumerModel (Question 1 problem) and its extensions: build() / solve() -> Results
-  scenarios.py           Helpers that derive scenarios from a base InputData (prices, tariffs, PV, preferences, disutility)
-  plotting.py            Figures for inputs, schedules, duals, scenario comparisons and Question 2
+  model.py               FlexibleConsumerModel (Questions 1 and 3, with the battery of 3.(g)) and the Question 2 models:
+                         build() / solve() -> Results; terminal_value() and solve_extended_horizon() for 3.(g)
+  scenarios.py           Helpers that derive scenarios from a base InputData (prices, tariffs, PV, preferences,
+                         disutility, battery)
+  plotting.py            Figures for inputs, schedules, duals, scenario comparisons, sweeps and the battery
 data/                    Input data, see Section 6
 results/                 Written by main.py (tables per case, figures in results/figures/)
 requirements.txt, environment.yaml, LICENSE, .gitignore
@@ -123,7 +136,16 @@ requirements.txt, environment.yaml, LICENSE, .gitignore
 
 ## 5. Code of each question
 
-**Question 1.** _To be described by the authors of Question 1 (model, functions, outputs)._
+**Question 1** (hourly consumption decision with a linear utility)
+
+* `src/model.py`: `FlexibleConsumerModel.build()` writes the LP of 1.(a) over the 24 hours: the variables
+  `load`, `pv`, `import`, `export`, the objective `sum_t u^L l_t - p^imp_t q^imp_t + p^exp_t q^exp_t - c^PV q^PV_t`
+  and the constraints `balance`, `load_lo`, `load_up`, `pv_lo`, `pv_up`, `imp_nonneg`, `exp_nonneg`, all in the
+  form of 1.(b), so that each `dual_<name>` is the multiplier of the report (lambda_t and the six mu_t).
+  `solve()` returns the schedule, the objective split into utility and procurement cost, and every dual.
+* `main.py`: `run_base_case` (schedule, duals and figures of any case) and `run_q1_validation` (1.(f): price
+  ladder of 1.(d) against the solver, and uniqueness of the balance dual).
+* `src/plotting.py`: `plot_inputs`, `plot_schedule`, `plot_duals` and `plot_lambda_range`.
 
 **Question 2** (separable and non-separable disutility)
 
@@ -145,7 +167,22 @@ requirements.txt, environment.yaml, LICENSE, .gitignore
   `predicted_load_linear` and `predicted_load_quadratic` used by the checks. Question 2 solves the base case with
   its own model and writes its figures to `results/figures/` instead of the standard plots of Question 1.
 
-**Question 3.** _To be described by the authors of Question 3 (model, functions, outputs)._
+**Question 3** (minimum daily energy and a small battery)
+
+* `src/model.py`, 3.(a)-(e): `FlexibleConsumerModel.build()` uses the quadratic disutility of 2.(c) as the
+  objective when the data contain `c^Q`, and adds the constraint `min_energy`, `E^min - sum_t l_t <= 0`, when
+  they contain `E^min`. Its dual is mu^E (`results.duals["min_energy"]`).
+* `src/model.py`, 3.(g): when the data contain a battery, `build()` adds the variables `charge`, `discharge`,
+  `soc`, the state-of-charge constraint `soc_dyn` and the limits `ch_lo`, `ch_up`, `dis_lo`, `dis_up`, `soc_lo`,
+  `soc_up`, and the term `pi^end (e_23 - e^init)` in the objective. `terminal_value()` computes pi^end from the
+  next-day data. The option `end_of_day` ("value", "cyclic" or "free") and `pi_end` give the alternatives
+  compared in 3.(g).v. `solve_extended_horizon()` is the benchmark of 3.(g).v over day D and hours 0-10 of D+1.
+* `src/scenarios.py`: `set_load_preferences` (E^min, L^max), `set_disutility` (c^Q), `set_battery` (capacity,
+  power, efficiency), `scale_prices` and `shift_prices` (spread and level of the prices, also on the next day).
+* `main.py`: `run_q3_sensitivity` (3.(f)), `run_q3_battery` (3.(g).iv), `run_q3_battery_sensitivity` and
+  `run_q3_end_of_day` (3.(g).v). The parameters and values of the 3.(g).v sweeps are in `Q3_BATTERY_SWEEPS`.
+* `src/plotting.py`: `plot_battery_schedule` and `plot_battery_sensitivity` for 3.(g); 3.(f) reuses `plot_sweep`
+  and `plot_load_profiles`.
 
 ## 6. Input data
 
@@ -176,8 +213,9 @@ does every conversion for you and exposes physical quantities:
 | Question 3 - minimum daily energy requirement | `Q3` | `PV_01_A` + `FL_03` (as `FL_02_Q` plus `min_total_energy_per_day_kWh`, the E_min of the daily requirement) |
 | Question 3.(g) - the same consumer with a small battery | `Q3_battery` | `PV_01_A` + `FL_03` + `BAT_01` |
 
-No data is shipped for the bonus question 2.(e) on purpose: choosing your own cost parameters (and
-justifying them) is part of that question - start from the `Q2_quadratic` case and override in code.
+No data is shipped for the bonus question 2.(e): its parameters (`rho = 0.8`, `c^Q = 0.05`, `c^S = 0.06`) were
+chosen by the group, starting from the `Q2_quadratic` case, and are set in code (`AccumulatedDeviationModel`).
+All the values chosen by the group (sweeps, scenarios, parameters) are listed in the appendix of the report.
 
 `params_<case>.json` - the case file
 : `consumers[]`: `consumer_id`, `connection_bus` (a `bus_id` of `bus_params.json`), `list_appliances`
@@ -195,11 +233,10 @@ justifying them) is part of that question - start from the `Q2_quadratic` case a
 
 **Next-day forecasts.** Three fields carry the forecast for the *following* day:
 `energy_price_next_day_DKK_per_kWh` (in `bus_params.json`), `hourly_profile_ratio_next_day` (in the
-DER entries) and `reference_hourly_profile_ratio_next_day` (in the load entries). They are **not
-needed for the base models**: they are provided in case you want to explore the end-of-horizon
-choice of Question 3.(g) with a look-ahead (for instance a rolling-horizon or a two-day experiment).
-`load_question()` exposes them as `energy_price_next_day`, `pv_available_next_day` and
-`reference_load_next_day`.
+DER entries) and `reference_hourly_profile_ratio_next_day` (in the load entries). `load_question()`
+exposes them as `energy_price_next_day`, `pv_available_next_day` and `reference_load_next_day`. We use
+them only in Question 3.(g): the next-day prices give the value pi^end of the energy left in the battery
+(`terminal_value()`), and the three of them define the benchmark of 3.(g).v (`solve_extended_horizon()`).
 
 `load_question()` in `src/data_loader.py` shows exactly how each attribute is derived from these files.
 
