@@ -156,35 +156,24 @@ and $\PVmax$):
 \paragraph{Computational meaning.}
 %\todo{What does this decomposition change about how the problem can be solved (size of the
 %problem actually being solved, parallelisability, ...)?}
-Since the hours are independent, the 24 hourly problems can be solved separately, in any
-order, and even in parallel. Each of them is also much smaller than the daily problem: 4
-variables and 7 constraints instead of 96 and 168. In general this reduces the computation time, since solving 24 small problems is faster than solving a single problem 24 times larger, although for a problem with only 96 variables the difference is expected to be negligible.
+Since the hours are independent, the 24 hourly problems can be solved separately and in any order. Each of them is also much smaller than the daily problem: 4 variables and 7 constraints instead of 96 and 168, which in general reduces the computation time, since solving 24 small problems is faster than solving a single problem 24 times larger.
 
 \paragraph{Economic meaning.}
 %\todo{What does this decomposition say about the structure of the consumer's
 %decision-making across the day?}
 
-The load is flexible, but it is not subject to reaching a total consumption over the day:
-the consumer only chooses how much to consume in each hour, between $\Lmin$ and $\Lmax$. For
-example, consuming less in hour $t$ (say, not running the washing machine then) does not
-oblige the consumer to consume more in another hour, and the value $\uL$ of each kWh does
-not depend on when it is consumed. Therefore, to decide in hour $t$ only the data of that
-hour are needed: not just the price, but also the tariffs and the PV available in that
-hour, and the consumer does not need to plan ahead across the day. The flexibility of the
-load does not break the independence between hours; what would break it is a minimum daily
-energy requirement or a battery.
+The load is flexible, but it is not subject to reaching a total consumption over the day: the consumer only chooses how much to consume in each hour, between $\Lmin$ and $\Lmax$. For example, consuming less in hour $t$ does not oblige the consumer to consume more in another hour, and the value $\uL$ of each kWh does not depend on when it is consumed. Therefore, to decide in hour $t$ only the data of that hour are needed.
 
 \subsection{(b) Lagrangian, dual problem and KKT conditions}
 
 \subsubsection{Setting up}
-\paragraph{Hourly problem in the form used here.}
-To follow the notation of the lecture notes, the hourly problem of (a) for a generic hour
+\paragraph{Hourly problem.}
+The hourly problem for a generic hour
 $t \in \T$ is written as a minimisation: instead of maximising the utility, we minimise the
 cost $C_t$, which is the hourly utility with the opposite sign. The equality constraints are
 written as $h_i(x) = 0$ and the inequality constraints as $g_j(x) \leq 0$, so that every
 non-negativity constraint $x \geq 0$ becomes the explicit constraint $-x \leq 0$ and gets its
-own multiplier. This makes the derivation of the KKT conditions more systematic and less
-error-prone.
+own multiplier. 
 
 \paragraph{Multipliers.}
 %Each constraint gets a multiplier, which works as a price: the Lagrangian adds to the cost
@@ -194,10 +183,9 @@ error-prone.
 Each constraint gets a multiplier that can be seen as a price in the Lagrangian. The multiplier tells us how much the optimal objective value would change if the constraint was marginally relaxed. 
 
 \begin{itemize}
-    \item $\lbal$ goes with the power balance, which is an equality. The balance can be relaxed
-    in both directions (too much or too little energy supplied), so $\lbal$ can be positive
-    or negative. It is the price of the energy in the balance in hour $t$.
-    \item The six $\mu$ go with the six inequalities. For inequalities written as $g_j(x)\leq 0$, the multipliers satisfy $\mu \geq 0$. A multiplier is typically nonzero when its constraint is binding. Each one prices its own limit: $\muLlo$ and $\muLup$ the lower and upper load limits; $\muPVlo$ and $\muPVup$ the lower and upper PV limits; $\muimp$ and $\muexp$ the non-negativity limits on import and export.
+    \item For the equality constraint we assign $\lbal$, the multiplier of the power balance. The balance can be relaxed
+    in both directions (too much or too little energy supplied), so $\lbal$ can be positive or negative. It is the price of the energy in the balance in hour $t$.
+    \item For the other six inequality constraints, we assign six $\mu$. For inequalities written as $g_j(x)\leq 0$, the multipliers satisfy $\mu \geq 0$. A multiplier is typically nonzero when its constraint is binding. Each one prices its own limit: $\muLlo$ and $\muLup$ the lower and upper load limits; $\muPVlo$ and $\muPVup$ the lower and upper PV limits; $\muimp$ and $\muexp$ the non-negativity limits on import and export.
     %\item The six $\mu$ go with the inequalities. A limit only has a price when it is
     %exceeded, so $\mu \geq 0$. Each one prices its own limit: $\muLlo$ and $\muLup$ the load
     %going below $\Lmin$ or above $\Lmax$; $\muPVlo$ and $\muPVup$ the PV production going
@@ -205,8 +193,7 @@ Each constraint gets a multiplier that can be seen as a price in the Lagrangian.
 
     
 \end{itemize}
-All multipliers are in DKK/kWh, since the hourly cost is in DKK and the constraints are in
-kWh/h. For the load and PV bounds, a bar below the multiplier ($\underline{\mu}$) marks the lower bound and a bar above it ($\overline{\mu}$) the upper bound.
+All multipliers are in DKK/kWh, since the hourly cost is in DKK and the constraints are in kWh/h.
 \begin{align}
     \min_{\load,\, \qimp,\, \qexp,\, \pvprod} \quad
     & C_t = -\uL \, \load + \pimp \, \qimp - \pexp \, \qexp + \cpv \, \pvprod \\
@@ -228,7 +215,7 @@ kWh/h. For the load and PV bounds, a bar below the multiplier ($\underline{\mu}$
 \end{align}
 
 \subsubsection{Lagrange function}
-Following the recipe of the lecture notes, the Lagrangian is the objective plus each
+The Lagrangian is the objective plus each
 constraint multiplied by its multiplier, $\mathcal{L} = f + \lambda h + \boldsymbol{\mu}^\top
 g$:
 \begin{align}
@@ -311,12 +298,9 @@ equalities and inequalities, so the dual problem is also a Linear Program.
 \subsubsection{KKT conditions}
 The Karush--Kuhn--Tucker (KKT) conditions collect the relations that a primal-dual pair
 $({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*, {\lbal}^*, \boldsymbol{\mu}^*)$ must satisfy to be
-optimal. The superscript $^*$ marks the value at the optimum, that is, the final value once the
-problem has been solved. The primal variables ${\load}^*$, ${\pvprod}^*$, ${\qimp}^*$ and
-${\qexp}^*$ are then the consumer's optimal decisions (how much to consume, how much PV to use,
-and how much to import and export), while ${\lbal}^*$ and $\boldsymbol{\mu}^*$ are the optimal
-prices of the constraints defined above. Whether the KKT conditions are necessary and/or
-sufficient for this problem is discussed below.
+optimal. The superscript $^*$ marks the value at the optimum, that is, the final value once the problem has been solved. The primal variables ${\load}^*$, ${\pvprod}^*$, ${\qimp}^*$ and
+${\qexp}^*$ are then the consumer's optimal decisions (how much to consume, how much PV to use, and how much to import and export), while ${\lbal}^*$ and $\boldsymbol{\mu}^*$ are the optimal
+prices of the constraints defined above. 
 
 \paragraph{1. Stationarity (first-order conditions).}
 Differentiating the Lagrangian \eqref{eq:lagrangian} with respect to each of the four
@@ -364,195 +348,93 @@ cannot both be non-zero.
 \end{align}
 The power-balance equality constraint does not carry a complementary slackness condition.
 
-\subsubsection{Strong duality}
-Strong duality holds for the hourly problem: the duality gap is zero, and the optimal value
-of the primal problem equals the optimal value of the dual problem, $C_t^* = d^*$. This is a
-theoretical result, which holds for every feasible and bounded LP, so it does not require
-solving the problem numerically. It follows from the properties established in (a):
+\subsubsection{Strong duality and the KKT conditions}
+The hourly problem is an LP, hence convex, and all its constraints are affine, so Slater's
+condition reduces to feasibility, which holds whenever $\Lmin \leq \Lmax$ and $\PVmax \geq 0$. It is also bounded, since $\pexp < \pimp$. Therefore strong duality holds: the duality gap is zero, both problems have an optimal solution and $C_t^* = d^*$. As a consequence, the KKT conditions \eqref{eq:kkt_stat_load}--\eqref{eq:kkt_cs_exp} are both necessary and sufficient for optimality:
 \begin{itemize}
-    \item \textbf{Problem class:} as shown in (a), the hourly problem is a Linear Program:
-    its objective is linear and all its constraints are affine. Linear programs are convex
-    optimisation problems.
-    \item \textbf{Feasibility and Slater's condition:} for problems with only affine
-    constraints, Slater's condition reduces to primal feasibility (lecture notes,
-    Section~4). The hourly problem was shown in (a) to be feasible whenever
-    $\Lmin \leq \Lmax$ and $\PVmax \geq 0$; for instance, $\load = \Lmin$, $\pvprod = 0$,
-    $\qimp = \Lmin$, $\qexp = 0$ is always feasible. Slater's condition is therefore satisfied.
-    \item \textbf{Boundedness:} it was also shown in (a) that, since $\pexp < \pimp$ (the
-    tariffs are positive), the cost cannot be driven to $-\infty$ through simultaneous
-    imports and exports. By LP strong duality (lecture notes, Section~5), if the primal LP
-    has an optimal solution, so does its dual, and both optimal values coincide.
+    \item \textbf{Necessity:} strong duality holds and the objective and constraints are
+    linear, hence differentiable. So for any primal optimal solution
+    $({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*)$ there exist multipliers
+    $({\lbal}^*, \boldsymbol{\mu}^*)$ such that the KKT conditions hold.
+    \item \textbf{Sufficiency:} the problem is convex, so the Lagrangian is convex in the
+    primal variables for any $\boldsymbol{\mu} \geq \mathbf{0}$. Stationarity
+    \eqref{eq:kkt_stat_load}--\eqref{eq:kkt_stat_exp} makes the primal candidate a global
+    minimiser of $\mathcal{L}$, and complementary slackness
+    \eqref{eq:kkt_cs_load_lb}--\eqref{eq:kkt_cs_exp} gives
+    $q(\lbal, \boldsymbol{\mu}) = \mathcal{L} = C_t$. Hence any point satisfying the KKT
+    system is a global optimum.
 \end{itemize}
-Consequently, $C_t({\mathbf{x}}^*) = q({\lbal}^*, \boldsymbol{\mu}^*)$: the primal solution
-certifies the optimality of the dual solution, and vice versa.
-
-\subsubsection{Necessity and sufficiency of the KKT conditions}
-The KKT conditions \eqref{eq:kkt_stat_load}--\eqref{eq:kkt_cs_exp} are \textbf{both necessary
-and sufficient} for optimality in this problem.
-
-\paragraph{Necessity.}
-According to Section~6 of the lecture notes, the KKT conditions are necessary if strong
-duality holds, the primal and dual solutions ${\mathbf{x}}^*$ and $({\lbal}^*, \boldsymbol{\mu}^*)$ are
-optimal, and the functions are differentiable. In our hourly problem:
-\begin{itemize}
-    \item The objective and all the constraint functions are linear, hence differentiable.
-    \item Strong duality holds, as shown above, and since the LP has an optimal solution its
-    dual has one too.
-\end{itemize}
-Therefore, if $({\load}^*, {\pvprod}^*, {\qimp}^*, {\qexp}^*)$ is a primal optimal solution, there
-exist multipliers $({\lbal}^*, \boldsymbol{\mu}^*)$ such that the complete set of conditions
-\eqref{eq:kkt_stat_load}--\eqref{eq:kkt_cs_exp} holds.
-
-\paragraph{Sufficiency.}
-According to Section~6, the KKT conditions are sufficient if the primal problem is convex. In
-our hourly problem:
-\begin{itemize}
-    \item The objective function $C_t$ is linear, hence convex.
-    \item Every inequality constraint function is affine, hence convex.
-    \item The power-balance equality constraint function is affine.
-\end{itemize}
-Under convexity, the Lagrangian is convex in the primal variables for any
-$\boldsymbol{\mu} \geq \mathbf{0}$. The stationarity conditions
-\eqref{eq:kkt_stat_load}--\eqref{eq:kkt_stat_exp} ensure that the primal candidate is a global
-minimiser of $\mathcal{L}$, and complementary slackness
-\eqref{eq:kkt_cs_load_lb}--\eqref{eq:kkt_cs_exp} guarantees that $q(\lbal, \boldsymbol{\mu}) =
-\mathcal{L} = C_t$. Thus, any point satisfying the KKT system is a global optimum.
-
-\paragraph{Conclusion.}
-Since both requirements are met by the properties established in (a), the KKT conditions
-fully characterise the optimal solution: a candidate is optimal \emph{if and only if} it
-satisfies the KKT system.
+A candidate is therefore optimal if and only if it satisfies the KKT system, and the primal solution certifies the optimality of the dual solution, and vice versa.
 
 \subsection{(c) Interpretation of the dual variables}
-In optimization problems a dual variable represent the marginal value of relaxing a constraint. In this problem, the objective function is measured in DKK and the constraints in kWh. This makes it so the dual variables gets the unit DKK/kWh.
 
+A multiplier is the marginal value of relaxing its constraint by one unit, in DKK/kWh. By
+complementary slackness it is zero when its constraint is non-binding, and it can only be
+positive when the constraint binds.
 
 \subsubsection{Power balance multiplier}
-The multiplier for the power balance constraint is $\lambda_t$. Since the constraint is about power, the multiplier $\lambda_t$ can be interpreted as the marginal value of 1 more kWh power for the consumer. 
+The multiplier $\lambda_t$ is the marginal value of one more kWh for the consumer. Its value
+follows from the stationarity conditions and complementary slackness:
+\begin{itemize}
+    \item \textbf{Importing} ($q_t^{\mathrm{imp}}>0$): $\mu_t^{\mathrm{imp}}=0$, so
+    \eqref{eq:kkt_stat_imp} gives $\lambda_t=p_t^{\mathrm{imp}}$, the cost of buying one
+    additional kWh.
+    \item \textbf{Exporting} ($q_t^{\mathrm{exp}}>0$): $\mu_t^{\mathrm{exp}}=0$, so
+    \eqref{eq:kkt_stat_exp} gives $\lambda_t=p_t^{\mathrm{exp}}$, the revenue of selling one
+    additional kWh.
+    \item \textbf{No grid exchange}
+    ($q_t^{\mathrm{imp}}=q_t^{\mathrm{exp}}=0$, $L^{\min}<\ell_t<L^{\max}$): the balance gives
+    $\ell_t=q_t^{\mathrm{PV}}$, so the load is supplied by the own PV, and both load bounds are
+    non-binding, $\underline{\mu}_t^L=\overline{\mu}_t^L=0$. Then \eqref{eq:kkt_stat_load}
+    gives $\lambda_t=u^L$: the marginal value of electricity is the marginal utility of
+    consumption.
+\end{itemize}
 
-\paragraph{Importing power:}
-If the consumer imports power, $q_t^{\mathrm{imp}}>0$. 
-The non-negativity constraint on imports is then non-binding, so complementary slackness gives
-\[
-\mu_t^{\mathrm{imp}}=0.
-\]
-Using the stationarity condition for imports in \eqref{eq:kkt_stat_imp},
-\[
-p_t^{\mathrm{imp}}-\lambda_t-\mu_t^{\mathrm{imp}}=0,
-\]
-we obtain
-\[
-\lambda_t=p_t^{\mathrm{imp}}.
-\]
-So when the consumer is importing, the marginal value of electricity equals the cost of buying one additional kWh from the grid.
-
-\paragraph{Exporting power:}
-This is very similar as above for importing power. If the consumer exports electricity, $q_t^{\mathrm{exp}}>0$.
-The non-negativity constraint on exports is then non-binding, so complementary slackness gives
-\[
-\mu_t^{\mathrm{exp}}=0.
-\]
-Using the stationarity condition for exports in Eq.~\eqref{eq:kkt_stat_exp},
-we obtain
-\[
-\lambda_t=p_t^{\mathrm{exp}}.
-\]
-Therefore when the consumer is exporting, the marginal value of electricity equals the revenue of one additional kWh sold.
-
-\paragraph{No grid exchange:}
-If the consumer neither imports or exports and the load is strictly within its bounds,
-\[
-q_t^{\mathrm{imp}}=q_t^{\mathrm{exp}}=0,
-\qquad
-L^{\min}<\ell_t<L^{\max},
-\]
-
-The power balance then implies
-\[
-\ell_t=q_t^{\mathrm{PV}},
-\]
-so the consumer's load is supplied entirely by its own PV production. Both load bounds are non-binding. Complementary slackness therefore gives
-\[
-\underline{\mu}_t^L=\overline{\mu}_t^L=0.
-\]
-Using the load stationarity condition in Eq.~\eqref{eq:kkt_stat_load},
-we obtain
-\[
-\lambda_t=u^L.
-\]
-So when there is no grid exchange the marginal value of electricity is determined by the marginal value of utility for the customer.
-
-\subsubsection{Load-bound multipliers}
+\subsubsection{Load and PV bound multipliers}
+Each bound multiplier is interpreted in three steps: write the constraint as
+$g(x)\leq 0$, split into the non-binding and binding cases, and use complementary slackness
+to see what the multiplier can be in each.
 
 \paragraph{Lower load bound.}
-The multiplier $\underline{\mu}_t^L$ is associated with the constraint
-\[
-L^{\min}-\ell_t \leq 0.
-\]
-If $\ell_t>L^{\min}$, the constraint is non-binding and complementary slackness gives
-\[
-\underline{\mu}_t^L=0.
-\]
-If instead $\ell_t=L^{\min}$, the constraint is binding and 
-$\underline{\mu}_t^L$ may be positive. It represents the marginal benefit of relaxing the minimum-load requirement, meaning allowing the consumer to use one less kWh.
+The multiplier $\underline{\mu}_t^L$ goes with $L^{\min}-\ell_t\leq 0$.
+\begin{itemize}
+    \item If $\ell_t>L^{\min}$ the constraint is non-binding, so complementary slackness
+    forces $\underline{\mu}_t^L=0$: relaxing a bound that is not limiting the solution has
+    no value.
+    \item If $\ell_t=L^{\min}$ the constraint is binding and $\underline{\mu}_t^L$ may be
+    positive. It is then the marginal benefit of relaxing the bound, meaning allowing the
+    consumer to use one kWh less.
+\end{itemize}
 
 \paragraph{Upper load bound.}
-The multiplier $\overline{\mu}_t^L$ belongs to the upper load limit
-\[
-\ell_t-L^{\max}\leq 0.
-\]
-As long as the consumer stays below $L^{\max}$, the constraint does not affect the solution and complementary slackness gives
-\[
-\overline{\mu}_t^L=0.
-\]
-If the load reaches its maximum, $\ell_t=L^{\max}$, the constraint becomes binding. In that case $\overline{\mu}_t^L$ can be positive and shows how valuable it would be to allow the consumer to use 1 kWh more of power.
+The multiplier $\overline{\mu}_t^L$ goes with $\ell_t-L^{\max}\leq 0$.
+\begin{itemize}
+    \item If $\ell_t<L^{\max}$ the constraint is non-binding and
+    $\overline{\mu}_t^L=0$.
+    \item If $\ell_t=L^{\max}$ the constraint is binding and $\overline{\mu}_t^L$ may be
+    positive. It shows how valuable it would be to allow the consumer to use one kWh more.
+\end{itemize}
 
-\subsubsection{PV-bound multipliers}
 \paragraph{Lower PV bound.}
-The multiplier $\underline{\mu}_t^{PV}$ is linked to the constraint
-\[
--q_t^{PV}\leq 0.
-\]
-If the consumer uses some PV production, $q_t^{PV}>0$, the constraint is non-binding and complementary slackness gives
-\[
-\underline{\mu}_t^{PV}=0.
-\]
-If instead $q_t^{PV}=0$, the lower bound is active and $\underline{\mu}_t^{PV}$ can be positive. It then reflects the marginal extra cost to force 1 kWh of PV production when producing no PV is optimal.
+The multiplier $\underline{\mu}_t^{\mathrm{PV}}$ goes with $-q_t^{\mathrm{PV}}\leq 0$.
+\begin{itemize}
+    \item If $q_t^{\mathrm{PV}}>0$ the constraint is non-binding and
+    $\underline{\mu}_t^{\mathrm{PV}}=0$.
+    \item If $q_t^{\mathrm{PV}}=0$ the constraint is binding and
+    $\underline{\mu}_t^{\mathrm{PV}}$ may be positive. It reflects the extra cost of being
+    forced to produce one kWh of PV when producing none is optimal.
+\end{itemize}
 
 \paragraph{Upper PV bound.}
-The multiplier $\overline{\mu}_t^{PV}$ is associated with the constraint
-\[
-q_t^{PV}-PV_t^{\max}\leq 0.
-\]
-If $q_t^{PV}<PV_t^{\max}$, the constraint is non-binding and complementary slackness gives
-\[
-\overline{\mu}_t^{PV}=0.
-\]
-If instead $q_t^{PV}=PV_t^{\max}$, the constraint is binding and $\overline{\mu}_t^{PV}$ can be positive. That would mean the marginal value of relaxing the PV availability limit, meaning how much the consumer marginally benefits by having 1 more kWh PV.
-
-% HINTS (not final text) -- everything below marked "draft" was written during the 1.(b)
-% work and should be reviewed and rewritten in the author's own words.
-
-%\paragraph{Load bounds (draft).}
-%The multiplier $\muLlo$ of the lower load bound $\Lmin - \load \leq 0$ is only active when
-%the load sits at its floor ($\load = \Lmin$): by complementary slackness, $\load > \Lmin$
-%forces $\muLlo = 0$. Its value measures how much the obligation to consume at least $\Lmin$
-%costs the consumer: the marginal saving if $\Lmin$ could be lowered by one kWh. Symmetrically,
-%$\muLup$ is only positive when the load sits at its ceiling ($\load = \Lmax$), and measures the
-%marginal gain if $\Lmax$ could be increased by one kWh. If $\Lmin < \Lmax$ they cannot both be
-%positive at the same time.
-
-%\paragraph{Power balance.}
-%\todo{Interpretation of $\lbal$ as the marginal value of one more kWh in that hour (the
-%internal price of electricity for the prosumer), and the units.
-%Hint for the three cases asked in the brief (importing, exporting, neither with the load %strictly within its bounds): combine the dual-feasibility equalities
-%\eqref{eq:dual_cond_load}, \eqref{eq:dual_cond_imp} and \eqref{eq:dual_cond_exp} with
-%complementary slackness of the multipliers of the corresponding constraints, case by case.}
-
-%\paragraph{PV availability limits.}
-%\todo{Interpretation of $\muPVlo$ and $\muPVup$ in the same style as the load bounds above:
-%when is each of them active, and what does its value measure? Hint: the equality
-%\eqref{eq:dual_cond_pv} relates them to $\lbal$ and $\cpv$.}
+The multiplier $\overline{\mu}_t^{\mathrm{PV}}$ goes with
+$q_t^{\mathrm{PV}}-PV_t^{\max}\leq 0$.
+\begin{itemize}
+    \item If $q_t^{\mathrm{PV}}<PV_t^{\max}$ the constraint is non-binding and
+    $\overline{\mu}_t^{\mathrm{PV}}=0$.
+    \item If $q_t^{\mathrm{PV}}=PV_t^{\max}$ the constraint is binding and
+    $\overline{\mu}_t^{\mathrm{PV}}$ may be positive. It is the benefit of having one more
+    kWh of PV available.
+\end{itemize}
 
 \subsection{(d) Price ladder (case A)}
 Only case A is considered, i.e.\ $\cpv < \uL$.
@@ -938,7 +820,7 @@ The consumer compares the value of consuming one additional kWh $\uL$, with the 
 
 If $\uL < \pexp$, means that selling electricity is worth more than consuming it. The consumer therefore keeps consumption at its minimum value.
 
-If $\pexp < \uL < \pimp$, means consuming electricity is more valuable than exporting it, but not valuable enough to justify buying extra electricity from the grid. The consumer therefore tries to match its load with the available PV, while still respecting the load bounds. 
+If $\pexp < \uL < \pimp$, means consuming electricity is more valuable than exporting it, but not valuable enough to buy extra electricity from the grid. The consumer therefore  matches its load with the available PV, while still respecting the load bounds. 
 
 If $\uL > \pimp$, the value of consuming an additional kWh is higher than the cost of importing it. The consumer therefore increases its load to $\Lmax$. 
 
@@ -992,10 +874,10 @@ in load regime 2. Producing one kWh with PV then costs exactly the same as impor
 \[
 0\leq \pvprod^*\leq\PVmax,
 \qquad
-\qimp^*=\Lmax-\pvprod^*.
+\qimp^*=\Lmax-\pvprod^*
 \]
 
-At a tie, several primal solutions can give the same objective value, so the primal solution may not be unique. The dual solution can still be unique, since the marginal value $\lambda_t$ may remain fixed at the common tied price. Dual non-uniqueness only occurs if the KKT conditions allow more than one set of optimal multipliers.
+At a tie, different primal solutions can give the same objective value. This does not mean that the dual solution has to be non-unique. For example, $\lambda_t$ can still have one fixed value at the tied price. The dual solution is only non-unique if the KKT conditions allow different sets of optimal multipliers.
 
 \subsection{(e) Implementation}
 The model is implemented in \texttt{FlexibleConsumerModel.build()}, in the file
@@ -1024,12 +906,12 @@ Only the PV cost differs.
 In case A, $c^{PV} = 1.41$ DKK/kWh.
 In case B, $c^{PV} = 1.47$ DKK/kWh.
 All results come from running this in the repository root:
-\texttt{python main.py --question Q1\_caseA --validate}
+\texttt{python main.py -{}-question Q1\_caseA --validate}
 (and the corresponding command for case B)
 
 \subsubsection{Case A hourly schedule}
 The model was first solved for case A. Figure~\ref{fig:q1_caseA_schedule} shows the hourly
-load, PV production, import and export, together with the electricity price.
+load, PV production, import and export, and the electricity price.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=\textwidth]{figures/Q1/schedule.png}
@@ -1039,7 +921,7 @@ load, PV production, import and export, together with the electricity price.
 
 The case A solution gives a net utility of 2.61 DKK over the day. The consumption utility is 51.39 DKK, while the total energy cost after accounting for export revenue is 48.79 DKK.
 
-In case A, the PV cost is $c^{PV}=1.41$ DKK/kWh, which is slightly below the consumption utility $u^L=1.43$ DKK/kWh. This makes PV worth using for own consumption in the middle of the day. In the later hours, when the export price is higher than the utility, the PV is instead sold to the grid. In total, all 26.9 kWh of available PV
+In case A, the PV cost is $c^{PV}=1.41$ DKK/kWh. This is  slightly below the consumption utility $u^L=1.43$ DKK/kWh. This makes PV worth using for own consumption in the middle of the day. In the later hours, when the export price is higher than the utility, the PV is instead sold to the grid. In total all 26.9 kWh of available PV
 is used.
 
 The hourly behaviour in Figure~\ref{fig:q1_caseA_schedule} can be divided into four
@@ -1067,10 +949,10 @@ main blocks:
     $PV_t^{\max}=0$ and there is no grid exchange.
 \end{itemize}
 
-A significant point is that no available PV is curtailed in case A. This differs from case B. If PV had been available during all hours of the day, some of it would however have been curtailed. This would happen in hours 3--4, where the PV availability is currently zero, since $c^{PV} > p_t^{imp}$. In these hours, importing electricity is cheaper than producing PV, so any available PV would be curtailed.
+A significant point is that no available PV is curtailed in case A. This differs from case B. If PV had been available during all hours of the day, some of it would however have been curtailed. This would happen in hours 3--4, where the PV availability is currently zero, since $c^{PV} > p_t^{imp}$. In these hours importing electricity is cheaper than producing PV. This would make it so any available PV would be curtailed.
 
 \paragraph{Price ladder comparison for case A}
-We found that for each hour the ladder matched perfectly with the solver result for every hour in case A, meaning the predicted load and PV decisions were as expected. This can be seen in the schedule plot above and is also checked automatically in the code, which reports whether the ladder and solver results match in each hour.
+We found that for each hour the ladder matched perfectly with the solver result for every hour in case A. Meaning the predicted load and PV decisions were as expected. This can be seen in the schedule plot above and is also checked automatically in the code, which reports whether the ladder and solver results match in each hour.
 
 \subsubsection{Case B hourly schedule}
 The model was re-run for case B, now with the increased cost of PV such that it is slightly higher than the utility gain of consumption. 
@@ -1080,10 +962,10 @@ The model was re-run for case B, now with the increased cost of PV such that it 
     \caption{Optimal schedule for case B.}
     \label{fig:q1_caseB_schedule}
 \end{figure}
-The main difference in case B compared to case A is that the PV cost has increased, such that it is now larger than the utility gain. This results in quite a significant change in behavior. The total net utility for case B is 1.95 DKK, compared to case A which had 2.61 DKK. The difference in net utility is therefore quite small, even though the PV usage changes significantly. The reason is that the gain from using PV for self-consumption in case A was only about 0.02 DKK/kWh, since $u^L-c^{PV}=1.43-1.41=0.02$. Removing this PV
-consumption therefore changes the load a lot, but has only a small effect on the total net utility.
+The main difference in case B compared to case A is that the PV cost has increased, such that it is now larger than the utility gain. This results in quite a significant change in behavior. Hours 3--4 and 18--20 are unchanged from case A. The main difference appears in hours 5--17, where PV consumption is no longer happening. Using PV for self consumption is no longer worthwhile. PV is therefore only an export resource whenever that is worth it. These hours are instead idle.
 
-Hours 3--4 and 18--20 are unchanged from case A. The main difference appears in hours 5--17, where the most PV consumption happened in case A. Using PV for self consumption is therefore no longer worthwhile. PV is therefore only a export resource whenever that is worth it. These hours are instead idle.
+The total net utility for case B is 1.95 DKK, compared to case A which had 2.61 DKK. The difference in net utility is therefore quite small, even though the PV usage changes significantly. The reason is that the gain from using PV for self-consumption in case A was only about 0.02 DKK/kWh, since $u^L-c^{PV}=1.43-1.41=0.02$. Removing this PV
+consumption therefore changes the load a lot, but has only a small effect on the total net utility.
 
 Trying to fit the price ladder generated in ii-iii is less relevant here, since the regimes were generated for the case where the PV cost was below the utility gain value. This means that the price ladder is correct for regime 1 and 2, but incorrect for regime 3 where self consumption for PV is relevant. In case A, the ladder matched the solver in all 24 hours, while in case B it only matched in 11 out of 24 hours. The 13 differences occur in hours 5--17, where the ladder predicts that the load follows the available PV. In case B, these hours instead have zero load and the available PV is curtailed.
 
@@ -1110,7 +992,7 @@ Here is a quick comparison of the main numerical results for the two cases.
 \end{table}
 
 \subsubsection{Dual variables}
-The dual variables give more information about which constraints are affecting the solution in each hour, and how much they are affecting the solution. This will be looked at in detail for case A, then the main differences for case A and case B will be discussed. 
+The dual variables give more information about which constraints are affecting the solution in each hour and how much they are affecting the solution. This will be looked at in detail for case A, then the main differences for case A and case B will be discussed. 
 
 \paragraph{Case A duals}
  The below plot shows each constraint's dual value over the 24 hours for case A:
@@ -1222,7 +1104,7 @@ The dual for the constraints is plotted the same way below, but now for case B:
 For case B a full table like in case A would repeat a lot. Instead, just the main differences will be commented on. They all come from the higher PV cost. Most of them are in hours 5-17, where the
 consumer in case B is now idle. 
 
-\textbf{Balance ($\lambda_t$).} The value is unchanged in hours 0--4 and 18--23. In hours 5--17 Gurobi still reports 1.43 DKK/kWh, but the value is now non-unique. An extra kWh could be consumed and is therefore worth $u^L=1.43$ DKK/kWh. If energy is instead taken away, it must be replaced by PV or importing. These two directions therefore give different marginal values, showing that the dual is non-unique. 
+\textbf{Balance ($\lambda_t$).} The value is unchanged in hours 0--4 and 18--23. In hours 5--17 Gurobi still reports 1.43 DKK/kWh, but the value is non-unique. An extra kWh could be consumed and is therefore worth $u^L=1.43$ DKK/kWh. If energy is instead taken away, it must be replaced by PV or importing. These two directions therefore give different marginal values, showing that the dual is non-unique. 
 
 \textbf{Load upper bound ($\muLup$).} This is unchanged compared to case A. The reason is that the PV cost does not affect the hours where the load upper bound is active.
 

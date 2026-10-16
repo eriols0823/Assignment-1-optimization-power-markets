@@ -238,7 +238,7 @@ Figures 13 and 14 show the optimal schedule with and without $E^{\min} = 40$ kWh
     \label{fig:q3_plot1}
 \end{figure}
 
-The table below shows how the most interesting values change between the cases:
+The table below shows how the most interesting values change between the cases: 
 \begin{table}[H]
 \centering
 \begin{tabular}{lcc}
@@ -265,8 +265,7 @@ This will now be used in comparison the the hypothesis made in 3c.
 \textbf{Above the daily minimum.} This does not happen. The total load is exactly 40 kWh and $\mu^E = 2.37$ DKK/kWh is positive. So without the requirement, the consumer would only use 22.8 kWh as can be seen in 2c. That does not however make it impossible to provide more than 40 kWh, it is just quite far from being worth it here. If the parameters were changed it could be worth it.
 
 \subsection{(f) Sensitivity analysis}
-
-To make the sensitivity analysis we vary three parameters one at a time and keep the rest at the base case. The parameters varied are the minimum daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$. All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
+To make the sensitivity analysis we vary three parameters on at a time and keep the rest at the base case. The parameters varied are the minimum daily energy $E^{\min}$, the disutility coefficient $c^Q$ and the hourly maximum load $L^{\max}$. All runs come from \texttt{python main.py -{}-question Q3 -{}-sensitivity}.
 Table~\ref{tab:q3f} shows selected runs.
 
 \begin{table}[H]
@@ -284,9 +283,10 @@ $c^Q$ (DKK/kWh$^2$)       & 0.1 & 56.97  & 2.07  & 1.71 & 16 \\
                           & 1   & 60.40  & 2.92  & 2.37 & 23 \\
                           & 5   & 61.20  & 12.34 & 4.94 & 24 \\
 \midrule
-$L^{\max}$ (kWh/h)        & 6   & 60.40  & 2.92  & 2.37 & 23 \\
-                          & 3   & 62.21  & 18.56 & 3.26 & 19 \\
+$L^{\max}$ (kWh/h)        & 7   & 60.40  & 2.92  & 2.37 & 23 \\
+                          & 3.5 & 61.70  & 10.54 & 2.94 & 19 \\
                           & 1.7 & 64.23  & 67.38 & 5.45 & 16 \\
+
 \bottomrule
 \end{tabular}
 \caption{Selected runs of the sensitivity analysis. Only the varied parameter differs from the
@@ -297,52 +297,34 @@ base case.}
 \textbf{Minimum daily energy.}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/q3f_emin_profiles.png}
+    \includegraphics[width=\textwidth]{figures/Q3/q3f_emin_profiles.png}
     \caption{Hourly load for different $E^{\min}$.}
     \label{fig:q3f_emin}
 \end{figure}
-We vary $E^{\min}$ from 0 to 140 kWh. Below 22.8 kWh the requirement has no effect. The consumer
-already uses that much without it and $\mu^E = 0$. Between 22.8 kWh and the reference total of
-32.3 kWh the requirement pulls the load up towards the reference. The disutility then drops from
-7.43 DKK to 0.57 DKK. Above 32.3 kWh the load must go above the reference. The extra energy is
-spread thinly over the day with more in the cheap hours. At very high values the load hits
-$L^{\max}$ at midday and the shape of the reference is lost. Both the disutility and $\mu^E$ then
-grow quickly.
+ $E^{\min}$ was varied from 20 to 80 kWh. Below 22.8 kWh the requirement has no effect, because 22.8 kWh was the choice when $E^{\min}$ constraint was not applied. Between 20 kWh to 30 kWh it can be seen that the load is pulled up more towards the reference. The results of this can be viewed in the disutility values in the table, showing 7.43 DKK to 0.57 DKK. After 32.2 kWh (total reference load), the extra load is spread thinly over the day with a bit more in the cheap hours. At higher values (80 kWh) the load needs to be more spread out of on the day because on the hours of 10-14 the load is at max. This makes it such that the difference between the reference load and the actual load is highest where the load is the lowest.
 
 \textbf{Disutility coefficient.}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/q3f_cq_profiles.png}
+    \includegraphics[width=\textwidth]{figures/Q3/q3f_cq_profiles.png}
     \caption{Hourly load for $c^Q = 0.1$ and $c^Q = 1$ with $E^{\min} = 40$ kWh.}
     \label{fig:q3f_cq}
 \end{figure}
-We vary $c^Q$ from 0.1 to 5 DKK/kWh$^2$ with $E^{\min} = 40$ kWh. A low $c^Q$ makes deviations
-cheap. The consumer then moves energy to the cheap night and midday hours. It even consumes below
-its reference in the expensive morning hours 8-10. A high $c^Q$ makes deviations costly. The
-consumer then adds a small amount in almost every hour and stays close to its reference. Being
-flexible makes the requirement cheaper to meet. $\mu^E$ rises from 1.71 to 4.94 DKK/kWh over the
-range. Above $c^Q \approx 0.5$ the shape of the load barely changes.
+We vary $c^Q$ from 0.1 to 5 DKK/kWh$^2$ with $E^{\min} = 40$ kWh. A low $c^Q$ makes deviations cheap so the consumer then moves energy to the cheap night and midday hours. It even consumes below its reference in the expensive morning hours 8-10. A high $c^Q$ makes deviations costly so the consumer then adds a small amount in almost every hour and stays close to its reference. Being flexible (meaning low penalty for deviating from reference) makes the requirement cheaper to meet. $\mu^E$ rises from 1.71 to 4.94 DKK/kWh over the range, which can be seen in the table. Although it was not shown here in the plot, if $c^Q \approx 0.5$ or higher the shape of the load barely changes (Quickly change paramater setting in repo to be able to see this).
 
 \textbf{Hourly maximum load.}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/q3f_lmax_profiles.png}
+    \includegraphics[width=\textwidth]{figures/Q3/q3f_lmax_profiles.png}
     \caption{Hourly load for different $L^{\max}$ with $E^{\min} = 40$ kWh.}
     \label{fig:q3f_lmax}
 \end{figure}
-We vary $L^{\max}$ from 1.7 to 8 kWh/h with $E^{\min} = 40$ kWh. Above about 5.5 kWh/h the limit
-never binds and nothing changes. With $L^{\max} = 3$ kWh/h the midday peak is cut flat. The energy
-that no longer fits there moves to the night and the evening. With $L^{\max} = 1.7$ kWh/h the load
-sits at the limit in 20 hours. The consumer must run almost evenly over the whole day to reach
-40 kWh. Below $40/24 \approx 1.67$ kWh/h the problem is infeasible. This matches the feasibility
-condition $E^{\min} \leq 24 L^{\max}$ from (a).
 
-\textbf{Conclusion.} The requirement only changes the behaviour when $E^{\min}$ is above what the
-consumer would use anyway. How it changes the behaviour depends on the consumer. A flexible
-consumer with a low $c^Q$ shifts energy to cheap hours. An inflexible one adds a little in every
-hour. A tight hourly limit forces the extra energy into the hours where there is still room. In
-all cases $\mu^E$ shows how costly the requirement is.
+We compare $L^{\max} = 7$, 3.5 and 1.7 kWh/h with $E^{\min} = 40$ kWh.  $L^{\max} = 1.7$ kWh/h was chosen as a lower limit, because that is just above for satisfying the $E^{\min} = 40$ kWh constraint. For the $L^{\max} = 7$, load is the same as in the base case with 6 kWh/h. This is because the load was never at the 6 kWh/h bound any way, so the dual of that constraint was 0. What is more interesting to look at is $L^{\max} = 3.5$ kWh/h. Here the midday peak is cut flat in hours 10-14. What happens is that the energy that no longer fits there is spread over the other hours. At 1.7 kWh/h in all 24 hours the load can reach at most 40.8 kWh. This follows the feasibility condition $E^{\min} \leq 24 L^{\max}$ from (a). With $L^{\max} = 1.7$ kWh/h the load sits at the limit in 20 of the hours, and close to the limit the remaining hours. The consumer must run almost evenly over the whole day to reach 40 kWh. This drives up disutility prices a good amount as expected.
 
+\textbf{Final conclusion}
+The $E^{\min}$ constraint only changes the behaviour when $E^{\min}$ is above what the
+consumer would use anyway. How it changes the behaviour depends on the consumer, meaning the consumer related parameters in the code (e.g maximum load and disutility function). A flexible consumer, meaning a low $c^Q$ will shift energy to cheap hours. An inflexible one adds a little in every hour such that it is more evenly distributed. A tight hourly load limit forces the extra energy into the hours where there is still room, based on lowest costs. Q3 generally shows how costly the $E^{\min}$ constraint is in the normal case. This sensitivity analysis part shows how much more expensive it will get with the $E^{\min}$ constraint, also when different parameters change.
 
 \subsection{(g) A small battery}
 
@@ -520,7 +502,7 @@ of (e), and Table~\ref{tab:q3g_base} the main results.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/q3g_battery_schedule.png}
+    \includegraphics[width=\textwidth]{figures/Q3/q3g_battery_schedule.png}
     \caption{Base case with the battery. Top: load with and without battery, reference load,
     charging (positive) and discharging (negative). Bottom: state of charge at the end of each
     hour and import price.}
@@ -537,7 +519,7 @@ Import / export (kWh)                 & 15.47 / 2.41 & 16.89 / 5.07 \\
 Procurement cost (DKK)                & 60.40        & 54.50        \\
 Disutility (DKK)                      & 2.92         & 2.70         \\
 Initial battery energy used, $\piend(\soc[23] - \einit)$ (DKK) & --  & $-2.84$      \\
-Net utility (objective, DKK; higher is better) & $-63.31$ & $-60.04$ \\
+Net utility (objective, DKK; less negative is better) & $-63.31$ & $-60.04$ \\
 Cost of one more kWh of $\Emin$, $\mu^E$ (DKK/kWh) & 2.37 & 2.31     \\
 \bottomrule
 \end{tabular}
@@ -566,8 +548,8 @@ it shifts energy in time, so the load does not have to.
 \paragraph{Role of the minimum-energy requirement.} $\Emin$ is still binding, with a total load
 of exactly 40~kWh, but its multiplier $\mu^E$, the cost of requiring one more kWh per day,
 drops from 2.37 to 2.31~DKK/kWh: the extra energy can now be supplied in part by energy bought
-or produced in cheaper hours. The energy stored or lost in the
-battery does not count towards $\Emin$, so the battery cannot be used to meet it on its own.
+or produced in cheaper hours. Charging the battery is not consumption (the energy stored in the
+battery does not count towards $\Emin$), so the battery cannot replace the required energy; it can only make it cheaper.
 
 \paragraph{Value of the battery.} The net utility is minus the procurement cost, minus the
 disutility, plus the value of the change of stored energy. It is negative because the consumer
@@ -647,13 +629,16 @@ only sees two hours. The last price alone lies right at the limit where the deci
 
 \paragraph{Conclusion.} A battery at the consumer level is worth the most where the prices change
 a lot within the day, where buying from the grid costs much more than selling to it, and where
-the consumer cannot easily shift its own load. Of its technical characteristics, the efficiency
-matters most, since it decides whether the price differences pay for the losses at all; extra
-capacity and power only help up to what the daily price profile can use. Whether a larger
-battery pays off then depends on its cost: in this case, doubling the capacity adds only
-0.67~DKK per day, which would have to be compared with the cost of the extra 4~kWh over the
-lifetime of the battery. In our base case the
-battery is worth 3.27~DKK/day in our model, or about 3.12 when the energy left at midnight is
-valued exactly. In practice the value would be somewhat lower, since the model has no
-degradation cost: every cycle wears the battery, so each one would need an even larger price
-spread to pay off.
+the consumer cannot easily shift its own load, while the overall price level barely matters.
+
+Of its technical characteristics, the efficiency matters most, since it decides whether the price
+differences pay for the losses at all. Extra capacity and power only help up to what the daily
+price profile can use. Whether a larger battery pays off then depends on its cost: in this case,
+doubling the capacity adds only 0.67~DKK per day, which would have to be compared with the cost of
+the extra 4~kWh over the lifetime of the battery.
+
+In our base case the battery is worth 3.27~DKK/day in our model, or about 3.12 when its initial
+energy is valued at what it really costs to refill it the following night, as given by the model
+that sees the following morning (see the end of the day above). In practice the value would be somewhat lower, since the model
+has no degradation cost: every cycle wears the battery, so each one would need an even larger
+price spread to pay off.

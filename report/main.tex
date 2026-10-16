@@ -153,7 +153,7 @@ showstringspaces=false
     \toprule
     \textbf{Student} & \textbf{Mathematical models} & \textbf{Writing} & \textbf{Code} & \textbf{Numerical results} & \textbf{Overall} \\
     \midrule
-    Student 1 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
+    Alejandro & 34\,\% & 25\,\% & 43\,\% & 18\,\% & 30\,\% \\
     Student 2 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
     Student 3 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
     Student 4 & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% & \ldots\,\% \\
@@ -181,7 +181,7 @@ showstringspaces=false
     \toprule
     \textbf{Tool} & \textbf{Used for} & \textbf{How the output was verified} \\
     \midrule
-    Claude (Claude Code)
+        Claude (Claude Code)
     &
     Repository set-up; assistance writing and debugging the code; LaTeX typesetting, wording of
     the group's text and merging of drafts; explaining the brief and course concepts, and
@@ -208,8 +208,6 @@ showstringspaces=false
 \fancyfoot[C]{Page \thepage\ of \pageref{EndOfText}}
 
 
-\label{EndOfText}
-
 
 \newpage
 % \printnomenclature (inside 9_nomenclat) prints its own "Nomenclature" heading, and the
@@ -231,5 +229,44 @@ showstringspaces=false
 \newpage
 \section{Appendix A} \label{ch6}
 
+All input data of the base cases are those of the repository. The table below lists the values
+that were chosen by the group. They are also set in the source code
+(\texttt{main.py} and \texttt{src/}), so every result can be reproduced with the commands given in
+each section.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Question} & \textbf{Parameter} & \textbf{Chosen values} \\
+\midrule
+2.(b).iv & Sweep of $c^{L}$ & 0.005 to 3.195~DKK/kWh in steps of 0.01 (offset by 0.005 so that no run lies on a price threshold) \\
+2.(c).iv & Sweep of $c^{Q}$ & 0.01 to 3.20~DKK/kWh$^2$ in steps of 0.01 \\
+2.(d) & Scenarios & Base: $c^{L} = 1.43$~DKK/kWh, $c^{Q} = 1.00$~DKK/kWh$^2$; low: $c^{L} = c^{Q} = 0.50$; high: $c^{L} = c^{Q} = 3.20$; Question~1 model with $\uL = c^{L}$ \\
+2.(e) & Disutility parameters & $\rho = 0.8$, $c^{Q} = 0.05$~DKK/kWh$^2$, $c^{S} = 0.06$~DKK/kWh$^2$ \\
+2.(e).iv & Price profiles & Mean of the base prices (1.32~DKK/kWh); flat; alternating $\pm 0.8$~DKK/kWh every hour; blocks of 4~h at $\pm 0.8$~DKK/kWh \\
+\midrule
+3.(f) & $\Emin$ & 20, 30, 40, 80~kWh \\
+3.(f) & $c^{Q}$ & 0.1, 1, 5~DKK/kWh$^2$ (with $\Emin = 40$~kWh) \\
+3.(f) & $\Lmax$ & 7, 3.5, 1.7~kWh/h (with $\Emin = 40$~kWh) \\
+\midrule
+3.(g).i & Morning peak of $D+1$ & Searched in hours 0--11 of the following day, \eqref{eq:g_piend} \\
+3.(g).v & Price spread & 0, 0.5, 1, 1.5, 2 times the base spread, same mean, on both days \\
+3.(g).v & Price level & $-0.5$, 0, 0.5, 1.0~DKK/kWh added to all prices, on both days \\
+3.(g).v & $c^{Q}$ & 0.02, 0.1, 0.3, 1, 3, 10~DKK/kWh$^2$ \\
+3.(g).v & Capacity $\Ebat$ & 1, 2, 4, 8, 16~kWh, with $\einit$ at 50\,\% of it \\
+3.(g).v & Power $\Pch = \Pdis$ & 0.5, 1, 1.5, 3, 6~kW \\
+3.(g).v & Efficiency $\etach = \etadis$ & 0.80, 0.85, 0.90, 0.95, 1.00 \\
+3.(g).v & End of the day & Trend $\pimp[23] + (\pimp[23] - \pimp[22])$; last price $\pimp[23]$; $\pimp[23]/\etach$; free end; cyclic; $\piend$ from 1.40 to 2.00~DKK/kWh in steps of 0.01 \\
+3.(g).v & Benchmark & Day $D$ and hours 0--10 of $D+1$; $\Emin$ on day $D$ only; no value for the energy left at the end \\
+\bottomrule
+\end{tabularx}
+\caption{Values chosen by the group.}
+\label{tab:appendix}
+\end{table}
+
+
 \label{endOfDoc}
+\label{EndOfText}
 \end{document}

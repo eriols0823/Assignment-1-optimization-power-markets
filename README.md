@@ -9,7 +9,7 @@ figure of the report is produced by the commands in Section 2 and saved under `r
 or as a link to the group's GitHub repository on the front page of the report; the report says which one.
 A linked repository must be accessible to the graders (public, or private with the teaching team invited) and
 must not be modified after the deadline: the last commit before the deadline is the one graded.
-Chosen option: _to be filled in by the group before submission_.
+Chosen option: this GitHub repository, public and linked on the front page of the report.
 
 ## 1. Setup
 
