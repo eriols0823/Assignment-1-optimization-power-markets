@@ -1,4 +1,0 @@
-status    : OPTIMAL
-objective : 1.9500 DKK
-utility   : 17.1600 DKK
-cost      : 15.2100 DKK
