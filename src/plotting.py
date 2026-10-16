@@ -165,7 +165,7 @@ def plot_load_profiles(panels: dict[str, dict], data: InputData, prices: dict | 
         ax.fill_between(h, data.pv_available, step="mid", color="orange", alpha=0.2, lw=0, label="PV available")
         ax.step(h, data.reference_load, where="mid", color="0.55", lw=4, label="reference")   # thick: stays visible under the others
         for label, load in loads.items():
-            ax.step(h, load, where="mid", color=MODEL_COLORS[label.split()[0]], lw=2, label=label)
+            ax.step(h, load, where="mid", color=MODEL_COLORS.get(label.split()[0]), lw=2, label=label)
         ax.set_title(title, fontsize=11); ax.set_ylabel("kWh/h"); ax.grid(alpha=0.3)
         ax.set_xticks(range(0, data.n_hours, 2))
         if prices:
