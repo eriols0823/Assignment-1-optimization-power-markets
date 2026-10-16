@@ -123,13 +123,16 @@ class FlexibleConsumerModel:
 
     # ------------------------------------------------------------------ 2. build
     def build(self) -> "FlexibleConsumerModel":
-        """Declare the variables, objective and constraints of the Question 1 problem.
+        """Declare the variables, objective and constraints of the problem given by the data.
 
-        Over the 24 hours, maximise the net utility
+        Question 1: over the 24 hours, maximise the net utility
             sum_t ( uL * load_t - p_imp_t * import_t + p_exp_t * export_t - cPV * pv_t )
         subject to the hourly power balance, the load bounds, the PV availability limits and the
-        non-negativity of imports and exports. Every family is stored in ``self.var`` /
-        ``self.con`` so that ``solve()`` returns its primal and dual values automatically.
+        non-negativity of imports and exports. When the data contain them, the same method also adds
+        the quadratic disutility instead of the utility (Question 3), the minimum daily energy
+        (Question 3) and the battery with its stored-energy term (Question 3.(g)). Every family is
+        stored in ``self.var`` / ``self.con`` so that ``solve()`` returns its primal and dual values
+        automatically.
         """
         d, m, T = self.data, self.m, self.T
 
@@ -156,6 +159,7 @@ class FlexibleConsumerModel:
         # Constraint families (used as self.con["<name>"]; their duals come out as dual_<name>)
         #   balance, load_lo, load_up, pv_lo, pv_up, imp_nonneg, exp_nonneg
         #   -> lambda_t, mu^L_lo, mu^L_up, mu^PV_lo, mu^PV_up, mu^imp, mu^exp of Question 1.(b)
+        #   min_energy (Question 3, one for the whole day) -> mu^E of Question 3.(b)
         # Battery (Question 3.(g), only when the data has one)
         #   E^bat, P^ch, P^dis      d.battery_capacity_kWh, d.battery_max_charge_kW, d.battery_max_discharge_kW
         #   eta^ch, eta^dis         d.battery_charging_efficiency, d.battery_discharging_efficiency
@@ -164,7 +168,7 @@ class FlexibleConsumerModel:
         #   constraints: soc_dyn (h = 0), ch_lo, ch_up, dis_lo, dis_up, soc_lo, soc_up
 
         # --- Decision variables --------------------------------------------------------
-        # All four families are free (lb = -inf): every bound is an explicit constraint below, so
+        # All the families are free (lb = -inf): every bound is an explicit constraint below, so
         # that each one has a dual value (a variable bound would report its sensitivity in RC, not
         # in Pi). The names "import", "export", "load", "pv" are the ones src/plotting.py expects.
         self.var["import"] = m.addVars(T, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="import")
@@ -178,9 +182,9 @@ class FlexibleConsumerModel:
 
         # --- Objective: daily net utility (DKK), maximised --------------------------------
         # The consumption utility is only given in Question 1, so in the data it can be empty
-        # (None). We save it as u_L and stop with a clear message if it is missing, so that below
-        # we are sure we multiply by a number. This also avoids the VS Code warning that None
-        # cannot be multiplied.
+        # (None). We save it as u_L and check it first, so that we only multiply by a number. This
+        # also avoids the VS Code warning that None cannot be multiplied. Without it we use the
+        # quadratic disutility (Question 3), and if neither is given we stop with a clear message.
         u_L = d.consumption_utility
         if u_L is not None:                         # Question 1: linear utility of the load
             m.setObjective(
@@ -301,7 +305,9 @@ class FlexibleConsumerModel:
         """Collect the primal values, duals, objective and its split into utility and cost.
 
         ``hourly`` has one column per variable family and one ``dual_<name>`` column per constraint
-        family; ``meta['utility']`` and ``meta['procurement_cost']`` (DKK) add up to the objective.
+        family. In Question 1, ``meta['utility']`` minus ``meta['procurement_cost']`` (DKK) is the
+        objective; with a disutility the objective subtracts it instead of adding a utility, and with a
+        battery it also adds ``meta['terminal_value']``.
         """
         d, T = self.data, list(self.T)
         hourly = pd.DataFrame(index=pd.Index(T, name="hour"))
@@ -328,7 +334,7 @@ class FlexibleConsumerModel:
                 # No duals available (e.g. model with integer variables)
                 pass
 
-        # objective = utility - procurement cost
+        # Question 1: objective = utility - procurement cost (see the docstring for the other questions)
         utility = None if d.consumption_utility is None else d.consumption_utility * hourly["load"].sum()
         p_imp = hourly["price"] + d.import_tariff
         p_exp = hourly["price"] - d.export_tariff
