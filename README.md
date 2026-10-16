@@ -13,7 +13,9 @@ Chosen option: _to be filled in by the group before submission_.
 
 ## 1. Setup
 
-Use one of the two options (both install the same packages; the code needs `gurobipy` and a Gurobi licence).
+Use one of the two options (both install the same packages; the code needs Python 3.10 or later, `gurobipy` and a
+Gurobi licence). Every command below has been tested with Python 3.12 and the free size-limited licence that comes
+with `pip install gurobipy`.
 
 **Option A - pip and venv**
 ```bash
