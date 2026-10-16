@@ -631,24 +631,28 @@ case described in (ii).
 \paragraph{End of the day.} We also checked the choice of (i) against a model that sees the
 following morning: day $D$ and the first eleven hours of $D+1$, which fits the size limit of our
 solver licence once the state of charge is written as an expression ($\Emin$ only applies to
-day $D$). It takes the same decisions as our daily model, and it shows that the energy left at
-midnight is worth slightly more per kWh than our $\piend$, because refilling a whole battery
-takes several night hours at increasing prices. Our $\piend$ therefore gives the right schedule
-but overstates the value of the battery a little, by about 5\,\%. The decisions would only
-change if the stored energy were valued well above any reasonable estimate (above
-1.71~DKK/kWh, against 1.42 in our model), when keeping energy becomes better than exporting it at
-the evening peak. The alternatives of (i) behave as expected: the free end reports almost
-twice the value, because the battery uses its initial energy for free, and the cyclic condition
-forces an expensive refill before midnight. Without forecasts of the following day,
-extrapolating the trend of the last two prices works well here, since it follows the fall of
-the prices towards the night, although it only sees two hours; the last price alone lies right
-at the limit where the decisions change.
+day $D$). It takes the same decisions as our daily model.
+
+It also gives the exact value of each kWh left at midnight. This value decreases from 1.52 to
+1.42~DKK/kWh, because refilling a whole battery takes several night hours at increasing prices.
+Our $\piend$ is the lowest of these values, so it gives the right schedule but overstates the
+value of the battery a little, by about 5\,\%. The decisions would only change above
+1.71~DKK/kWh, when keeping energy becomes better than exporting it at the evening peak.
+
+The alternatives of (i) behave as expected. The free end reports almost twice the value, because
+the battery uses its initial energy for free, and the cyclic condition forces an expensive refill
+before midnight. Without forecasts of the following day, extrapolating the trend of the last two
+prices works well here, since it follows the fall of the prices towards the night, although it
+only sees two hours. The last price alone lies right at the limit where the decisions change.
 
 \paragraph{Conclusion.} A battery at the consumer level is worth the most where the prices change
 a lot within the day, where buying from the grid costs much more than selling to it, and where
 the consumer cannot easily shift its own load. Of its technical characteristics, the efficiency
 matters most, since it decides whether the price differences pay for the losses at all; extra
-capacity and power only help up to what the daily price profile can use. In our base case the
+capacity and power only help up to what the daily price profile can use. Whether a larger
+battery pays off then depends on its cost: in this case, doubling the capacity adds only
+0.67~DKK per day, which would have to be compared with the cost of the extra 4~kWh over the
+lifetime of the battery. In our base case the
 battery is worth 3.27~DKK/day in our model, or about 3.12 when the energy left at midnight is
 valued exactly. In practice the value would be somewhat lower, since the model has no
 degradation cost: every cycle wears the battery, so each one would need an even larger price
